@@ -8,3 +8,4 @@ Julian Rakuschek
 <img alt="Demo" src="./images/pure.png" align="center" width="600" />
 
 </td></tr></table>
+
