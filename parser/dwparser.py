@@ -1,3 +1,6 @@
+# Author: Julian Rakuschek
+# julian.rakuschek@tugraz.at
+
 import contextlib
 import math
 import os

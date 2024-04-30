@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from numba import jit
 from numpy.lib.stride_tricks import sliding_window_view
 from scipy.signal import butter, lfilter, savgol_filter
 from tslearn.preprocessing import TimeSeriesResampler
@@ -13,19 +14,23 @@ def find_nearest(array, value):
     else:
         return idx
 
+
 def derive_sample_rate(timestamps):
     time_intervals = np.diff(timestamps)
     average_interval = np.mean(time_intervals)
     sample_rate = 1 / average_interval
     return sample_rate
 
+
 def signal_variance(signal, window_size=300, smoothing_window=None):
     variance_scores = sliding_window_view(signal, window_shape=window_size)
     variance_scores = np.var(variance_scores, axis=1)
-    variance_scores = TimeSeriesResampler(sz=len(variance_scores)).fit_transform(variance_scores.reshape(1, -1))[0, :, 0]
+    variance_scores = TimeSeriesResampler(sz=len(variance_scores)).fit_transform(variance_scores.reshape(1, -1))[0, :,
+                      0]
     if smoothing_window is not None and smoothing_window > 0:
         variance_scores = savgol_filter(variance_scores, smoothing_window, 3)
     return variance_scores
+
 
 def butter_bandpass(lowcut, highcut, fs, order=5) -> (np.ndarray, np.ndarray):
     return butter(order, [lowcut, highcut], fs=fs, btype='band')
@@ -35,3 +40,15 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
+
+
+@jit
+def reverse_windowing(scores: np.ndarray, window_size: int) -> np.ndarray:
+    unwindowed_length = (window_size - 1) + len(scores)
+    result = np.zeros(unwindowed_length)
+    divisor = np.ones(unwindowed_length)
+    for i, s in enumerate(scores):
+        result[i:i + window_size] += s
+        divisor[i:i + window_size] += 1
+    result /= divisor
+    return result

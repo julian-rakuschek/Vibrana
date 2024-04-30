@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.signal import periodogram, ShortTimeFFT, savgol_filter
 from scipy.signal.windows import gaussian
+from tslearn.preprocessing import TimeSeriesResampler
 
 from Experiment import Experiment
+from TakenMethod import TakenMethod
 from algorithms.defaultParameters import DWTCustomParameters
 from algorithms.dwt_mlead import run_dwt
-from util import signal_variance, butter_bandpass_filter
+from util import signal_variance, butter_bandpass_filter, reverse_windowing
 
 
 def basic(folder):
@@ -92,6 +94,39 @@ def dwt_experiment(folder):
     ex.save()
 
 
+def taken_cloud_events(folder):
+    ex = TakenMethod(
+        folder, name="point_cloud_events", plot_fig_size=(30, 30)
+    )
+    ex.points_to_cloud()
+    scores = ex.score_by_events()
+    ex.plot_point_cloud(scores)
+    ex.save()
+
+def taken_cloud_radius(folder):
+    ex = TakenMethod(
+        folder, name="point_cloud_radius", plot_fig_size=(30, 30)
+    )
+    proj = ex.points_to_cloud()
+    scores = ex.score_by_radius(proj, True)
+    ex.plot_point_cloud(scores)
+    ex.save()
+
+def taken_anomaly_scores(folder):
+    ex = TakenMethod(
+        folder, name="taken_method", plot_rows=2, plot_fig_size=(35, 20)
+    )
+    proj = ex.points_to_cloud()
+    scores = ex.score_by_radius(proj, True)
+    scores = reverse_windowing(scores, ex.window_size)
+    anomaly_scores = np.abs(np.diff(scores, n=2)[20:-20])[:-300]
+    anomaly_scores = TimeSeriesResampler(sz=len(scores)).fit_transform(anomaly_scores.reshape(1, -1))[0, :, 0]
+
+    ex.plot_colored_signal(scores, title="Raw Signal Colored by Radius in Taken Point Cloud")
+    ex.plot_time_series(anomaly_scores, 1, title="Change of The Radius")
+    ex.save()
+
+
 if __name__ == '__main__':
-    dwt_experiment("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    dwt_experiment("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
