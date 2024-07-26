@@ -129,4 +129,5 @@ def taken_anomaly_scores(folder):
 
 if __name__ == '__main__':
     # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    taken_cloud_radius("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")

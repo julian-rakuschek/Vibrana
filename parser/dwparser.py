@@ -18,7 +18,10 @@ import _ctypes
 # "Dewesoft Data Reader Library" -> DWDataReaderExample.py
 
 def init_reader_lib():
-    reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/DWDataReaderLib64.so')
+    if os.name == 'nt':
+        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/DWDataReaderLib64.dll')
+    else:
+        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/DWDataReaderLib64.so')
     if reader_lib.DWInit() != DWStatus.DWSTAT_OK.value:
         DWRaiseError("DWDataReader: DWInit() failed")
     print("DWDataReader version: " + str(reader_lib.DWGetVersion()))
@@ -30,7 +33,8 @@ def init_reader_lib():
 def dwt_reader(folder):
     reader = init_reader_lib()
     try:
-        file_name = c_char_p(f'{Path(__file__).parents[0]}/data/{folder}/{folder}.dxd'.encode())
+        file_path = os.path.join(Path(__file__).parents[1], "data", folder, f"{folder}.dxd")
+        file_name = c_char_p(file_path.encode())
         file_info = DWFileInfo(0, 0, 0)
         if reader.DWOpenDataFile(file_name, c_void_p(addressof(file_info))) != DWStatus.DWSTAT_OK.value:
             DWRaiseError("DWDataReader: DWOpenDataFile() failed")
