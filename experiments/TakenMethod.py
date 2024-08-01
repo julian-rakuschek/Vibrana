@@ -1,12 +1,15 @@
 import numpy as np
 from matplotlib import cm
 from numpy.lib.stride_tricks import sliding_window_view
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
+from itertools import batched
+
+from tslearn.piecewise import PiecewiseAggregateApproximation
 
 from Experiment import Experiment
-
+from util import find_nearest
 
 class TakenMethod(Experiment):
     def __init__(
@@ -25,10 +28,30 @@ class TakenMethod(Experiment):
         self.windows = sliding_window_view(self.values, window_shape=window_size)
         self.projected = []
 
-    def points_to_cloud(self):
-        pca = PCA(n_components=2)
-        self.projected = pca.fit_transform(self.windows)
-        return self.projected
+    def reduce(self, new_length, new_window_len):
+        paa = PiecewiseAggregateApproximation(n_segments=new_length)
+        step_size = len(self.values) // new_length
+        self.values = paa.fit_transform(self.values.reshape(1, -1)).reshape(1, -1)[0]
+        self.timestamps = [
+            self.timestamps[window * step_size]
+            for window in range(new_length)
+        ]
+        self.event_indices = [find_nearest(self.timestamps, e) for e in self.events]
+        self.windows = sliding_window_view(self.values, window_shape=new_window_len)
+        self.window_size = new_window_len
+
+    def points_to_cloud(self, incremental=False):
+        if incremental:
+            print(len(self.windows))
+            pca = IncrementalPCA(n_components=2, batch_size=1)
+            for w in tqdm(batched(self.windows, 5000), total=len(self.windows) // 5000):
+                if len(w) < 2:
+                    continue
+                pca.partial_fit(w)
+            return pca.components_
+        else:
+            self.projected = PCA(n_components=2).fit_transform(self.windows)
+            return self.projected
 
     def score_by_events(self):
         scores = []
@@ -49,14 +72,25 @@ class TakenMethod(Experiment):
         scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
         return scores_norm if norm else scores
 
-    def plot_point_cloud(self, scores):
+    def plot_point_cloud(self, scores, s=5):
         row = "cloud" if self.plot_mosaic else 0
         ax = self.ax if self.plot_size == (1, 1) and self.plot_mosaic is None else self.ax[row]
         ax.set_axis_off()
         ax.set_xlim([np.min(self.projected[:, 0]), np.max(self.projected[:, 0])])
         ax.set_ylim([np.min(self.projected[:, 1]), np.max(self.projected[:, 1])])
         colors = cm.get_cmap('turbo')(scores)
-        ax.scatter(self.projected[:, 0], self.projected[:, 1], s=5, c=colors)
+        ax.scatter(self.projected[:, 0], self.projected[:, 1], s=s, c=colors)
+
+    def plot_point_cloud_trace(self, start_i, end_i, s=5):
+        print(start_i, end_i)
+        row = "cloud" if self.plot_mosaic else 0
+        ax = self.ax if self.plot_size == (1, 1) and self.plot_mosaic is None else self.ax[row]
+        ax.set_axis_off()
+        ax.set_xlim([np.min(self.projected[:, 0]), np.max(self.projected[:, 0])])
+        ax.set_ylim([np.min(self.projected[:, 1]), np.max(self.projected[:, 1])])
+        colors = [cm.get_cmap('turbo')((i - start_i) / (end_i - start_i)) if start_i <= i <= end_i else "lightgray" for i in range(len(self.windows))]
+        ax.scatter(self.projected[:, 0], self.projected[:, 1], s=s, c=colors)
+        ax.plot(self.projected[start_i:end_i+1, 0], self.projected[start_i:end_i+1, 1], c="black")
 
     def plot_colored_signal(self, scores, title: str = "Raw Signal", include_events: bool = True):
         row = "raw" if self.plot_mosaic else 0

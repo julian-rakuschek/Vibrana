@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.ticker as plticker
+from tslearn.piecewise import PiecewiseAggregateApproximation
 
 from util import find_nearest, derive_sample_rate
 
@@ -63,6 +64,17 @@ class Experiment:
         else:
             self.fig.set_size_inches((plot_cols * 30, plot_rows * 10))
         self.formatter = plticker.FuncFormatter(lambda x_val, tick_pos: f"{x_val / self.sample_rate}s")
+
+    def reduce(self, new_length):
+        paa = PiecewiseAggregateApproximation(n_segments=new_length)
+        step_size = len(self.values) // new_length
+        self.values = paa.fit_transform(self.values.reshape(1, -1)).reshape(1, -1)[0]
+        self.timestamps = [
+            self.timestamps[window * step_size]
+            for window in range(new_length)
+        ]
+        self.event_indices = [find_nearest(self.timestamps, e) for e in self.events]
+
 
     def plot_raw_signal(self, include_events: bool = True):
         row = "raw" if self.plot_mosaic else 0

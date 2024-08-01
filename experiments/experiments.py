@@ -1,10 +1,14 @@
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import periodogram, ShortTimeFFT, savgol_filter
 from scipy.signal.windows import gaussian
 from tslearn.preprocessing import TimeSeriesResampler
-
+import stumpy
+from numba import cuda
+from matplotlib import cm
 from Experiment import Experiment
 from TakenMethod import TakenMethod
+from algorithms.damp import DAMP
 from algorithms.defaultParameters import DWTCustomParameters
 from algorithms.dwt_mlead import run_dwt
 from util import signal_variance, butter_bandpass_filter, reverse_windowing
@@ -127,7 +131,80 @@ def taken_anomaly_scores(folder):
     ex.save()
 
 
+def matrix_profile_experiment(folder):
+    ex = Experiment(
+        folder, name="matrix_profile", plot_rows=3, plot_fig_size=(35, 20)
+    )
+    all_gpu_devices = [device.id for device in cuda.list_devices()]
+    mat = np.load("matrix.npy", allow_pickle=True)[:, 0]
+    mat2 = np.log(signal_variance(mat))
+    ex.plot_raw_signal()
+    ex.plot_time_series(mat, 1, "Matrix Profile", True)
+    ex.plot_time_series(mat2, 2, "Matrix Profile", True)
+
+
+
+    # matrix_profile = stumpy.gpu_stump(ex.values, m=7000, device_id=all_gpu_devices)
+    # with Client() as dask_client:
+    #     matrix_profile = stumpy.stumped(dask_client, ex.values, m=7000)
+    # np.save("matrix.npy", matrix_profile)
+    # print(matrix_profile)
+    ex.save()
+
+
+def incremental_PCA_experiment(folder):
+    ex = TakenMethod(
+        folder, name="inc_pca", plot_rows=3, plot_fig_size=(30, 30), window_size=1_000
+    )
+    proj = ex.points_to_cloud(incremental=True)
+    scores = ex.score_by_radius(proj, True)
+    ex.plot_point_cloud(scores)
+    ex.save()
+
+
+def damp_experiment(folder):
+    ex = Experiment(
+        folder, name="damp", plot_rows=2, plot_fig_size=(35, 20)
+    )
+    res = DAMP(ex.values, 40, 1, 3000, 0, False)
+    print(res)
+
+
+def reduce_exp_1(folder):
+    ex = Experiment(
+        folder, name="reduced_100000", plot_rows=1, plot_fig_size=(35, 20)
+    )
+    ex.reduce(100000)
+    ex.plot_raw_signal()
+    ex.save()
+
+
+def reduce_exp_2(folder):
+    ex = TakenMethod(
+        folder, name="reduced_cloud_100000", plot_rows=1, plot_fig_size=(35, 35)
+    )
+    ex.reduce(100000, 700)
+    proj = ex.points_to_cloud(incremental=False)
+    scores = ex.score_by_radius(proj, True)
+    ex.plot_point_cloud(scores, s=50)
+    ex.save()
+
+
+def cloud_with_trace(folder):
+    ex = TakenMethod(
+        folder, name="point_cloud_radius_trace", plot_fig_size=(30, 30), window_size=2_000
+    )
+    # ex.reduce(1000, 7)
+    start_i = ex.event_indices[1] - (ex.window_size // 2)
+    end_i = ex.event_indices[1] + (ex.window_size // 2)
+    proj = ex.points_to_cloud(False)
+    ex.plot_point_cloud_trace(start_i, end_i)
+    ex.save()
+
+
 if __name__ == '__main__':
-    # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    taken_cloud_radius("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
-    taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    # reduce_exp_1("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    # cloud_with_trace("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    # matrix_profile_experiment("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
