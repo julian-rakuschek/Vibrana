@@ -4,20 +4,22 @@ import random
 import numpy as np
 from gutenTAG import GutenTAG
 from matplotlib import pyplot as plt
+from numpy.lib.stride_tricks import sliding_window_view
+from sklearn.decomposition import PCA
 from sklearn.metrics import f1_score, accuracy_score
 from tqdm import tqdm
 
 from algorithms.damp_hpi import DAMP
 
 
-def get_base_ts(name="dirichlet-sine"):
+def get_base_ts(length=1000, name="dirichlet-sine"):
     frequency = 1000
     # variance = np.random.normal(loc=0.1, scale=0.02)
     variance = 0.1
     amplitude = 0.5
     return {
         "name": "test",
-        "length": 1000,
+        "length": length,
         "base-oscillations": [
             {
                 "kind": "dirichlet",
@@ -205,8 +207,25 @@ def damp_test():
     plt.show()
 
 
+def create_sample():
+    gutentag = GutenTAG()
+    config = {"timeseries": []}
+    ts = get_base_ts(length=100000)
+    ts = get_frequency_anomaly(ts, pos="middle")
+    config["timeseries"].append(ts)
+    gutentag.load_config_dict(config)
+    datasets = gutentag.generate(return_timeseries=True)
+    df = datasets[0].timeseries
+    df.drop(columns=["is_anomaly"], inplace=True)
+    values = df.to_numpy()[:, 0]
+    projected = PCA(n_components=2).fit_transform(sliding_window_view(values, window_shape=50))
+    np.save("projected.npy", projected)
+    np.save("values.npy", values)
+
+
+
 if __name__ == '__main__':
     # plot_anomaly("variance")
     # pump_into_anoscout("Simple", 100)
     # assess_accuracy("GutenTAG")
-    damp_test()
+    create_sample()
