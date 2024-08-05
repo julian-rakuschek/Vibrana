@@ -12,14 +12,13 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
     to_idx: number;
     onSelectedPointChange?: (selectedPoint: number | undefined) => void;
 }, ref) => {
-
     const id = chartId === undefined ? "scatter" : chartId;
     const padding = 0.1;
     const min_x_value = useMemo(() => Math.min(...data.map(d => d[0])), [chartId])
     const max_x_value = useMemo(() => Math.max(...data.map(d => d[0])), [chartId])
     const min_y_value = useMemo(() => Math.min(...data.map(d => d[1])), [chartId])
     const max_y_value = useMemo(() => Math.max(...data.map(d => d[1])), [chartId])
-    const dataWithIndex = data.map((d, i) => ({index: i, coords: d}));
+    const dataWithIndex = data.map((d, i) => ({index: i, coords: d})).slice(from_idx, to_idx);
     const quadtree = d3.quadtree<{ index: number; coords: number[] }>()
         .x(d => d.coords[0])
         .y(d => d.coords[1])
@@ -102,7 +101,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
                     xScaleOriginal.range([0, event.detail.width]);
                     yScaleOriginal.range([event.detail.height, 0]);
                 })
-                .call(zoom)
+                // .call(zoom)
                 .call(pointer)
         );
 
@@ -123,9 +122,8 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
         });
 
     useEffect(() => {
-        // console.log("hi", from_idx)
         render()
-    }, [data.length, chartId, from_idx, to_idx]);
+    }, [data, chartId, from_idx, to_idx]);
     return (
         <div
             id={id}
