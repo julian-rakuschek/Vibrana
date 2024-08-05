@@ -3,3 +3,4 @@ venv
 .idea
 .npy
 data
+*.npy

@@ -19,7 +19,25 @@ export enum ToastType {
   Error = "Error",
 }
 
+export enum ColorMode {
+    Radius, Frequency, Distance
+}
+
 export type ToastDto = {
   type: ToastType;
   message: string;
 };
+
+export type Annotation = {
+    from: number;
+    to: number;
+    color: string;
+}
+
+export type DataPoint = {
+    x: number;
+    y: number;
+    meta_value: number;
+}
+
+export type Dataset = DataPoint[];

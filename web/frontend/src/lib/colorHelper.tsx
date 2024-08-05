@@ -1,3 +1,4 @@
+import * as d3 from "d3";
 
 export type ColorInterpolateParams = {
   start: number;
@@ -55,4 +56,13 @@ export function rgbStringToHex(rgb: string): string {
   if (nums === null) return "";
   const [r, g, b] = nums.map(num => parseInt(num));
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+export function  webglColor(color: string, opacity: number): number[] {
+    const parsed = d3.color(color);
+    if (parsed !== null) {
+      const {r, g, b} = parsed.rgb();
+      return [r / 255, g / 255, b / 255, opacity];
+    }
+    return [0, 0, 0, 1];
 }

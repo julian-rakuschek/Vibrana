@@ -1,21 +1,15 @@
-import {DefaultPageWithBoundaries} from "components/organisms/DefaultPage";
-import {useDummyValues, useDummyProjected} from "lib/hooks";
-import * as fc from "d3fc"
-import * as d3 from "d3"
-import {useEffect, useMemo, useRef, useImperativeHandle, forwardRef, useState} from "react";
+import {forwardRef, ReactElement, useEffect, useImperativeHandle, useMemo, useRef} from "react";
+import * as d3 from "d3";
+import * as fc from "d3fc";
+import {webglColor} from "lib/colorHelper";
 
-const webglColor = (color: string) => {
-    const {r, g, b, opacity} = d3.color(color).rgb();
-    return [r / 255, g / 255, b / 255, opacity];
-};
-
-
-
-const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPointChange}: {
+const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, height, onSelectedPointChange}: {
     chartId: string;
     data: number[][];
     width?: number;
     height?: number;
+    from_idx: number;
+    to_idx: number;
     onSelectedPointChange?: (selectedPoint: number | undefined) => void;
 }, ref) => {
 
@@ -40,12 +34,17 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
 
     const xScaleOriginal = xScale.copy();
     const yScaleOriginal = yScale.copy();
-    const selectedPoint = useRef<number | undefined>(100);
+    const selectedPoint = useRef<number | undefined>(undefined);
+    const filterRange = useRef<number[] | null>(null);
 
     useImperativeHandle(ref, () => ({
         getSelectedPoint: () => selectedPoint.current,
         setSelectedPoint: (value: number) => {
             selectedPoint.current = value;
+            render();
+        },
+        setRange: (range: number[]) => {
+            filterRange.current = [data.length * range[0], data.length * range[1]];
             render();
         }
     }));
@@ -62,18 +61,20 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
     });
 
 
-    const fillColor = fc
-        .webglFillColor()
-        .value(d => selectedPoint.current === undefined ? webglColor("lightgray") : webglColor(d.index > selectedPoint.current - 10 && d.index < selectedPoint.current + 10 ? "red" : "lightgray"))
-        .data(dataWithIndex);
-
     const pointSeries = fc
         .seriesWebglPoint()
-        .equals((a, b) => a === b)
         .size(20)
         .crossValue(d => d.coords[0])
         .mainValue(d => d.coords[1])
-        .decorate(s => fillColor(s))
+        .decorate((program, _, index) => fc
+                .webglFillColor()
+                .value((d) => {
+                    return webglColor(
+                        d.index && d.index > (from_idx * dataWithIndex.length) && d.index <= (to_idx * dataWithIndex.length) ? "blue" : "red",
+                        d.index && d.index > (from_idx * dataWithIndex.length) && d.index <= (to_idx * dataWithIndex.length) ? 1 : 0.2
+                    )
+                })
+                .data(dataWithIndex)(program));
 
     const trace = fc.seriesSvgLine()
         .crossValue(d => d[0])
@@ -97,7 +98,6 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
             sel
                 .enter()
                 .select("d3fc-svg.plot-area")
-
                 .on("measure.range", (event) => {
                     xScaleOriginal.range([0, event.detail.width]);
                     yScaleOriginal.range([event.detail.height, 0]);
@@ -105,6 +105,7 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
                 .call(zoom)
                 .call(pointer)
         );
+
 
     const render = () => {
         d3.select(`#${id}`).datum({
@@ -122,8 +123,9 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
         });
 
     useEffect(() => {
+        // console.log("hi", from_idx)
         render()
-    }, [data.length, chartId]);
+    }, [data.length, chartId, from_idx, to_idx]);
     return (
         <div
             id={id}
@@ -135,21 +137,4 @@ const SimpleScatter = forwardRef(({chartId, data, width, height, onSelectedPoint
     );
 });
 
-export default function Home(): JSX.Element {
-    const values = useDummyValues();
-    const projected = useDummyProjected();
-    const scatterRef = useRef<{
-        getSelectedPoint: () => number | undefined,
-        setSelectedPoint: (value: number) => void
-    }>(null);
-    const [currentSelectedPoint, setCurrentSelectedPoint] = useState<number | undefined>(100);
-
-    return (
-        <DefaultPageWithBoundaries menuDarkMode>
-            {values.length > 0 && <SimpleChart data={values} chartId={"chart1"} height={200}/>}
-            {projected.length > 0 &&
-                <SimpleScatter ref={scatterRef} onSelectedPointChange={(value) => setCurrentSelectedPoint(value)}
-                               data={projected} chartId={"scatter1"} height={600} width={"100%"}/>}
-        </DefaultPageWithBoundaries>
-    );
-}
+export default TimeSeriesPathView;
