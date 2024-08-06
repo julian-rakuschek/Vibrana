@@ -148,7 +148,7 @@ export default function Home(): JSX.Element {
         <DefaultPageWithBoundaries menuDarkMode>
             {values.length > 0 && <SimpleChart data={values} chartId={"chart1"} height={200}/>}
             {projected.length > 0 &&
-                <SimpleScatter ref={scatterRef} onSelectedPointChange={(value) => setCurrentSelectedPoint(value)}
+                <SimpleScatter ref={scatterRef} onHoverChange={(value) => setCurrentSelectedPoint(value)}
                                data={projected} chartId={"scatter1"} height={600} width={"100%"}/>}
         </DefaultPageWithBoundaries>
     );

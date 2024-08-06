@@ -39,7 +39,7 @@ const NavigatorChart = forwardRef(({chartId, data, width, height, onBrush}: {
         .svgPlotArea(
             fc.seriesSvgMulti()
                 .series([brush])
-                .mapping(() => brushedRange)
+                .mapping(() => brushedRange.current)
         );
 
     const render = () => {

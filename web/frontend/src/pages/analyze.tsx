@@ -23,6 +23,11 @@ export default function AnalyzePage(): JSX.Element {
 
     useEffect(() => {
         if (selectorRef && selectorRef.current && brushedRange) selectorRef.current.setRange(brushedRange)
+        if (scatterRef && scatterRef.current) {
+            scatterRef.current.setRange(
+                [brushedRange ? Math.floor(brushedRange[0] * projected.length) : 0, brushedRange ? Math.floor(brushedRange[1] * projected.length) : values.length]
+            )
+        }
     }, [brushedRange]);
 
     return (
@@ -30,8 +35,11 @@ export default function AnalyzePage(): JSX.Element {
             {values.length > 0 && <NavigatorChart onBrush={(new_range: number[]) => setBrushedRange(new_range)} data={values} chartId={"nav1"} height={200}/>}
             {values.length > 0 && <SelectionChart ref={selectorRef} data={values} chartId={"sel1"} height={200}/>}
             {projected.length > 0 &&
-                <TimeSeriesPathView from_idx={brushedRange ? Math.floor(brushedRange[0] * projected.length) : 0} to_idx={brushedRange ? Math.floor(brushedRange[1] * projected.length) : values.length} ref={scatterRef} onSelectedPointChange={(value) => setCurrentSelectedPoint(value)}
-                               data={projected} chartId={"scatter1"} height={600} width={"100%"}/>}
+                <TimeSeriesPathView
+                    ref={scatterRef} onHoverChange={(value) => setCurrentSelectedPoint(value)}
+                    data={projected} chartId={"scatter1"} height={600} width={"100%"}
+                />
+            }
         </DefaultPageWithBoundaries>
     );
 }

@@ -3,22 +3,22 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import {webglColor} from "lib/colorHelper";
 
-const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, height, onSelectedPointChange}: {
+const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverChange}: {
     chartId: string;
     data: number[][];
     width?: number;
     height?: number;
-    from_idx: number;
-    to_idx: number;
-    onSelectedPointChange?: (selectedPoint: number | undefined) => void;
+    onHoverChange?: (range: number[] | undefined) => void;
 }, ref) => {
     const id = chartId === undefined ? "scatter" : chartId;
     const padding = 0.1;
+    const hoverRange = useRef<number[] | undefined>(undefined);
+    const filterRange = useRef<number[] | null>([0, data.length]);
     const min_x_value = useMemo(() => Math.min(...data.map(d => d[0])), [chartId])
     const max_x_value = useMemo(() => Math.max(...data.map(d => d[0])), [chartId])
     const min_y_value = useMemo(() => Math.min(...data.map(d => d[1])), [chartId])
     const max_y_value = useMemo(() => Math.max(...data.map(d => d[1])), [chartId])
-    const dataWithIndex = data.map((d, i) => ({index: i, coords: d})).slice(from_idx, to_idx);
+    const dataWithIndex = data.map((d, i) => ({index: i, coords: d}));
     const quadtree = d3.quadtree<{ index: number; coords: number[] }>()
         .x(d => d.coords[0])
         .y(d => d.coords[1])
@@ -33,17 +33,16 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
 
     const xScaleOriginal = xScale.copy();
     const yScaleOriginal = yScale.copy();
-    const selectedPoint = useRef<number | undefined>(undefined);
-    const filterRange = useRef<number[] | null>(null);
+
 
     useImperativeHandle(ref, () => ({
-        getSelectedPoint: () => selectedPoint.current,
-        setSelectedPoint: (value: number) => {
-            selectedPoint.current = value;
+        getSelectedPoint: () => hoverRange.current,
+        setHoverRange: (range: number[]) => {
+            hoverRange.current = range;
             render();
         },
         setRange: (range: number[]) => {
-            filterRange.current = [data.length * range[0], data.length * range[1]];
+            filterRange.current = range;
             render();
         }
     }));
@@ -54,23 +53,25 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
         const y = yScale.invert(coord.y);
         const radius = Math.abs(xScale.invert(coord.x) - xScale.invert(coord.x - 20));
         const closestDatum = quadtree.find(x, y, radius);
-        selectedPoint.current = closestDatum?.index;
-        if (onSelectedPointChange) onSelectedPointChange(selectedPoint.current);
+        const window_size = hoverRange.current !== undefined ? Math.abs(hoverRange.current[0] - hoverRange.current[1]) : 500;
+        hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + window_size] : undefined;
+        if (onHoverChange) onHoverChange(hoverRange.current);
         render();
     });
 
 
     const pointSeries = fc
         .seriesWebglPoint()
-        .size(20)
+        .size(5)
         .crossValue(d => d.coords[0])
         .mainValue(d => d.coords[1])
         .decorate((program, _, index) => fc
                 .webglFillColor()
                 .value((d) => {
+                    if (!filterRange.current) return webglColor("black", 0.2)
                     return webglColor(
-                        d.index && d.index > (from_idx * dataWithIndex.length) && d.index <= (to_idx * dataWithIndex.length) ? "blue" : "red",
-                        d.index && d.index > (from_idx * dataWithIndex.length) && d.index <= (to_idx * dataWithIndex.length) ? 1 : 0.2
+                        d.index && d.index > filterRange.current[0] && d.index <= filterRange.current[1] ? "blue" : "black",
+                        d.index && d.index > filterRange.current[0] && d.index <= filterRange.current[1] ? 1 : 0.05
                     )
                 })
                 .data(dataWithIndex)(program));
@@ -101,7 +102,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
                     xScaleOriginal.range([0, event.detail.width]);
                     yScaleOriginal.range([event.detail.height, 0]);
                 })
-                // .call(zoom)
+                .call(zoom)
                 .call(pointer)
         );
 
@@ -109,7 +110,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
     const render = () => {
         d3.select(`#${id}`).datum({
             data: dataWithIndex,
-            trace: selectedPoint.current ? data.slice(selectedPoint.current - 10, selectedPoint.current + 10) : []
+            trace: hoverRange.current ? data.slice(hoverRange.current[0], hoverRange.current[1]) : []
         }).call(chart)
     };
 
@@ -123,7 +124,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, from_idx, to_idx, width, 
 
     useEffect(() => {
         render()
-    }, [data, chartId, from_idx, to_idx]);
+    }, [data, chartId]);
     return (
         <div
             id={id}

@@ -24,8 +24,8 @@ const SelectionChart = forwardRef(({chartId, data, width, height}: {
         .orient('vertical')
         .xScale(xScale)
         .yScale(yScale)
-        .decorate(selection  => {
-            selection.selectAll('.band').attr('fill', 'rgba(0, 204, 0, 0.1)');
+        .decorate(se  => {
+            se.selectAll('.band').attr('fill', 'rgba(0, 204, 0, 0.1)');
         });
 
     const chart = fc
