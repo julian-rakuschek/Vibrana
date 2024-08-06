@@ -210,7 +210,7 @@ def damp_test():
 def create_sample():
     gutentag = GutenTAG()
     config = {"timeseries": []}
-    ts = get_base_ts(length=100000)
+    ts = get_base_ts(length=10000)
     ts = get_frequency_anomaly(ts, pos="middle")
     config["timeseries"].append(ts)
     gutentag.load_config_dict(config)

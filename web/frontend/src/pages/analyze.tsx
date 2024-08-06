@@ -18,8 +18,9 @@ export default function AnalyzePage(): JSX.Element {
         setSelectedPoint: (value: number) => void
         setRange: (value: number[]) => void
     }>(null);
-    const [currentSelectedPoint, setCurrentSelectedPoint] = useState<number | undefined>(100);
+    const [hoverRange, setHoverRange] = useState<number | undefined>(100);
     const [brushedRange, setBrushedRange] = useState<number[] | null>(null);
+    const [windowSize, setWindowSize] = useState(100);
 
     useEffect(() => {
         if (selectorRef && selectorRef.current && brushedRange) selectorRef.current.setRange(brushedRange)
@@ -30,16 +31,24 @@ export default function AnalyzePage(): JSX.Element {
         }
     }, [brushedRange]);
 
+    useEffect(() => {
+
+    }, [hoverRange]);
+
     return (
         <DefaultPageWithBoundaries menuDarkMode>
-            {values.length > 0 && <NavigatorChart onBrush={(new_range: number[]) => setBrushedRange(new_range)} data={values} chartId={"nav1"} height={200}/>}
-            {values.length > 0 && <SelectionChart ref={selectorRef} data={values} chartId={"sel1"} height={200}/>}
-            {projected.length > 0 &&
-                <TimeSeriesPathView
-                    ref={scatterRef} onHoverChange={(value) => setCurrentSelectedPoint(value)}
-                    data={projected} chartId={"scatter1"} height={600} width={"100%"}
-                />
-            }
+            {values.length > 0 && projected.length > 0 &&
+                <div className="flex flex-col p-5 gap-5">
+                    <NavigatorChart
+                        onBrush={(new_range: number[]) => setBrushedRange(new_range)}
+                        data={values} chartId={"nav1"} height={150}
+                    />
+                    <SelectionChart windowSize={windowSize} setWindowSize={setWindowSize} ref={selectorRef} data={values} chartId={"sel1"} height={200} />
+                    <TimeSeriesPathView
+                        ref={scatterRef} onHoverChange={(value) => setHoverRange(value)}
+                        data={projected} chartId={"scatter1"} height={500} width={"100%"} windowSize={windowSize}
+                    />
+                </div>}
         </DefaultPageWithBoundaries>
     );
 }

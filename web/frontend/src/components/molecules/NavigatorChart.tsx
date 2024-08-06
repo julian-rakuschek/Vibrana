@@ -54,13 +54,16 @@ const NavigatorChart = forwardRef(({chartId, data, width, height, onBrush}: {
     }));
 
     return (
-        <div
-            id={id}
-            style={{
-                width: width != undefined ? width : "100%",
-                height: height != undefined ? height : "95vh"
-            }}
-        ></div>
+        <div className="rounded-xl shadow-lg text-center">
+            <p>Click and drag over the time series to select a subset of the data.</p>
+            <div
+                id={id}
+                style={{
+                    width: width != undefined ? width : "100%",
+                    height: height != undefined ? height : "95vh"
+                }}
+            ></div>
+        </div>
     );
 });
 

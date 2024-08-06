@@ -3,11 +3,28 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import {webglColor} from "lib/colorHelper";
 
-const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverChange}: {
+
+type DataIndex = { index: number; coords: number[] };
+
+const compute_radius_norm = (data: number[][]): number[] => {
+    const radii = data.map(p => Math.sqrt(Math.pow(p[0], 2) + Math.pow(p[1], 2)));
+    const max_rad = Math.max(...radii);
+    return radii.map(r => r / max_rad);
+}
+
+function moveMiddleToEnd(data: DataIndex[], range: number[] | null): DataIndex[] {
+    if (range === null) return data;
+    const [start, end] = range;
+    const middlePart = data.slice(start, end);
+    return data.slice(0, start).concat(data.slice(end), middlePart);
+}
+
+const TimeSeriesPathView = forwardRef(({chartId, data, width, height, windowSize, onHoverChange}: {
     chartId: string;
     data: number[][];
     width?: number;
     height?: number;
+    windowSize: number;
     onHoverChange?: (range: number[] | undefined) => void;
 }, ref) => {
     const id = chartId === undefined ? "scatter" : chartId;
@@ -18,8 +35,10 @@ const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverCha
     const max_x_value = useMemo(() => Math.max(...data.map(d => d[0])), [chartId])
     const min_y_value = useMemo(() => Math.min(...data.map(d => d[1])), [chartId])
     const max_y_value = useMemo(() => Math.max(...data.map(d => d[1])), [chartId])
-    const dataWithIndex = data.map((d, i) => ({index: i, coords: d}));
-    const quadtree = d3.quadtree<{ index: number; coords: number[] }>()
+    const radius_colors = useMemo(() => compute_radius_norm(data), [chartId]);
+    const dataWithIndex: DataIndex[] = data.map((d, i): DataIndex => ({index: i, coords: d}));
+    const windowSizeRef = useRef<number>(windowSize)
+    const quadtree = d3.quadtree<DataIndex>()
         .x(d => d.coords[0])
         .y(d => d.coords[1])
         .addAll(dataWithIndex);
@@ -53,8 +72,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverCha
         const y = yScale.invert(coord.y);
         const radius = Math.abs(xScale.invert(coord.x) - xScale.invert(coord.x - 20));
         const closestDatum = quadtree.find(x, y, radius);
-        const window_size = hoverRange.current !== undefined ? Math.abs(hoverRange.current[0] - hoverRange.current[1]) : 500;
-        hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + window_size] : undefined;
+        hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
         if (onHoverChange) onHoverChange(hoverRange.current);
         render();
     });
@@ -68,13 +86,14 @@ const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverCha
         .decorate((program, _, index) => fc
                 .webglFillColor()
                 .value((d) => {
-                    if (!filterRange.current) return webglColor("black", 0.2)
+                    const col = d3.interpolateTurbo(radius_colors[d.index])
+                    if (!filterRange.current) return webglColor(col, 0.2)
                     return webglColor(
-                        d.index && d.index > filterRange.current[0] && d.index <= filterRange.current[1] ? "blue" : "black",
+                        d.index && d.index > filterRange.current[0] && d.index <= filterRange.current[1] ? col : "black",
                         d.index && d.index > filterRange.current[0] && d.index <= filterRange.current[1] ? 1 : 0.05
                     )
                 })
-                .data(dataWithIndex)(program));
+                .data(moveMiddleToEnd(dataWithIndex, filterRange.current))(program));
 
     const trace = fc.seriesSvgLine()
         .crossValue(d => d[0])
@@ -109,7 +128,7 @@ const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverCha
 
     const render = () => {
         d3.select(`#${id}`).datum({
-            data: dataWithIndex,
+            data: moveMiddleToEnd(dataWithIndex, filterRange.current),
             trace: hoverRange.current ? data.slice(hoverRange.current[0], hoverRange.current[1]) : []
         }).call(chart)
     };
@@ -125,14 +144,22 @@ const TimeSeriesPathView = forwardRef(({chartId, data, width, height, onHoverCha
     useEffect(() => {
         render()
     }, [data, chartId]);
+
+    useEffect(() => {
+        windowSizeRef.current = windowSize
+    }, [windowSize]);
+
     return (
-        <div
-            id={id}
-            style={{
-                width: width != undefined ? width : "400px",
-                height: height != undefined ? height : "400px"
-            }}
-        ></div>
+        <div className="rounded-xl shadow-lg text-center">
+            <p>Point cloud of the time series. By hovering a point, the path may be inspected and by clicking it, the path is saved as a reference window.</p>
+            <div
+                id={id}
+                style={{
+                    width: width != undefined ? width : "100%",
+                    height: height != undefined ? height : "95vh"
+                }}
+            ></div>
+        </div>
     );
 });
 
