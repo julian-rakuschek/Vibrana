@@ -1,0 +1,333 @@
+import {useEffect, useMemo, useRef, useState} from "react";
+import * as d3 from "d3";
+import * as fc from "d3fc";
+import {webglColor} from "lib/colorHelper";
+
+type props = {
+    chartId: string;
+    timeseries: number[];
+    projected: number[][];
+    width?: number | string;
+    height?: number | string;
+}
+
+type TimeSeriesPoint = {
+    x: number;
+    y: number;
+}
+
+type ProjectedPoint = { index: number; coords: number[] };
+
+const projectionPadding = 0.1;
+
+const compute_radius_norm = (data: number[][]): number[] => {
+    const radii = data.map(p => Math.sqrt(Math.pow(p[0], 2) + Math.pow(p[1], 2)));
+    const max_rad = Math.max(...radii);
+    return radii.map(r => r / max_rad);
+}
+
+const compute_quadtree = (data: ProjectedPoint[]): d3.Quadtree<ProjectedPoint> => {
+    return d3.quadtree<ProjectedPoint>()
+        .x(d => d.coords[0])
+        .y(d => d.coords[1])
+        .addAll(data);
+}
+
+const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): ProjectedPoint[] => {
+    if (range === null) return data;
+    const [start, end] = range;
+    const middlePart = data.slice(start, end);
+    return data.slice(0, start).concat(data.slice(end), middlePart);
+}
+
+/*
+ * Yes I know, this component is far too large and violates the React phiolosophy, BUT:
+ * When having all charts in one component, it makes data exchange much faster.
+ * This is because I need to use Refs since I want to avoid component re-renders at all cost.
+ * There is no need to pass states between components via function calls and stuff when using one single component.
+ * Therefore this approach is a necessary evil.
+ */
+export default function ThreeCharts({ chartId, timeseries, projected, width, height }: props): JSX.Element {
+    const navigatorId = `${chartId}-nav`
+    const selectorId = `${chartId}-sel`
+    const projectionId = `${chartId}-pro`
+
+    // values that only need to be computed once
+    const timeseriesIndexed: TimeSeriesPoint[] = useMemo(() => timeseries.map((d, index) => ({x: index, y: d})), [chartId])
+    const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({index: i, coords: d})), [chartId]);
+    const min_value = useMemo(() => Math.min(...timeseries), [chartId])
+    const max_value = useMemo(() => Math.max(...timeseries), [chartId])
+    const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [chartId])
+    const max_x_value = useMemo(() => Math.max(...projected.map(d => d[0])), [chartId])
+    const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [chartId])
+    const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [chartId])
+    const radius_colors = useMemo(() => compute_radius_norm(projected), [chartId]);
+    const quadtree =  useMemo(() => compute_quadtree(projectedIndexed), [chartId]);
+
+    // All Scales for the plots
+    const xScaleNavigator = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
+    const yScaleNavigator = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
+    const xScaleSelector = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
+    const yScaleSelector = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
+    const xScaleProjection = d3.scaleLinear()
+        .domain([min_x_value - Math.abs(min_x_value - max_x_value) * projectionPadding, max_x_value + Math.abs(min_x_value - max_x_value) * projectionPadding])
+        .range([0, 1]);
+    const yScaleProjection = d3.scaleLinear()
+        .domain([min_y_value - Math.abs(min_y_value - max_y_value) * projectionPadding, max_y_value + Math.abs(min_y_value - max_y_value) * projectionPadding])
+        .range([0, 1])
+
+    const xScaleProjectionOriginal = xScaleProjection.copy();
+    const yScaleProjectionOriginal = yScaleProjection.copy();
+
+    // Refs are used instead of React State since they don't trigger a re-render of the component, which is important for fast chart performance
+    const filterRangePercent = useRef<[number, number] | null>(null);
+    const filterRangeIndexed = useRef<[number, number] | null>(null);
+    const hoverRange = useRef<number[] | undefined>(undefined);
+    const windowSizeRef = useRef<number>(100);
+    const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
+
+    const [mode, setMode] = useState("annotation")
+    useEffect(() => {
+        renderNavigator();
+        renderSelector();
+        renderProjection();
+    }, [timeseries.length, projected.length, chartId]);
+
+    // ----------------------------------------------
+    // DATA FUNCTIONS
+
+    const timeseriesLine = fc.seriesWebglLine().crossValue((d: TimeSeriesPoint) => d.x).mainValue((d: TimeSeriesPoint) => d.y);
+
+    const scatterplot = fc
+        .seriesWebglPoint()
+        .size(5)
+        .crossValue(d => d.coords[0])
+        .mainValue(d => d.coords[1])
+        .decorate((program, _, index) => fc
+                .webglFillColor()
+                .value((d) => {
+                    const col = d3.interpolateTurbo(radius_colors[d.index])
+                    if (!filterRangeIndexed.current) return webglColor(col, 1)
+                    return webglColor(
+                        d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? col : "black",
+                        d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? 1 : 0.05
+                    )
+                })
+                .data(moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current))(program));
+
+    const trace = fc.seriesSvgLine().crossValue(d => d[0]).mainValue(d => d[1])
+
+    // ----------------------------------------------
+    // INTERACTION FUNCTIONS
+
+    const brushNavigator = fc.brushX().on('brush', (e: { selection: [number, number] | null; }) => {
+        if (e.selection) {
+            filterRangePercent.current = e.selection;
+            filterRangeIndexed.current = [e.selection[0] * projected.length, e.selection[1] * projected.length];
+            xScaleSelector.domain([timeseries.length * e.selection[0], timeseries.length * e.selection[1]]);
+            renderNavigator();
+            renderSelector();
+            renderProjection();
+        }
+    });
+
+    const selectorPointer = fc.pointer().on("point", ([coord]) => {
+        if (!coord) return;
+        const x = xScaleSelector.invert(coord.x);
+        hoverRange.current = [Math.max(0, x - windowSizeRef.current / 2), Math.min(timeseries.length - 1, x + windowSizeRef.current / 2)]
+        renderSelector();
+    });
+
+    const selectorBrushWindowSize = fc.brushX().on('brush', e => {
+        if (e.selection) {
+            selectorBrushRangeWindowSize.current = e.selection;
+            windowSizeRef.current = Math.floor(Math.abs(e.selection[0] - e.selection[1]) * timeseries.length);
+            renderSelector();
+        }
+    });
+
+    const projectionPointer = fc.pointer().on("point", ([coord]) => {
+        if (!coord || !quadtree) return;
+        const x = xScaleProjection.invert(coord.x);
+        const y = yScaleProjection.invert(coord.y);
+        const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - 20));
+        const closestDatum = quadtree.find(x, y, radius);
+        hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
+        renderProjection();
+    });
+
+    const projectionZoom = d3
+        .zoom()
+        .on("zoom", (event) => {
+            xScaleProjection.domain(event.transform.rescaleX(xScaleProjectionOriginal).domain());
+            yScaleProjection.domain(event.transform.rescaleY(yScaleProjectionOriginal).domain());
+            renderProjection();
+        });
+
+    // ----------------------------------------------
+    // ANNOTATIONS
+
+    const savedSelectionAnnotations = fc
+        .annotationSvgBand()
+        .orient('vertical')
+        .xScale(xScaleSelector)
+        .yScale(yScaleSelector)
+        .decorate(se => {
+            se.selectAll('.band').attr('fill', 'rgba(0, 204, 0, 0.1)');
+        });
+
+    const selectorHoverBand = fc
+        .annotationSvgBand()
+        .orient("vertical")
+        .xScale(xScaleSelector)
+        .yScale(yScaleSelector)
+        .decorate(se => {
+            se.selectAll('.band').attr('fill', 'rgba(0, 204, 0, 0.1)');
+        });
+
+
+    // ----------------------------------------------
+    // CHART FUNCTIONS
+
+    const navigatorChart = fc
+        .chartCartesian(xScaleNavigator, yScaleNavigator)
+        .webglPlotArea(
+            fc
+                .seriesWebglMulti()
+                .series([timeseriesLine])
+        )
+        .svgPlotArea(
+            fc.seriesSvgMulti()
+                .series([brushNavigator])
+                .mapping(() => filterRangePercent.current)
+        );
+
+    const selectorChart = fc
+        .chartCartesian(xScaleSelector, yScaleSelector)
+        .webglPlotArea(
+            fc
+                .seriesWebglMulti()
+                .series([timeseriesLine])
+                .mapping(d => d.data)
+
+        )
+        .svgPlotArea(
+            fc.seriesSvgMulti()
+                .series([savedSelectionAnnotations, selectorHoverBand, selectorBrushWindowSize])
+                .mapping((data, index, series) => {
+                    switch (series[index]) {
+                        case savedSelectionAnnotations:
+                            return data.selected;
+                        case selectorHoverBand:
+                            return data.windowSelection;
+                        case selectorBrushWindowSize:
+                            return data.brushedRange;
+                    }
+                })
+        )
+        .decorate(sel =>
+            sel
+                .enter()
+                .select("d3fc-svg.plot-area")
+                .call(selectorPointer)
+        );
+
+    const projectionChart = fc
+        .chartCartesian(xScaleProjection, yScaleProjection)
+        .webglPlotArea(
+            fc
+                .seriesWebglMulti()
+                .series([scatterplot])
+                .mapping(d => d.data)
+        )
+        .svgPlotArea(
+            fc
+                .seriesSvgMulti()
+                .series([trace])
+                .mapping(d => d.trace)
+        )
+        .decorate(sel =>
+            sel
+                .enter()
+                .select("d3fc-svg.plot-area")
+                .on("measure.range", (event) => {
+                    xScaleProjectionOriginal.range([0, event.detail.width]);
+                    yScaleProjectionOriginal.range([event.detail.height, 0]);
+                })
+                .call(projectionZoom)
+                .call(projectionPointer)
+        );
+
+    // ----------------------------------------------
+    // RENDER FUNCTIONS
+    const renderNavigator = () => {
+        d3.select(`#${navigatorId}`).datum(timeseriesIndexed).call(navigatorChart)
+    };
+
+    const renderSelector = () => {
+        d3.select(`#${selectorId}`).datum({
+            data: timeseriesIndexed,
+            selected: [{from: 1000, to: 3000}],
+            windowSelection: selectorBrushWindowSize.current,
+            hover: [{from: hoverRange.current ? hoverRange.current[0] : 0, to: hoverRange.current ? hoverRange.current[1] : 0}]
+        }).call(selectorChart)
+    };
+
+    const renderProjection = () => {
+        d3.select(`#${projectionId}`).datum({
+            data: moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current),
+            trace: hoverRange.current ? projected.slice(hoverRange.current[0], hoverRange.current[1]) : []
+        }).call(projectionChart)
+    };
+
+    // ----------------------------------------------
+    // HTML STRUCTURE
+
+    return <div>
+        <div className="rounded-xl shadow-lg text-center">
+            <p>Click and drag over the time series to select a subset of the data.</p>
+            <div
+                id={navigatorId}
+                style={{
+                    width: "100%",
+                    height: 200
+                }}
+            ></div>
+        </div>
+        <div className="rounded-xl shadow-lg text-center flex flex-col items-center">
+            <div className="flex flex-row shadow-xl rounded-lg bg-white px-2 py-1 cursor-default">
+                <div onClick={() => setMode("size")}
+                     className={`${mode === "size" ? 'bg-indigo-700-accent text-white ' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Select
+                    window size ({windowSizeRef.current})
+                </div>
+                <div onClick={() => setMode("annotation")}
+                     className={`${mode === "annotation" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Draw
+                    annotation
+                </div>
+                <div onClick={() => setMode("delete")}
+                     className={`${mode === "delete" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Delete
+                    annotation
+                </div>
+            </div>
+
+            <div
+                id={selectorId}
+                style={{
+                    width: "100%",
+                    height: 200
+                }}
+            ></div>
+        </div>
+        <div className="rounded-xl shadow-lg text-center">
+            <p>Point cloud of the time series. By hovering a point, the path may be inspected and by clicking it, the
+                path is saved as a reference window.</p>
+            <div
+                id={projectionId}
+                style={{
+                    width: "100%",
+                    height: 500
+                }}
+            ></div>
+        </div>
+    </div>
+}
