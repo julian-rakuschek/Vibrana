@@ -31,7 +31,7 @@ export type ToastDto = {
 export type Annotation = {
     from: number;
     to: number;
-    color: string;
+    color?: string;
 }
 
 export type DataPoint = {

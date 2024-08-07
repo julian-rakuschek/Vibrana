@@ -1,10 +1,16 @@
 import {useEffect, useMemo, useRef, useState} from "react";
 import * as d3 from "d3";
 import * as fc from "d3fc";
+import betterPointer from "lib/betterPointer"
 import {webglColor} from "lib/colorHelper";
+import {Annotation} from "../../types";
+import axios from "axios";
+import {ApiRoutes} from "lib/api/ApiRoutes";
+import {useQueryClient} from "@tanstack/react-query";
 
 type props = {
-    chartId: string;
+    series: string;
+    labels: Annotation[];
     timeseries: number[];
     projected: number[][];
     width?: number | string;
@@ -20,7 +26,7 @@ type ProjectedPoint = { index: number; coords: number[] };
 
 const projectionPadding = 0.1;
 
-const active_charts: {[chart: string]: boolean} = {
+const active_charts: { [chart: string]: boolean } = {
     navigator: true,
     selector: true,
     projection: true
@@ -53,23 +59,30 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
  * There is no need to pass states between components via function calls and stuff when using one single component.
  * Therefore this approach is a necessary evil.
  */
-export default function ThreeCharts({ chartId, timeseries, projected, width, height }: props): JSX.Element {
-    const navigatorId = `${chartId}-nav`
-    const selectorId = `${chartId}-sel`
-    const windowId = `${chartId}-win`
-    const projectionId = `${chartId}-pro`
+export default function ThreeCharts({series, labels, timeseries, projected, width, height}: props): JSX.Element {
+    const navigatorId = `${series}-nav`
+    const selectorId = `${series}-sel`
+    const windowId = `${series}-win`
+    const projectionId = `${series}-pro`
+
 
     // values that only need to be computed once
-    const timeseriesIndexed: TimeSeriesPoint[] = useMemo(() => timeseries.map((d, index) => ({x: index, y: d})), [chartId])
-    const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({index: i, coords: d})), [chartId]);
-    const min_value = useMemo(() => Math.min(...timeseries), [chartId])
-    const max_value = useMemo(() => Math.max(...timeseries), [chartId])
-    const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [chartId])
-    const max_x_value = useMemo(() => Math.max(...projected.map(d => d[0])), [chartId])
-    const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [chartId])
-    const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [chartId])
-    const radius_colors = useMemo(() => compute_radius_norm(projected), [chartId]);
-    const quadtree =  useMemo(() => compute_quadtree(projectedIndexed), [chartId]);
+    const timeseriesIndexed: TimeSeriesPoint[] = useMemo(() => timeseries.map((d, index) => ({
+        x: index,
+        y: d
+    })), [series])
+    const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({
+        index: i,
+        coords: d
+    })), [series]);
+    const min_value = useMemo(() => Math.min(...timeseries), [series])
+    const max_value = useMemo(() => Math.max(...timeseries), [series])
+    const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [series])
+    const max_x_value = useMemo(() => Math.max(...projected.map(d => d[0])), [series])
+    const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [series])
+    const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [series])
+    const radius_colors = useMemo(() => compute_radius_norm(projected), [series]);
+    const quadtree = useMemo(() => compute_quadtree(projectedIndexed), [series]);
 
     // All Scales for the plots
     const xScaleNavigator = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
@@ -92,14 +105,20 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
     const hoverRange = useRef<number[] | undefined>(undefined);
     const windowSizeRef = useRef<number>(100);
     const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
+    const modeRef = useRef<string>("size");
+    const labelRef = useRef<Annotation[]>(labels);
 
-    const [mode, setMode] = useState("size")
-    const [windowSize, setWindowSize] = useState(100);
+    const [mode, setMode] = useState<string>("size")
+    const [windowSize, setWindowSize] = useState<number>(100);
 
     useEffect(() => {
         selectorBrushRangeWindowSize.current = undefined
+        modeRef.current = mode
+        labelRef.current = labels
         renderAll();
-    }, [timeseries.length, projected.length, chartId, mode]);
+    }, [timeseries.length, projected.length, series, mode, labels]);
+
+    const queryClient = useQueryClient();
 
 
     // ----------------------------------------------
@@ -113,16 +132,16 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         .crossValue((d: ProjectedPoint) => d.coords[0])
         .mainValue((d: ProjectedPoint) => d.coords[1])
         .decorate((program) => fc
-                .webglFillColor()
-                .value((d: ProjectedPoint) => {
-                    const col = d3.interpolateTurbo(radius_colors[d.index])
-                    if (!filterRangeIndexed.current) return webglColor(col, 1)
-                    return webglColor(
-                        d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? col : "black",
-                        d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? 1 : 0.05
-                    )
-                })
-                .data(moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current))(program));
+            .webglFillColor()
+            .value((d: ProjectedPoint) => {
+                const col = d3.interpolateTurbo(radius_colors[d.index])
+                if (!filterRangeIndexed.current) return webglColor(col, 1)
+                return webglColor(
+                    d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? col : "black",
+                    d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? 1 : 0.05
+                )
+            })
+            .data(moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current))(program));
 
     const trace = fc.seriesSvgLine().crossValue(d => d[0]).mainValue(d => d[1])
 
@@ -138,7 +157,9 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         }
     });
 
-    const selectorPointer = fc.pointer().on("point", ([coord]: {x: number; y: number}[]) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const selectorPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
         if (!coord) return;
         const x = xScaleSelector.invert(coord.x);
         hoverRange.current = [
@@ -146,9 +167,23 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
             Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
         ]
         renderAll();
+    }).on("click", async ([coord]: { x: number; y: number }[]) => {
+        if (!coord) return;
+        const x = xScaleSelector.invert(coord.x);
+        const selected = [
+            Math.floor(Math.max(0, x - windowSizeRef.current / 2)),
+            Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
+        ]
+        if (modeRef.current === "add") {
+            await ApiRoutes.addLabel.fetch({data: {from: selected[0], to: selected[1]}, params: {series}})
+        }
+        if (modeRef.current === "delete") {
+            await ApiRoutes.deleteLabel.fetch({data: {index: x}, params: {series}})
+        }
+        await queryClient.invalidateQueries({queryKey: [`/db/labels/${series}`]});
     });
 
-    const selectorBrushWindowSize = fc.brushX().on('brush', (e: {selection: number[]}) => {
+    const selectorBrushWindowSize = fc.brushX().on('brush', (e: { selection: number[] }) => {
         if (e.selection) {
             selectorBrushRangeWindowSize.current = e.selection;
             const range_len = filterRangeIndexed.current ? Math.abs(filterRangeIndexed.current[0] - filterRangeIndexed.current[1]) : timeseries.length;
@@ -158,7 +193,9 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         }
     });
 
-    const projectionPointer = fc.pointer().on("point", ([coord]: {x: number; y: number}[]) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    const projectionPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
         if (!coord || !quadtree) return;
         const x = xScaleProjection.invert(coord.x);
         const y = yScaleProjection.invert(coord.y);
@@ -166,8 +203,7 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         const closestDatum = quadtree.find(x, y, radius);
         if (closestDatum && closestDatum.index && filterRangeIndexed.current && (closestDatum.index < filterRangeIndexed.current[0] || closestDatum.index > filterRangeIndexed.current[1])) {
             hoverRange.current = undefined
-        }
-        else {
+        } else {
             hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
         }
         renderAll();
@@ -208,8 +244,15 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
 
     const navigatorChart = fc
         .chartCartesian(xScaleNavigator, yScaleNavigator)
-        .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]))
-        .svgPlotArea(fc.seriesSvgMulti().series([brushNavigator]).mapping(() => filterRangePercent.current));
+        .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
+        .svgPlotArea(fc.seriesSvgMulti().series([savedSelectionAnnotations, brushNavigator]).mapping((data, index, series) => {
+            switch (series[index]) {
+                case savedSelectionAnnotations:
+                    return data.selected;
+                case brushNavigator:
+                    return filterRangePercent.current;
+            }
+        }));
 
     const windowSizeChart = fc
         .chartCartesian(xScaleSelector, yScaleSelector)
@@ -252,14 +295,20 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
     // ----------------------------------------------
     // RENDER FUNCTIONS
     const renderNavigator = () => {
-        d3.select(`#${navigatorId}`).datum(timeseriesIndexed).call(navigatorChart)
+        d3.select(`#${navigatorId}`).datum({
+            data: timeseriesIndexed,
+            selected: labelRef.current
+        }).call(navigatorChart)
     };
 
     const renderSelector = () => {
         d3.select(`#${selectorId}`).datum({
             data: timeseriesIndexed,
-            selected: [{from: 1000, to: 3000}],
-            hover: [{from: hoverRange.current ? hoverRange.current[0] : 0, to: hoverRange.current ? hoverRange.current[1] : 0}]
+            selected: labelRef.current,
+            hover: [{
+                from: hoverRange.current ? hoverRange.current[0] : 0,
+                to: hoverRange.current ? hoverRange.current[1] : 0
+            }]
         }).call(selectorChart)
     };
 
@@ -307,8 +356,8 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
                     <span>Select window size ({windowSize})</span>
                 </div>
                 <div
-                    onClick={() => setMode("annotation")}
-                    className={`${mode === "annotation" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
+                    onClick={() => setMode("add")}
+                    className={`${mode === "add" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
                     Draw annotation
                 </div>
                 <div

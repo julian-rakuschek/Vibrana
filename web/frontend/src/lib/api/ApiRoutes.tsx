@@ -1,4 +1,5 @@
 import {ApiRoute} from "lib/api/ApiRoute";
+import {Annotation} from "../../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -11,6 +12,9 @@ import {ApiRoute} from "lib/api/ApiRoute";
 export const dbRoutes = {
   getDummyValues: new ApiRoute<undefined, undefined, undefined, number[]>("GET", "/db/dummy_values"),
   getDummyProjected: new ApiRoute<undefined, undefined, undefined, number[][]>("GET", "/db/dummy_projected"),
+  getLabels: new ApiRoute<undefined, {series: string}, undefined, Annotation[]>("GET", "/db/labels/:series"),
+  addLabel: new ApiRoute<Annotation, {series: string}, undefined, undefined>("POST", "/db/labels/:series"),
+  deleteLabel: new ApiRoute<{index: number}, {series: string}, undefined, undefined>("DELETE", "/db/labels/:series"),
 };
 
 export const ApiRoutes = {
