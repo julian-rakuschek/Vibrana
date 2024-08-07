@@ -20,6 +20,12 @@ type ProjectedPoint = { index: number; coords: number[] };
 
 const projectionPadding = 0.1;
 
+const active_charts: {[chart: string]: boolean} = {
+    navigator: true,
+    selector: true,
+    projection: true
+}
+
 const compute_radius_norm = (data: number[][]): number[] => {
     const radii = data.map(p => Math.sqrt(Math.pow(p[0], 2) + Math.pow(p[1], 2)));
     const max_rad = Math.max(...radii);
@@ -50,6 +56,7 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
 export default function ThreeCharts({ chartId, timeseries, projected, width, height }: props): JSX.Element {
     const navigatorId = `${chartId}-nav`
     const selectorId = `${chartId}-sel`
+    const windowId = `${chartId}-win`
     const projectionId = `${chartId}-pro`
 
     // values that only need to be computed once
@@ -86,12 +93,14 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
     const windowSizeRef = useRef<number>(100);
     const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
 
-    const [mode, setMode] = useState("annotation")
+    const [mode, setMode] = useState("size")
+    const [windowSize, setWindowSize] = useState(100);
+
     useEffect(() => {
-        renderNavigator();
-        renderSelector();
-        renderProjection();
-    }, [timeseries.length, projected.length, chartId]);
+        selectorBrushRangeWindowSize.current = undefined
+        renderAll();
+    }, [timeseries.length, projected.length, chartId, mode]);
+
 
     // ----------------------------------------------
     // DATA FUNCTIONS
@@ -101,11 +110,11 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
     const scatterplot = fc
         .seriesWebglPoint()
         .size(5)
-        .crossValue(d => d.coords[0])
-        .mainValue(d => d.coords[1])
-        .decorate((program, _, index) => fc
+        .crossValue((d: ProjectedPoint) => d.coords[0])
+        .mainValue((d: ProjectedPoint) => d.coords[1])
+        .decorate((program) => fc
                 .webglFillColor()
-                .value((d) => {
+                .value((d: ProjectedPoint) => {
                     const col = d3.interpolateTurbo(radius_colors[d.index])
                     if (!filterRangeIndexed.current) return webglColor(col, 1)
                     return webglColor(
@@ -125,35 +134,43 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
             filterRangePercent.current = e.selection;
             filterRangeIndexed.current = [e.selection[0] * projected.length, e.selection[1] * projected.length];
             xScaleSelector.domain([timeseries.length * e.selection[0], timeseries.length * e.selection[1]]);
-            renderNavigator();
-            renderSelector();
-            renderProjection();
+            renderAll();
         }
     });
 
-    const selectorPointer = fc.pointer().on("point", ([coord]) => {
+    const selectorPointer = fc.pointer().on("point", ([coord]: {x: number; y: number}[]) => {
         if (!coord) return;
         const x = xScaleSelector.invert(coord.x);
-        hoverRange.current = [Math.max(0, x - windowSizeRef.current / 2), Math.min(timeseries.length - 1, x + windowSizeRef.current / 2)]
-        renderSelector();
+        hoverRange.current = [
+            Math.floor(Math.max(0, x - windowSizeRef.current / 2)),
+            Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
+        ]
+        renderAll();
     });
 
-    const selectorBrushWindowSize = fc.brushX().on('brush', e => {
+    const selectorBrushWindowSize = fc.brushX().on('brush', (e: {selection: number[]}) => {
         if (e.selection) {
             selectorBrushRangeWindowSize.current = e.selection;
-            windowSizeRef.current = Math.floor(Math.abs(e.selection[0] - e.selection[1]) * timeseries.length);
-            renderSelector();
+            const range_len = filterRangeIndexed.current ? Math.abs(filterRangeIndexed.current[0] - filterRangeIndexed.current[1]) : timeseries.length;
+            windowSizeRef.current = Math.floor(Math.abs(e.selection[0] - e.selection[1]) * range_len);
+            setWindowSize(windowSizeRef.current)
+            renderAll();
         }
     });
 
-    const projectionPointer = fc.pointer().on("point", ([coord]) => {
+    const projectionPointer = fc.pointer().on("point", ([coord]: {x: number; y: number}[]) => {
         if (!coord || !quadtree) return;
         const x = xScaleProjection.invert(coord.x);
         const y = yScaleProjection.invert(coord.y);
         const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - 20));
         const closestDatum = quadtree.find(x, y, radius);
-        hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
-        renderProjection();
+        if (closestDatum && closestDatum.index && filterRangeIndexed.current && (closestDatum.index < filterRangeIndexed.current[0] || closestDatum.index > filterRangeIndexed.current[1])) {
+            hoverRange.current = undefined
+        }
+        else {
+            hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
+        }
+        renderAll();
     });
 
     const projectionZoom = d3
@@ -161,7 +178,7 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         .on("zoom", (event) => {
             xScaleProjection.domain(event.transform.rescaleX(xScaleProjectionOriginal).domain());
             yScaleProjection.domain(event.transform.rescaleY(yScaleProjectionOriginal).domain());
-            renderProjection();
+            renderAll();
         });
 
     // ----------------------------------------------
@@ -173,7 +190,7 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         .xScale(xScaleSelector)
         .yScale(yScaleSelector)
         .decorate(se => {
-            se.selectAll('.band').attr('fill', 'rgba(0, 204, 0, 0.1)');
+            se.selectAll('.band').attr('fill', 'rgba(0, 120, 0, 0.4)');
         });
 
     const selectorHoverBand = fc
@@ -191,61 +208,35 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
 
     const navigatorChart = fc
         .chartCartesian(xScaleNavigator, yScaleNavigator)
-        .webglPlotArea(
-            fc
-                .seriesWebglMulti()
-                .series([timeseriesLine])
-        )
-        .svgPlotArea(
-            fc.seriesSvgMulti()
-                .series([brushNavigator])
-                .mapping(() => filterRangePercent.current)
-        );
+        .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]))
+        .svgPlotArea(fc.seriesSvgMulti().series([brushNavigator]).mapping(() => filterRangePercent.current));
+
+    const windowSizeChart = fc
+        .chartCartesian(xScaleSelector, yScaleSelector)
+        .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
+        .svgPlotArea(fc.seriesSvgMulti().series([selectorBrushWindowSize]).mapping(d => d.windowSelection))
 
     const selectorChart = fc
         .chartCartesian(xScaleSelector, yScaleSelector)
-        .webglPlotArea(
-            fc
-                .seriesWebglMulti()
-                .series([timeseriesLine])
-                .mapping(d => d.data)
-
-        )
+        .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
         .svgPlotArea(
             fc.seriesSvgMulti()
-                .series([savedSelectionAnnotations, selectorHoverBand, selectorBrushWindowSize])
+                .series([savedSelectionAnnotations, selectorHoverBand])
                 .mapping((data, index, series) => {
                     switch (series[index]) {
                         case savedSelectionAnnotations:
                             return data.selected;
                         case selectorHoverBand:
-                            return data.windowSelection;
-                        case selectorBrushWindowSize:
-                            return data.brushedRange;
+                            return data.hover;
                     }
                 })
         )
-        .decorate(sel =>
-            sel
-                .enter()
-                .select("d3fc-svg.plot-area")
-                .call(selectorPointer)
-        );
+        .decorate(sel => sel.enter().select("d3fc-svg.plot-area").call(selectorPointer));
 
     const projectionChart = fc
         .chartCartesian(xScaleProjection, yScaleProjection)
-        .webglPlotArea(
-            fc
-                .seriesWebglMulti()
-                .series([scatterplot])
-                .mapping(d => d.data)
-        )
-        .svgPlotArea(
-            fc
-                .seriesSvgMulti()
-                .series([trace])
-                .mapping(d => d.trace)
-        )
+        .webglPlotArea(fc.seriesWebglMulti().series([scatterplot]).mapping(d => d.data))
+        .svgPlotArea(fc.seriesSvgMulti().series([trace]).mapping(d => d.trace))
         .decorate(sel =>
             sel
                 .enter()
@@ -268,10 +259,17 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         d3.select(`#${selectorId}`).datum({
             data: timeseriesIndexed,
             selected: [{from: 1000, to: 3000}],
-            windowSelection: selectorBrushWindowSize.current,
             hover: [{from: hoverRange.current ? hoverRange.current[0] : 0, to: hoverRange.current ? hoverRange.current[1] : 0}]
         }).call(selectorChart)
     };
+
+    const renderWindowSizeSelector = () => {
+        d3.select(`#${windowId}`).datum({
+            data: timeseriesIndexed,
+            windowSelection: selectorBrushRangeWindowSize.current,
+        }).call(windowSizeChart)
+    };
+
 
     const renderProjection = () => {
         d3.select(`#${projectionId}`).datum({
@@ -280,11 +278,18 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
         }).call(projectionChart)
     };
 
+    const renderAll = () => {
+        renderNavigator();
+        renderSelector();
+        renderProjection();
+        renderWindowSizeSelector();
+    }
+
     // ----------------------------------------------
     // HTML STRUCTURE
 
-    return <div>
-        <div className="rounded-xl shadow-lg text-center">
+    return <div className="flex flex-col gap-4">
+        {active_charts.navigator && <div className="rounded-xl shadow-lg text-center">
             <p>Click and drag over the time series to select a subset of the data.</p>
             <div
                 id={navigatorId}
@@ -293,32 +298,42 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
                     height: 200
                 }}
             ></div>
-        </div>
-        <div className="rounded-xl shadow-lg text-center flex flex-col items-center">
+        </div>}
+        {active_charts.selector && <div className="rounded-xl shadow-lg text-center flex flex-col items-center">
             <div className="flex flex-row shadow-xl rounded-lg bg-white px-2 py-1 cursor-default">
-                <div onClick={() => setMode("size")}
-                     className={`${mode === "size" ? 'bg-indigo-700-accent text-white ' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Select
-                    window size ({windowSizeRef.current})
+                <div
+                    onClick={() => setMode("size")}
+                    className={`${mode === "size" ? 'bg-indigo-700-accent text-white ' : 'bg-white text-gray-800/80'} px-3 rounded-lg`}>
+                    <span>Select window size ({windowSize})</span>
                 </div>
-                <div onClick={() => setMode("annotation")}
-                     className={`${mode === "annotation" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Draw
-                    annotation
+                <div
+                    onClick={() => setMode("annotation")}
+                    className={`${mode === "annotation" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
+                    Draw annotation
                 </div>
-                <div onClick={() => setMode("delete")}
-                     className={`${mode === "delete" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>Delete
-                    annotation
+                <div
+                    onClick={() => setMode("delete")}
+                    className={`${mode === "delete" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
+                    Delete annotation
                 </div>
             </div>
 
-            <div
+            {mode !== "size" && <div
                 id={selectorId}
                 style={{
                     width: "100%",
                     height: 200
                 }}
-            ></div>
-        </div>
-        <div className="rounded-xl shadow-lg text-center">
+            ></div>}
+            {mode === "size" && <div
+                id={windowId}
+                style={{
+                    width: "100%",
+                    height: 200
+                }}
+            ></div>}
+        </div>}
+        {active_charts.projection && <div className="rounded-xl shadow-lg text-center">
             <p>Point cloud of the time series. By hovering a point, the path may be inspected and by clicking it, the
                 path is saved as a reference window.</p>
             <div
@@ -328,6 +343,6 @@ export default function ThreeCharts({ chartId, timeseries, projected, width, hei
                     height: 500
                 }}
             ></div>
-        </div>
+        </div>}
     </div>
 }
