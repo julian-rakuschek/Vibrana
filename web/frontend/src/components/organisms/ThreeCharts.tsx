@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from "react";
+import {ReactElement, useEffect, useMemo, useRef, useState} from "react";
 import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
@@ -7,14 +7,14 @@ import {Annotation} from "../../types";
 import axios from "axios";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
+import {useLabels, useSampleProjected, useSampleValues} from "lib/hooks";
 
 type props = {
-    series: string;
-    labels: Annotation[];
     timeseries: number[];
     projected: number[][];
-    width?: number | string;
-    height?: number | string;
+    labels: Annotation[];
+    sampleId: string;
+    machineId: string;
 }
 
 type TimeSeriesPoint = {
@@ -59,30 +59,29 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
  * There is no need to pass states between components via function calls and stuff when using one single component.
  * Therefore this approach is a necessary evil.
  */
-export default function ThreeCharts({series, labels, timeseries, projected, width, height}: props): JSX.Element {
-    const navigatorId = `${series}-nav`
-    const selectorId = `${series}-sel`
-    const windowId = `${series}-win`
-    const projectionId = `${series}-pro`
-
+export default function ThreeCharts({timeseries, projected, labels, machineId, sampleId}: props): ReactElement  {
+    const navigatorId = `${machineId}-${sampleId}-nav`
+    const selectorId = `${machineId}-${sampleId}-sel`
+    const windowId = `${machineId}-${sampleId}-win`
+    const projectionId = `${machineId}-${sampleId}-pro`
 
     // values that only need to be computed once
     const timeseriesIndexed: TimeSeriesPoint[] = useMemo(() => timeseries.map((d, index) => ({
         x: index,
         y: d
-    })), [series])
+    })), [machineId, sampleId, timeseries.length])
     const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({
         index: i,
         coords: d
-    })), [series]);
-    const min_value = useMemo(() => Math.min(...timeseries), [series])
-    const max_value = useMemo(() => Math.max(...timeseries), [series])
-    const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [series])
-    const max_x_value = useMemo(() => Math.max(...projected.map(d => d[0])), [series])
-    const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [series])
-    const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [series])
-    const radius_colors = useMemo(() => compute_radius_norm(projected), [series]);
-    const quadtree = useMemo(() => compute_quadtree(projectedIndexed), [series]);
+    })), [machineId, sampleId, projected.length]);
+    const min_value = useMemo(() => Math.min(...timeseries), [machineId, sampleId, timeseries.length])
+    const max_value = useMemo(() => Math.max(...timeseries), [machineId, sampleId, timeseries.length])
+    const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [machineId, sampleId, projected.length])
+    const max_x_value = useMemo(() => Math.max(...projected.map(d => d[0])), [machineId, sampleId, projected.length])
+    const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
+    const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
+    const radius_colors = useMemo(() => compute_radius_norm(projected), [machineId, sampleId, projected.length]);
+    const quadtree = useMemo(() => compute_quadtree(projectedIndexed), [machineId, sampleId, projected.length]);
 
     // All Scales for the plots
     const xScaleNavigator = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
@@ -116,7 +115,7 @@ export default function ThreeCharts({series, labels, timeseries, projected, widt
         modeRef.current = mode
         labelRef.current = labels
         renderAll();
-    }, [timeseries.length, projected.length, series, mode, labels]);
+    }, [timeseries.length, projected.length, mode, labels]);
 
     const queryClient = useQueryClient();
 

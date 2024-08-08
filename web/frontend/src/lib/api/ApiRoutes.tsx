@@ -10,8 +10,10 @@ import {Annotation} from "../../types";
 // (4) TResponse = Response object
 
 export const dbRoutes = {
-  getDummyValues: new ApiRoute<undefined, undefined, undefined, number[]>("GET", "/db/dummy_values"),
-  getDummyProjected: new ApiRoute<undefined, undefined, undefined, number[][]>("GET", "/db/dummy_projected"),
+  getMachinesList: new ApiRoute<undefined, undefined, undefined, string[]>("GET", "/db/machines"),
+  getMachineSamples: new ApiRoute<undefined, {machine: string}, undefined, string[]>("GET", "/db/:machine/samples"),
+  getSampleValues: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[]>("GET", "/db/:machine/samples/:sampleId/values"),
+  getSampleProjected: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machine/samples/:sampleId/projected"),
   getLabels: new ApiRoute<undefined, {series: string}, undefined, Annotation[]>("GET", "/db/labels/:series"),
   addLabel: new ApiRoute<Annotation, {series: string}, undefined, undefined>("POST", "/db/labels/:series"),
   deleteLabel: new ApiRoute<{index: number}, {series: string}, undefined, undefined>("DELETE", "/db/labels/:series"),

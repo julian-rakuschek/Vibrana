@@ -6,16 +6,50 @@ import flask
 import numpy as np
 
 db_app = flask.Blueprint("db", __name__)
+samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
-@db_app.get("dummy_values")
-def flask_get_dummy_values():
-    values: np.ndarray = np.load(os.path.join(Path(__file__).parent, "values.npy"))
+@db_app.get("machines")
+def flask_get_machines_list():
+    return ["dummy"]
+
+@db_app.get("<machine>/samples")
+def flask_get_samples(machine):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    return os.listdir(os.path.join(samples_folder, machine))
+
+
+@db_app.get("<machine>/samples/<sampleId>/values")
+def flask_get_values(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
     return values.tolist()
 
-@db_app.get("dummy_projected")
-def flask_get_dummy_projection():
-    values: np.ndarray = np.load(os.path.join(Path(__file__).parent, "projected.npy"))
+
+@db_app.get("<machine>/samples/<sampleId>/projected")
+def flask_get_projection(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    values: np.ndarray = np.load(os.path.join(sample_path, "projected.npy"))
     return values.tolist()
+
+
+@db_app.get("<machine>/samples/<sampleId>/thumbnail")
+def flask_get_sample_thumb(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    return flask.send_file(os.path.join(sample_path, "preview.png"), mimetype='image/png')
+
 
 # WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
 # Might switch to proper database in the future, but for prototype this is fine

@@ -1,23 +1,23 @@
 import { useState } from "react";
 import { Dialog, Popover } from "@headlessui/react";
-import {Bars3Icon, XMarkIcon, DocumentIcon, CodeBracketIcon,} from "@heroicons/react/24/outline";
+import {Bars3Icon, XMarkIcon, DocumentIcon,} from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 
-export default function Navbar({ darkMode = false }: { darkMode?: boolean }): JSX.Element {
+export default function Navbar({ headerText, darkMode = false }: { headerText?: string; darkMode?: boolean }): JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuLinks: { name: string; link: string }[] = [
-    { name: "Entry1", link: "/entry1" },
-    { name: "Entry2", link: "/entry2" },
-    { name: "Entry3", link: "/entry3" },
+    { name: "Machines", link: "/machines" },
+    { name: "Overview", link: "/overview" },
   ];
 
   return (
     <header className={`${(darkMode) ? "bg-[#0e1b40]" : "bg-white"} z-50`}>
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+      <nav className="mx-auto flex items-center justify-between py-4 px-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
-          <Link to="/" className="-m-1.5 p-1.5">
-            <span className={`${(darkMode) ? "text-white" : "text-black"} font-bold text-2xl`}>Project Name</span>
+          <Link to="/" className="-m-1.5 p-1.5 flex flex-row flex-nowrap gap-4 items-center">
+            <img width={50} alt="" src="/vibrava.png"></img>
+            <span className={`${(darkMode) ? "text-white" : "text-black"} font-bold text-2xl`}>Vibrava</span>
           </Link>
         </div>
         <div className="flex lg:hidden">
@@ -38,8 +38,8 @@ export default function Navbar({ darkMode = false }: { darkMode?: boolean }): JS
           )}
         </Popover.Group>
         <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
-          <Link to="#" className={`text-sm font-semibold leading-6 ${(darkMode) ? "text-white before:border-b-white" : "text-gray-900 before:border-b-indigo-700"} flex flex-row items-center border-animation`}>
-            <DocumentIcon className={`h-4 w-4 ${(darkMode) ? "text-white" : "text-gray-600"} mr-1`} /> Something
+          <Link to="/documentation" className={`text-sm font-semibold leading-6 ${(darkMode) ? "text-white before:border-b-white" : "text-gray-900 before:border-b-indigo-700"} flex flex-row items-center border-animation`}>
+            <DocumentIcon className={`h-4 w-4 ${(darkMode) ? "text-white" : "text-gray-600"} mr-1`} /> Documentation
           </Link>
         </div>
       </nav>
@@ -69,10 +69,10 @@ export default function Navbar({ darkMode = false }: { darkMode?: boolean }): JS
                 </div>
                 <div className="py-6">
                   <Link
-                    to="#"
+                    to="/documentation"
                     className={`-mx-3 rounded-lg px-3 py-2.5 text-base font-semibold leading-7 ${(darkMode) ? "text-white" : "text-gray-900"} flex flex-row items-center`}
                   >
-                    <DocumentIcon className={`h-4 w-4 ${(darkMode) ? "text-white" : "text-gray-600"} mr-1`} /> Something
+                    <DocumentIcon className={`h-4 w-4 ${(darkMode) ? "text-white" : "text-gray-600"} mr-1`} /> Documentation
                   </Link>
                 </div>
               </div>
