@@ -22,8 +22,8 @@ export const useSampleProjected = (machine: string, sampleId: string): number[][
   return data ?? [];
 };
 
-export const useLabels = (machine: string, sampleId: string): Annotation[] => {
-  const data = useQueryFetch(ApiRoutes.getLabels, {params: {series: sampleId}});
+export const useLabels = (machineId: string, sampleId: string): Annotation[] => {
+  const data = useQueryFetch(ApiRoutes.getLabels, {params: {sampleId, machineId}});
   return data ?? [];
 }
 

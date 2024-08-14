@@ -53,23 +53,28 @@ def flask_get_sample_thumb(machine, sampleId):
 
 # WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
 # Might switch to proper database in the future, but for prototype this is fine
-@db_app.get("labels/<series>")
-def flask_get_labels(series):
+@db_app.get("<machine>/labels/<sampleId>")
+def flask_get_labels(machine, sampleId):
     with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
-        return json.load(f).get(series, [])
+        labels_json = json.load(f)
+    machine_json = labels_json.get(machine, {})
+    sample_labels_json = machine_json.get(sampleId, [])
+    return sample_labels_json
 
 
 # WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
 # Might switch to proper database in the future, but for prototype this is fine
-@db_app.post("labels/<series>")
-def flask_add_label(series):
+@db_app.post("<machine>/labels/<sampleId>")
+def flask_add_label(machine, sampleId):
     data = flask.request.get_json()
     print("Add", data)
     with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
         json_file = json.load(f)
-    if series not in json_file:
-        json_file[series] = []
-    json_file[series].append(data)
+    if machine not in json_file:
+        json_file[machine] = {}
+    if sampleId not in json_file[machine]:
+        json_file[machine][sampleId] = []
+    json_file[machine][sampleId].append(data)
     with open(os.path.join(Path(__file__).parent, "labels.json"), "w") as f:
         f.write(json.dumps(json_file, indent=4))
     return "OK", 200
@@ -77,18 +82,18 @@ def flask_add_label(series):
 
 # WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
 # Might switch to proper database in the future, but for prototype this is fine
-@db_app.delete("labels/<series>")
-def flask_delete_label(series):
+@db_app.delete("<machine>/labels/<sampleId>")
+def flask_delete_label(machine, sampleId):
     data = flask.request.get_json()
     index = int(data["index"])
     print("Delete", data)
     with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
         json_file = json.load(f)
-    if series not in json_file:
-        json_file[series] = []
-    print(json_file[series])
-    json_file[series] = [item for item in json_file[series] if index < item["from"] or item["to"] < index]
-    print(json_file[series])
+    if machine not in json_file:
+        json_file[machine] = {}
+    if sampleId not in json_file[machine]:
+        json_file[machine][sampleId] = []
+    json_file[machine][sampleId] = [item for item in json_file[machine][sampleId] if index < item["from"] or item["to"] < index]
     with open(os.path.join(Path(__file__).parent, "labels.json"), "w") as f:
         f.write(json.dumps(json_file, indent=4))
     return "OK", 200

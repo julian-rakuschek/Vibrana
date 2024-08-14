@@ -14,9 +14,9 @@ export const dbRoutes = {
   getMachineSamples: new ApiRoute<undefined, {machine: string}, undefined, string[]>("GET", "/db/:machine/samples"),
   getSampleValues: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[]>("GET", "/db/:machine/samples/:sampleId/values"),
   getSampleProjected: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machine/samples/:sampleId/projected"),
-  getLabels: new ApiRoute<undefined, {series: string}, undefined, Annotation[]>("GET", "/db/labels/:series"),
-  addLabel: new ApiRoute<Annotation, {series: string}, undefined, undefined>("POST", "/db/labels/:series"),
-  deleteLabel: new ApiRoute<{index: number}, {series: string}, undefined, undefined>("DELETE", "/db/labels/:series"),
+  getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Annotation[]>("GET", "/db/:machineId/labels/:sampleId"),
+  addLabel: new ApiRoute<Annotation, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/:machineId/labels/:sampleId"),
+  deleteLabel: new ApiRoute<{index: number}, {machineId: string; sampleId: string}, undefined, undefined>("DELETE", "/db/:machineId/labels/:sampleId"),
 };
 
 export const ApiRoutes = {

@@ -1,5 +1,6 @@
 import os.path
 from pathlib import Path
+from typing import List
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -51,6 +52,16 @@ class Experiment:
         self.sample_rate = derive_sample_rate(self.timestamps)
 
         # Plotting Setup
+        self.setup_plotting(plot_rows, plot_cols, plot_fig_size, plot_mosaic)
+
+    def setup_plotting(
+            self,
+            plot_rows: int = 1,
+            plot_cols: int = 1,
+            plot_fig_size: (int, int) or None = None,
+            plot_mosaic: list or None = None):
+        self.plot_size = (plot_cols, plot_rows)
+        self.plot_mosaic = plot_mosaic
         plt.clf()
         if plot_mosaic:
             fig, ax = plt.subplot_mosaic(plot_mosaic)
@@ -87,7 +98,7 @@ class Experiment:
             ax.vlines(self.event_indices, 0, np.max(self.values), color="#ff4d4d", linewidth=1)
             ax.scatter(self.event_indices, np.tile(np.max(self.values), len(self.event_indices)), color="#ff4d4d", marker="v", s=60)
 
-    def plot_time_series(self, data: np.ndarray, row: int | str, title: str, include_events: bool = True, color: str = "indigo"):
+    def plot_time_series(self, data: np.ndarray, row: int | str, title: str, include_events: bool = True, color: str = "indigo", annotation: List[int] | None = None, annotation_color: str = "green"):
         ax = self.ax if self.plot_size == (1, 1) and self.plot_mosaic is None else self.ax[row]
         ax.plot(data, color=color)
         ax.set_title(title, fontsize=self.plot_title_font_size)
@@ -96,6 +107,8 @@ class Experiment:
         if include_events:
             ax.vlines(self.event_indices, 0, np.max(data), color="#ff4d4d", linewidth=1)
             ax.scatter(self.event_indices, np.tile(np.max(data), len(self.event_indices)), color="#ff4d4d", marker="v", s=60)
+        if annotation is not None and len(annotation) == 2:
+            ax.axvspan(xmin=annotation[0], xmax=annotation[1], color=annotation_color, alpha=0.2)
 
     def plot_event_zoom(self, event: int, event_width: int = 15_000):
         if self.plot_mosaic != [["raw"], ["event"], ["event"]]:

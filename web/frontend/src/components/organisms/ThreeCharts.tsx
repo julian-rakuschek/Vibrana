@@ -4,10 +4,8 @@ import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
 import {webglColor} from "lib/colorHelper";
 import {Annotation} from "../../types";
-import axios from "axios";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
-import {useLabels, useSampleProjected, useSampleValues} from "lib/hooks";
 
 type props = {
     timeseries: number[];
@@ -22,7 +20,11 @@ type TimeSeriesPoint = {
     y: number;
 }
 
-type ProjectedPoint = { index: number; coords: number[] };
+type ProjectedPoint = {
+    timeSeriesIndex: number;
+    projectedIndex: number;
+    coords: number[]
+};
 
 const projectionPadding = 0.1;
 
@@ -38,11 +40,12 @@ const compute_radius_norm = (data: number[][]): number[] => {
     return radii.map(r => r / max_rad);
 }
 
-const compute_quadtree = (data: ProjectedPoint[]): d3.Quadtree<ProjectedPoint> => {
+const compute_quadtree = (data: ProjectedPoint[], filterRange: [number, number] | null): d3.Quadtree<ProjectedPoint> => {
+    const filteredData = filterRange ? data.filter(d => d.timeSeriesIndex >= filterRange[0] && d.timeSeriesIndex <= filterRange[1]) : data;
     return d3.quadtree<ProjectedPoint>()
         .x(d => d.coords[0])
         .y(d => d.coords[1])
-        .addAll(data);
+        .addAll(filteredData);
 }
 
 const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): ProjectedPoint[] => {
@@ -71,9 +74,23 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         y: d
     })), [machineId, sampleId, timeseries.length])
     const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({
-        index: i,
+        projectedIndex: i,
+        timeSeriesIndex: i + Math.floor((timeseries.length - projected.length) / 2),
         coords: d
-    })), [machineId, sampleId, projected.length]);
+    })), [machineId, sampleId, projected.length, timeseries.length]);
+    // Refs are used instead of React State since they don't trigger a re-render of the component, which is important for fast chart performance
+    const filterRangePercent = useRef<[number, number] | null>(null);
+    const filterRangeIndexed = useRef<[number, number] | null>(null);
+    const hoverRange = useRef<number[] | undefined>(undefined);
+    const windowSizeRef = useRef<number>(100);
+    const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
+    const modeRef = useRef<string>("size");
+    const labelRef = useRef<Annotation[]>(labels);
+    const quadtree = useRef(compute_quadtree(projectedIndexed, filterRangeIndexed.current));
+
+    const [mode, setMode] = useState<string>("size")
+    const [windowSize, setWindowSize] = useState<number>(100);
+
     const min_value = useMemo(() => Math.min(...timeseries), [machineId, sampleId, timeseries.length])
     const max_value = useMemo(() => Math.max(...timeseries), [machineId, sampleId, timeseries.length])
     const min_x_value = useMemo(() => Math.min(...projected.map(d => d[0])), [machineId, sampleId, projected.length])
@@ -81,7 +98,7 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
     const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
     const radius_colors = useMemo(() => compute_radius_norm(projected), [machineId, sampleId, projected.length]);
-    const quadtree = useMemo(() => compute_quadtree(projectedIndexed), [machineId, sampleId, projected.length]);
+
 
     // All Scales for the plots
     const xScaleNavigator = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
@@ -98,24 +115,16 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const xScaleProjectionOriginal = xScaleProjection.copy();
     const yScaleProjectionOriginal = yScaleProjection.copy();
 
-    // Refs are used instead of React State since they don't trigger a re-render of the component, which is important for fast chart performance
-    const filterRangePercent = useRef<[number, number] | null>(null);
-    const filterRangeIndexed = useRef<[number, number] | null>(null);
-    const hoverRange = useRef<number[] | undefined>(undefined);
-    const windowSizeRef = useRef<number>(100);
-    const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
-    const modeRef = useRef<string>("size");
-    const labelRef = useRef<Annotation[]>(labels);
-
-    const [mode, setMode] = useState<string>("size")
-    const [windowSize, setWindowSize] = useState<number>(100);
-
     useEffect(() => {
         selectorBrushRangeWindowSize.current = undefined
         modeRef.current = mode
         labelRef.current = labels
         renderAll();
     }, [timeseries.length, projected.length, mode, labels]);
+
+    useEffect(() => {
+        quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
+    }, [projectedIndexed, filterRangeIndexed.current]);
 
     const queryClient = useQueryClient();
 
@@ -133,11 +142,11 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         .decorate((program) => fc
             .webglFillColor()
             .value((d: ProjectedPoint) => {
-                const col = d3.interpolateTurbo(radius_colors[d.index])
+                const col = d3.interpolateTurbo(radius_colors[d.projectedIndex])
                 if (!filterRangeIndexed.current) return webglColor(col, 1)
                 return webglColor(
-                    d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? col : "black",
-                    d.index && d.index > filterRangeIndexed.current[0] && d.index <= filterRangeIndexed.current[1] ? 1 : 0.05
+                    d.timeSeriesIndex > filterRangeIndexed.current[0] && d.timeSeriesIndex <= filterRangeIndexed.current[1] ? col : "black",
+                    d.timeSeriesIndex > filterRangeIndexed.current[0] && d.timeSeriesIndex <= filterRangeIndexed.current[1] ? 1 : 0.05
                 )
             })
             .data(moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current))(program));
@@ -150,8 +159,9 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const brushNavigator = fc.brushX().on('brush', (e: { selection: [number, number] | null; }) => {
         if (e.selection) {
             filterRangePercent.current = e.selection;
-            filterRangeIndexed.current = [e.selection[0] * projected.length, e.selection[1] * projected.length];
-            xScaleSelector.domain([timeseries.length * e.selection[0], timeseries.length * e.selection[1]]);
+            filterRangeIndexed.current = [e.selection[0] * timeseries.length, e.selection[1] * timeseries.length];
+            quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
+            xScaleSelector.domain(filterRangeIndexed.current);
             renderAll();
         }
     });
@@ -174,12 +184,12 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
             Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
         ]
         if (modeRef.current === "add") {
-            await ApiRoutes.addLabel.fetch({data: {from: selected[0], to: selected[1]}, params: {series}})
+            await ApiRoutes.addLabel.fetch({data: {from: selected[0], to: selected[1]}, params: {sampleId, machineId}})
         }
         if (modeRef.current === "delete") {
-            await ApiRoutes.deleteLabel.fetch({data: {index: x}, params: {series}})
+            await ApiRoutes.deleteLabel.fetch({data: {index: x}, params: {sampleId, machineId}})
         }
-        await queryClient.invalidateQueries({queryKey: [`/db/labels/${series}`]});
+        await queryClient.invalidateQueries({queryKey: [`/db/${machineId}/labels/${sampleId}`]});
     });
 
     const selectorBrushWindowSize = fc.brushX().on('brush', (e: { selection: number[] }) => {
@@ -195,15 +205,16 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const projectionPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
-        if (!coord || !quadtree) return;
+        if (!coord || !quadtree.current) return;
         const x = xScaleProjection.invert(coord.x);
         const y = yScaleProjection.invert(coord.y);
-        const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - 20));
-        const closestDatum = quadtree.find(x, y, radius);
-        if (closestDatum && closestDatum.index && filterRangeIndexed.current && (closestDatum.index < filterRangeIndexed.current[0] || closestDatum.index > filterRangeIndexed.current[1])) {
+        const span_width = (Math.abs(max_x_value - min_x_value) + Math.abs(max_y_value - min_y_value)) / 2
+        const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - (span_width * 0.2)));
+        const p = quadtree.current.find(x, y, radius);
+        if (p && filterRangeIndexed.current && (p.timeSeriesIndex < filterRangeIndexed.current[0] || p.timeSeriesIndex > filterRangeIndexed.current[1])) {
             hoverRange.current = undefined
         } else {
-            hoverRange.current = closestDatum?.index ? [closestDatum.index, closestDatum.index + windowSizeRef.current] : undefined;
+            hoverRange.current = p ? [p?.timeSeriesIndex, p.timeSeriesIndex + windowSizeRef.current] : undefined;
         }
         renderAll();
     });
@@ -322,7 +333,7 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const renderProjection = () => {
         d3.select(`#${projectionId}`).datum({
             data: moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current),
-            trace: hoverRange.current ? projected.slice(hoverRange.current[0], hoverRange.current[1]) : []
+            trace: hoverRange.current ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange.current[0] && p.timeSeriesIndex <= hoverRange.current[1]).map(p => p.coords) : []
         }).call(projectionChart)
     };
 

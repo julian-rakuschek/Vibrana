@@ -1,7 +1,12 @@
+import json
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import periodogram, ShortTimeFFT, savgol_filter
 from scipy.signal.windows import gaussian
+from sklearn.manifold import MDS
 from tslearn.preprocessing import TimeSeriesResampler
 import stumpy
 from numba import cuda
@@ -202,9 +207,43 @@ def cloud_with_trace(folder):
     ex.save()
 
 
+def sim_search(folder):
+    with open("labels.json") as f:
+        labels = json.load(f)["dummy"]
+    ex = Experiment(
+        folder, name="distances", plot_rows=1
+    )
+    distances = []
+    for sampleId in labels:
+        values = np.load(os.path.join(Path(__file__).parents[1], "data", "samples", "dummy", sampleId, "values.npy"))
+        for window in labels[sampleId]:
+            print(sampleId, window["from"], window["to"])
+            d = stumpy.mass(values[window["from"]:window["to"]], ex.values, normalize=False)
+            d[d < 10] = np.mean(d)
+            distances.append((sampleId, window["from"], window["to"], d))
+    ex.setup_plotting(plot_rows=len(distances) + 1, plot_cols=1, plot_fig_size=(30, len(distances) * 10))
+    ex.plot_raw_signal(True)
+    for idx, d in enumerate(distances):
+        annotation = [
+            80_000 + d[1] * int(d[0]),
+            80_000 + d[2] * int(d[0]),
+        ]
+        ex.plot_time_series(d[3], idx + 1, f"{d[0]}: {d[1]} - {d[2]}", color="darkgreen", include_events=False, annotation=annotation, annotation_color="red")
+    ex.save()
+
+def mds_cloud(folder):
+    ex = TakenMethod(
+        folder, name="mds_method", plot_rows=1, plot_fig_size=(35, 35)
+    )
+    proj = MDS().fit_transform(ex.windows[:100_000])
+    print(proj)
+
+
 if __name__ == '__main__':
     # reduce_exp_1("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
     # cloud_with_trace("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
     # matrix_profile_experiment("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
-    cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
+    # cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
+    # sim_search("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    mds_cloud("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
