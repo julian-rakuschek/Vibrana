@@ -6,9 +6,12 @@ import math
 import os
 import shutil
 from pathlib import Path
-
+from matplotlib import cm
 import numpy as np
 from matplotlib import pyplot as plt
+from numpy.lib.stride_tricks import sliding_window_view
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
 from DWDataReaderHeader import *
 from ctypes import *
@@ -125,7 +128,7 @@ def get_events(reader):
         DWRaiseError("DWDataReader: DWGetEventList() failed")
     return [e.time_stamp for e in event_list if e.event_type == 20]
 
-def process_folder(folder):
+def process_folder(folder, plot_projection=True):
     def find_nearest(array, value):
         idx = np.searchsorted(array, value, side="left")
         if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
@@ -151,6 +154,27 @@ def process_folder(folder):
     np.save(f"{base_path}/timestamps.npy", timestamps)
     np.save(f"{base_path}/event_timestamps.npy", np.array(events))
 
+    if plot_projection:
+        print("Plotting projection")
+        plt.clf()
+
+        windows = sliding_window_view(values, window_shape=2_000)
+        projected = PCA(n_components=2).fit_transform(windows)
+        scores = []
+        for point in projected:
+            scores.append(np.linalg.norm(point))
+        scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
+
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        fig.set_size_inches((30, 30))
+        ax.set_axis_off()
+        ax.set_xlim([np.min(projected[:, 0]), np.max(projected[:, 0])])
+        ax.set_ylim([np.min(projected[:, 1]), np.max(projected[:, 1])])
+        colors = cm.get_cmap('turbo')(scores_norm)
+        ax.scatter(projected[:, 0], projected[:, 1], s=5, c=colors)
+        plt.savefig(f"{base_path}/plot_projection.png", bbox_inches='tight')
+
+
 def process_data_folder():
     base_path = f'{Path(__file__).parents[1]}/data/'
     for file in os.listdir(base_path):
@@ -161,6 +185,9 @@ def process_data_folder():
             os.makedirs(os.path.join(base_path, folder_name))
             shutil.move(os.path.join(base_path, file), os.path.join(base_path, folder_name, file))
             process_folder(folder_name)
+        elif os.path.isdir(os.path.join(base_path, file)):
+            if os.path.exists(os.path.join(base_path, file, f"{file}.dxd")):
+                process_folder(file)
 
 
 if __name__ == '__main__':

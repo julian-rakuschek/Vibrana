@@ -10,7 +10,7 @@ samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
 @db_app.get("machines")
 def flask_get_machines_list():
-    return ["dummy"]
+    return ["dummy", "dummy2"]
 
 @db_app.get("<machine>/samples")
 def flask_get_samples(machine):

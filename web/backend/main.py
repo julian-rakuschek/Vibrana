@@ -5,6 +5,7 @@ import flask
 from flask_cors import CORS
 
 from modules.database import db_app
+from modules.analysis import analysis_app
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"
@@ -12,6 +13,7 @@ cors = CORS(app, supports_credentials=True)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.register_blueprint(db_app, url_prefix="/api/db")
+app.register_blueprint(analysis_app, url_prefix="/api/analysis")
 
 @app.route("/")
 @app.route("/<path:path>")

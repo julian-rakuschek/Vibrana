@@ -19,6 +19,11 @@ export const dbRoutes = {
   deleteLabel: new ApiRoute<{index: number}, {machineId: string; sampleId: string}, undefined, undefined>("DELETE", "/db/:machineId/labels/:sampleId"),
 };
 
+export const analysisRoutes = {
+  getMDSEmbedding: new ApiRoute<undefined, {machine: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machine/:sampleId/clustering"),
+}
+
 export const ApiRoutes = {
   ...dbRoutes,
+  ...analysisRoutes
 };

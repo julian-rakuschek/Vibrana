@@ -4,9 +4,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
+from pyinform import block_entropy
 from scipy.signal import periodogram, ShortTimeFFT, savgol_filter
 from scipy.signal.windows import gaussian
 from sklearn.manifold import MDS
+from sklearn.preprocessing import MinMaxScaler
 from tslearn.preprocessing import TimeSeriesResampler
 import stumpy
 from numba import cuda
@@ -239,6 +242,24 @@ def mds_cloud(folder):
     print(proj)
 
 
+def entropy(folder):
+    ex = TakenMethod(
+        folder, name="entropy", plot_rows=1, plot_fig_size=(35, 35)
+    )
+    print("Transforming")
+    transformed = block_entropy(np.abs(ex.values), k=4, local=True)[0]
+    print(transformed)
+    print(len(transformed))
+    ex.windows = sliding_window_view(transformed[8000:], window_shape=ex.window_size)
+    temp = np.mean(ex.windows, axis=1)
+    print("PCA")
+    proj = ex.points_to_cloud(incremental=False)
+    # scores = ex.score_by_radius(proj, True)
+    temp = MinMaxScaler().fit_transform(np.array(temp).reshape(-1, 1))[:, 0]
+    ex.plot_point_cloud(temp)
+    ex.save()
+
+
 if __name__ == '__main__':
     # reduce_exp_1("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
     # cloud_with_trace("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
@@ -246,4 +267,4 @@ if __name__ == '__main__':
     # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     # cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
     # sim_search("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    mds_cloud("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    entropy("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")

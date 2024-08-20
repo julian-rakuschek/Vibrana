@@ -22,14 +22,15 @@ def save_preview_image(data, save_path):
     plt.close(fig)
 
 
-folder = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt"
+# folder = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt"
+folder = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62"
 base_path = os.path.join(Path(__file__).parents[1], "data", folder)
 folder_values = np.load(os.path.join(base_path, "values.npy"))
 folder_values = folder_values[80_000:950_000]
 
-if os.path.exists("snippets"):
-    shutil.rmtree("snippets")
-os.mkdir("snippets")
+if os.path.exists("dummy2"):
+    shutil.rmtree("dummy2")
+os.mkdir("dummy2")
 
 window_size = 100_000
 needle = 0
@@ -37,10 +38,10 @@ while needle < len(folder_values):
     name = str(needle // window_size).zfill(4)
     print(name)
     extracted = folder_values[needle:needle+window_size]
-    os.mkdir(os.path.join("snippets", name))
-    np.save(os.path.join("snippets", name, "values.npy"), extracted)
-    save_preview_image(extracted, os.path.join("snippets", name, "preview.png"))
+    os.mkdir(os.path.join("dummy2", name))
+    np.save(os.path.join("dummy2", name, "values.npy"), extracted)
+    save_preview_image(extracted, os.path.join("dummy2", name, "preview.png"))
     windows = sliding_window_view(extracted, window_shape=2000)
     projected = PCA(n_components=2).fit_transform(windows)
-    np.save(os.path.join("snippets", name, "projected.npy"), projected)
+    np.save(os.path.join("dummy2", name, "projected.npy"), projected)
     needle += window_size
