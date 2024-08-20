@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
 import {webglColor} from "lib/colorHelper";
-import {Annotation} from "../../types";
+import {Annotation, ThreeChartsSettingsType} from "../../types";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
 
@@ -13,6 +13,7 @@ type props = {
     labels: Annotation[];
     sampleId: string;
     machineId: string;
+    settings: ThreeChartsSettingsType;
 }
 
 type TimeSeriesPoint = {
@@ -62,7 +63,7 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
  * There is no need to pass states between components via function calls and stuff when using one single component.
  * Therefore this approach is a necessary evil.
  */
-export default function ThreeCharts({timeseries, projected, labels, machineId, sampleId}: props): ReactElement  {
+export default function ThreeCharts({timeseries, projected, labels, machineId, sampleId, settings}: props): ReactElement  {
     const navigatorId = `${machineId}-${sampleId}-nav`
     const selectorId = `${machineId}-${sampleId}-sel`
     const windowId = `${machineId}-${sampleId}-win`
@@ -82,14 +83,14 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const filterRangePercent = useRef<[number, number] | null>(null);
     const filterRangeIndexed = useRef<[number, number] | null>(null);
     const hoverRange = useRef<number[] | undefined>(undefined);
-    const windowSizeRef = useRef<number>(100);
+    const windowSizeRef = useRef<number>(1000);
     const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
-    const modeRef = useRef<string>("size");
+    const modeRef = useRef<string>("add");
     const labelRef = useRef<Annotation[]>(labels);
     const quadtree = useRef(compute_quadtree(projectedIndexed, filterRangeIndexed.current));
 
-    const [mode, setMode] = useState<string>("size")
-    const [windowSize, setWindowSize] = useState<number>(100);
+    const [mode, setMode] = useState<string>("add")
+    const [windowSize, setWindowSize] = useState<number>(1000);
 
     const min_value = useMemo(() => Math.min(...timeseries), [machineId, sampleId, timeseries.length])
     const max_value = useMemo(() => Math.max(...timeseries), [machineId, sampleId, timeseries.length])
@@ -214,7 +215,10 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         if (p && filterRangeIndexed.current && (p.timeSeriesIndex < filterRangeIndexed.current[0] || p.timeSeriesIndex > filterRangeIndexed.current[1])) {
             hoverRange.current = undefined
         } else {
-            hoverRange.current = p ? [p?.timeSeriesIndex, p.timeSeriesIndex + windowSizeRef.current] : undefined;
+            hoverRange.current = p ? [
+                Math.max(0, Math.floor(p.timeSeriesIndex - windowSizeRef.current / 2)),
+                Math.min(Math.floor(p.timeSeriesIndex + windowSizeRef.current / 2), timeseries.length - 1)
+            ] : undefined;
         }
         renderAll();
     });
@@ -361,11 +365,6 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         {active_charts.selector && <div className="rounded-xl shadow-lg text-center flex flex-col items-center">
             <div className="flex flex-row shadow-xl rounded-lg bg-white px-2 py-1 cursor-default">
                 <div
-                    onClick={() => setMode("size")}
-                    className={`${mode === "size" ? 'bg-indigo-700-accent text-white ' : 'bg-white text-gray-800/80'} px-3 rounded-lg`}>
-                    <span>Select window size ({windowSize})</span>
-                </div>
-                <div
                     onClick={() => setMode("add")}
                     className={`${mode === "add" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
                     Draw annotation
@@ -374,6 +373,11 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
                     onClick={() => setMode("delete")}
                     className={`${mode === "delete" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
                     Delete annotation
+                </div>
+                <div
+                    onClick={() => setMode("size")}
+                    className={`${mode === "size" ? 'bg-indigo-700-accent text-white ' : 'bg-white text-gray-800/80'} px-3 rounded-lg`}>
+                    <span>Select window size ({windowSize})</span>
                 </div>
             </div>
 
