@@ -13,7 +13,7 @@ export default function AnalyzeSamplePage(): ReactElement {
     return (
         <DefaultPageWithBoundaries menuDarkMode>
             {machineID && sampleID &&
-                <ThreeChartsWrapper machineId={machineID} sampleId={sampleID} />
+                <ThreeChartsWrapper machineId={machineID} sampleId={sampleID} settings={settings} />
             }
             <Link className="fixed top-3 left-3 bg-white rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl" to={`/machines/${machineID}/analyze`}>
                 <ArrowLeftIcon className="w-5 h-5" />

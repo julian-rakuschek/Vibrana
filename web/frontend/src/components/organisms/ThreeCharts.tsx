@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
 import {webglColor} from "lib/colorHelper";
-import {Annotation, ThreeChartsSettingsType} from "../../types";
+import {Annotation, ThreeChartsSettingsType, WindowMode} from "../../types";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
 
@@ -63,7 +63,14 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
  * There is no need to pass states between components via function calls and stuff when using one single component.
  * Therefore this approach is a necessary evil.
  */
-export default function ThreeCharts({timeseries, projected, labels, machineId, sampleId, settings}: props): ReactElement  {
+export default function ThreeCharts({
+                                        timeseries,
+                                        projected,
+                                        labels,
+                                        machineId,
+                                        sampleId,
+                                        settings
+                                    }: props): ReactElement {
     const navigatorId = `${machineId}-${sampleId}-nav`
     const selectorId = `${machineId}-${sampleId}-sel`
     const windowId = `${machineId}-${sampleId}-win`
@@ -84,6 +91,7 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const filterRangeIndexed = useRef<[number, number] | null>(null);
     const hoverRange = useRef<number[] | undefined>(undefined);
     const windowSizeRef = useRef<number>(1000);
+    const settingsRef = useRef<ThreeChartsSettingsType>(settings);
     const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
     const modeRef = useRef<string>("add");
     const labelRef = useRef<Annotation[]>(labels);
@@ -120,8 +128,9 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         selectorBrushRangeWindowSize.current = undefined
         modeRef.current = mode
         labelRef.current = labels
+        settingsRef.current = settings
         renderAll();
-    }, [timeseries.length, projected.length, mode, labels]);
+    }, [timeseries.length, projected.length, mode, labels, settings]);
 
     useEffect(() => {
         quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
@@ -172,10 +181,18 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
     const selectorPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
         if (!coord) return;
         const x = xScaleSelector.invert(coord.x);
-        hoverRange.current = [
-            Math.floor(Math.max(0, x - windowSizeRef.current / 2)),
-            Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
-        ]
+        if (settingsRef.current.window === WindowMode.Sliding) {
+            hoverRange.current = [
+                Math.floor(Math.max(0, x - windowSizeRef.current / 2)),
+                Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
+            ]
+        } else {
+            hoverRange.current = [
+                Math.floor(Math.max(0, Math.floor(x / windowSizeRef.current) * windowSizeRef.current)),
+                Math.floor(Math.min(timeseries.length - 1, Math.ceil(x / windowSizeRef.current) * windowSizeRef.current))
+            ]
+        }
+
         renderAll();
     }).on("click", async ([coord]: { x: number; y: number }[]) => {
         if (!coord) return;
@@ -215,10 +232,17 @@ export default function ThreeCharts({timeseries, projected, labels, machineId, s
         if (p && filterRangeIndexed.current && (p.timeSeriesIndex < filterRangeIndexed.current[0] || p.timeSeriesIndex > filterRangeIndexed.current[1])) {
             hoverRange.current = undefined
         } else {
-            hoverRange.current = p ? [
-                Math.max(0, Math.floor(p.timeSeriesIndex - windowSizeRef.current / 2)),
-                Math.min(Math.floor(p.timeSeriesIndex + windowSizeRef.current / 2), timeseries.length - 1)
-            ] : undefined;
+            if (settingsRef.current.window === WindowMode.Sliding) {
+                hoverRange.current = p ? [
+                    Math.max(0, Math.floor(p.timeSeriesIndex - windowSizeRef.current / 2)),
+                    Math.min(Math.floor(p.timeSeriesIndex + windowSizeRef.current / 2), timeseries.length - 1)
+                ] : undefined;
+            } else {
+                hoverRange.current = p ? [
+                    Math.floor(Math.max(0, Math.floor(p.timeSeriesIndex / windowSizeRef.current) * windowSizeRef.current)),
+                Math.floor(Math.min(timeseries.length - 1, Math.ceil(p.timeSeriesIndex / windowSizeRef.current) * windowSizeRef.current))
+                ] : undefined;
+            }
         }
         renderAll();
     });
