@@ -33,6 +33,7 @@ export enum ProjectionMode {
 
 export type ThreeChartsSettingsType = {
     window: WindowMode;
+    window_size: number;
     color: ColorMode;
     projection: ProjectionMode;
 }

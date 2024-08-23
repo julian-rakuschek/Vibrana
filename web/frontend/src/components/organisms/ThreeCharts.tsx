@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
 import {webglColor} from "lib/colorHelper";
-import {Annotation, ThreeChartsSettingsType, WindowMode} from "../../types";
+import {Annotation, ProjectionMode, ThreeChartsSettingsType, WindowMode} from "../../types";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
 
@@ -14,6 +14,7 @@ type props = {
     sampleId: string;
     machineId: string;
     settings: ThreeChartsSettingsType;
+    key: string | number;
 }
 
 type TimeSeriesPoint = {
@@ -63,33 +64,35 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
  * There is no need to pass states between components via function calls and stuff when using one single component.
  * Therefore this approach is a necessary evil.
  */
-export default function ThreeCharts({
-                                        timeseries,
-                                        projected,
-                                        labels,
-                                        machineId,
-                                        sampleId,
-                                        settings
-                                    }: props): ReactElement {
-    const navigatorId = `${machineId}-${sampleId}-nav`
-    const selectorId = `${machineId}-${sampleId}-sel`
-    const windowId = `${machineId}-${sampleId}-win`
-    const projectionId = `${machineId}-${sampleId}-pro`
+export default function ThreeCharts(
+    {
+        timeseries,
+        projected,
+        labels,
+        machineId,
+        sampleId,
+        settings,
+        key
+    }: props): ReactElement {
+    const navigatorId = `${machineId}-${sampleId}-nav-${key}`
+    const selectorId = `${machineId}-${sampleId}-sel-${key}`
+    const windowId = `${machineId}-${sampleId}-win-${key}`
+    const projectionId = `${machineId}-${sampleId}-pro-${key}`
 
-    // values that only need to be computed once
-    const timeseriesIndexed: TimeSeriesPoint[] = useMemo(() => timeseries.map((d, index) => ({
+    const timeseriesIndexed: TimeSeriesPoint[] = timeseries.map((d, index) => ({
         x: index,
         y: d
-    })), [machineId, sampleId, timeseries.length])
-    const projectedIndexed: ProjectedPoint[] = useMemo(() => projected.map((d, i): ProjectedPoint => ({
+    }))
+    const projectedIndexed = projected.map((d, i): ProjectedPoint => ({
         projectedIndex: i,
         timeSeriesIndex: i + Math.floor((timeseries.length - projected.length) / 2),
         coords: d
-    })), [machineId, sampleId, projected.length, timeseries.length]);
+    }))
     // Refs are used instead of React State since they don't trigger a re-render of the component, which is important for fast chart performance
     const filterRangePercent = useRef<[number, number] | null>(null);
     const filterRangeIndexed = useRef<[number, number] | null>(null);
     const hoverRange = useRef<number[] | undefined>(undefined);
+    const hoverPoint = useRef<ProjectedPoint | undefined>(undefined);
     const windowSizeRef = useRef<number>(1000);
     const settingsRef = useRef<ThreeChartsSettingsType>(settings);
     const selectorBrushRangeWindowSize = useRef<number[] | undefined>(undefined);
@@ -130,7 +133,7 @@ export default function ThreeCharts({
         labelRef.current = labels
         settingsRef.current = settings
         renderAll();
-    }, [timeseries.length, projected.length, mode, labels, settings]);
+    }, [timeseries, projected, mode, labels, settings]);
 
     useEffect(() => {
         quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
@@ -163,6 +166,13 @@ export default function ThreeCharts({
 
     const trace = fc.seriesSvgLine().crossValue(d => d[0]).mainValue(d => d[1])
 
+    const current_dot = fc.annotationSvgCrosshair()
+        .x(d => xScaleProjection(d[0]))
+        .y(d => yScaleProjection(d[1]))
+        .xLabel(() => "")
+        .yLabel(() => "")
+
+
     // ----------------------------------------------
     // INTERACTION FUNCTIONS
 
@@ -192,6 +202,8 @@ export default function ThreeCharts({
                 Math.floor(Math.min(timeseries.length - 1, Math.ceil(x / windowSizeRef.current) * windowSizeRef.current))
             ]
         }
+
+        hoverPoint.current = projectedIndexed.find(p => p.timeSeriesIndex === Math.floor(x))
 
         renderAll();
     }).on("click", async ([coord]: { x: number; y: number }[]) => {
@@ -229,10 +241,16 @@ export default function ThreeCharts({
         const span_width = (Math.abs(max_x_value - min_x_value) + Math.abs(max_y_value - min_y_value)) / 2
         const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - (span_width * 0.2)));
         const p = quadtree.current.find(x, y, radius);
+        hoverPoint.current = p;
         if (p && filterRangeIndexed.current && (p.timeSeriesIndex < filterRangeIndexed.current[0] || p.timeSeriesIndex > filterRangeIndexed.current[1])) {
             hoverRange.current = undefined
         } else {
-            if (settingsRef.current.window === WindowMode.Sliding) {
+            if (settingsRef.current.projection === ProjectionMode.Cluster) {
+                hoverRange.current = p ? [
+                    Math.max(0, Math.floor(p.timeSeriesIndex - windowSizeRef.current / 2)),
+                    Math.min(Math.floor(p.timeSeriesIndex + windowSizeRef.current / 2), timeseries.length - 1)
+                ] : undefined;
+            } else if (settingsRef.current.window === WindowMode.Sliding) {
                 hoverRange.current = p ? [
                     Math.max(0, Math.floor(p.timeSeriesIndex - windowSizeRef.current / 2)),
                     Math.min(Math.floor(p.timeSeriesIndex + windowSizeRef.current / 2), timeseries.length - 1)
@@ -240,7 +258,7 @@ export default function ThreeCharts({
             } else {
                 hoverRange.current = p ? [
                     Math.floor(Math.max(0, Math.floor(p.timeSeriesIndex / windowSizeRef.current) * windowSizeRef.current)),
-                Math.floor(Math.min(timeseries.length - 1, Math.ceil(p.timeSeriesIndex / windowSizeRef.current) * windowSizeRef.current))
+                    Math.floor(Math.min(timeseries.length - 1, Math.ceil(p.timeSeriesIndex / windowSizeRef.current) * windowSizeRef.current))
                 ] : undefined;
             }
         }
@@ -317,7 +335,14 @@ export default function ThreeCharts({
     const projectionChart = fc
         .chartCartesian(xScaleProjection, yScaleProjection)
         .webglPlotArea(fc.seriesWebglMulti().series([scatterplot]).mapping(d => d.data))
-        .svgPlotArea(fc.seriesSvgMulti().series([trace]).mapping(d => d.trace))
+        .svgPlotArea(fc.seriesSvgMulti().series([trace, current_dot]).mapping((data, index, series) => {
+            switch (series[index]) {
+                case trace:
+                    return data.trace;
+                case current_dot:
+                    return data.hoverPoint;
+            }
+        }))
         .decorate(sel =>
             sel
                 .enter()
@@ -361,7 +386,8 @@ export default function ThreeCharts({
     const renderProjection = () => {
         d3.select(`#${projectionId}`).datum({
             data: moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current),
-            trace: hoverRange.current ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange.current[0] && p.timeSeriesIndex <= hoverRange.current[1]).map(p => p.coords) : []
+            trace: hoverRange.current && settings.projection === ProjectionMode.Paths ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange.current[0] && p.timeSeriesIndex < hoverRange.current[1]).map(p => p.coords) : [],
+            hoverPoint: hoverPoint.current ? [hoverPoint.current.coords] : []
         }).call(projectionChart)
     };
 

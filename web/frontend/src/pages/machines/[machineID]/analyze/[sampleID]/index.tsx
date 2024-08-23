@@ -6,9 +6,11 @@ import {ArrowLeftIcon} from "@heroicons/react/24/solid";
 import ThreeChartsSettings from "components/molecules/ThreeChartsSettings";
 import {ColorMode, ProjectionMode, ThreeChartsSettingsType, WindowMode} from "../../../../../types";
 
+const default_settings: ThreeChartsSettingsType = {window: WindowMode.Sliding, color: ColorMode.Radius, projection: ProjectionMode.Paths, window_size: 1000};
+
 export default function AnalyzeSamplePage(): ReactElement {
     const {machineID, sampleID} = useParams();
-    const [settings, setSettings] = useState<ThreeChartsSettingsType>({window: WindowMode.Sliding, color: ColorMode.Radius, projection: ProjectionMode.Paths})
+    const [settings, setSettings] = useState<ThreeChartsSettingsType>(default_settings)
 
     return (
         <DefaultPageWithBoundaries menuDarkMode>
