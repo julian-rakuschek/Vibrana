@@ -6,6 +6,7 @@ import {webglColor} from "lib/colorHelper";
 import {Annotation, ProjectionMode, ThreeChartsSettingsType, WindowMode} from "../../types";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
+import {PaintBrushIcon} from "@heroicons/react/24/solid";
 
 type props = {
     timeseries: number[];
@@ -102,6 +103,7 @@ export default function ThreeCharts(
 
     const [mode, setMode] = useState<string>("add")
     const [windowSize, setWindowSize] = useState<number>(1000);
+    const [brushMode, setBrushMode] = useState(false)
 
     const min_value = useMemo(() => Math.min(...timeseries), [machineId, sampleId, timeseries.length])
     const max_value = useMemo(() => Math.max(...timeseries), [machineId, sampleId, timeseries.length])
@@ -446,7 +448,7 @@ export default function ThreeCharts(
                 }}
             ></div>}
         </div>}
-        {active_charts.projection && <div className="rounded-xl shadow-lg text-center">
+        {active_charts.projection && <div className="relative rounded-xl shadow-lg text-center">
             <p>Point cloud of the time series. By hovering a point, the path may be inspected and by clicking it, the
                 path is saved as a reference window.</p>
             <div
@@ -456,6 +458,12 @@ export default function ThreeCharts(
                     height: 500
                 }}
             ></div>
+            <div
+                onClick={() => setBrushMode(!brushMode)}
+                className={`absolute top-3 left-3 ${brushMode ? 'bg-indigo-700 text-white' : 'bg-white text-black'}  rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl`}
+            >
+                <PaintBrushIcon className="w-5 h-5" />
+            </div>
         </div>}
     </div>
 }
