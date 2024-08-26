@@ -9,7 +9,7 @@ export default function betterPointer(): unknown {
 
     function mousemove(event) {
         const point = pointer(event);
-        pointEvent.call('point', this, [{ x: point[0], y: point[1] }]);
+        pointEvent.call('point', this, [{ x: point[0], y: point[1], buttons: event.buttons }]);
     }
 
     function mouseleave() {
