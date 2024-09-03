@@ -46,6 +46,11 @@ export type Annotation = {
     color?: string;
 }
 
+export type Point = {
+    x: number;
+    y: number;
+}
+
 export type DataPoint = {
     x: number;
     y: number;

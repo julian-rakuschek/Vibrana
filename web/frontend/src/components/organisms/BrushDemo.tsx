@@ -2,17 +2,15 @@ import {ReactElement, useEffect, useRef} from "react";
 import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer";
-import polygonClipping, {MultiPolygon, Pair, Polygon} from 'polygon-clipping';
+import polygonClipping, {MultiPolygon, Pair, Polygon, Ring} from 'polygon-clipping';
 import earcut from 'earcut';
+import {distToNormalSegment, distToSegment} from "lib/util";
+import {distancePairToLine, distancePairToOrthogonalLine} from "lib/geometryUtil";
 
 type Earcut = {
     vertices: number[],
     hole_indices: number[]
 }
-
-type Triangle = [Pair, Pair, Pair]
-
-const transformTo2D = arr => arr.reduce((result, value, index, array) => index % 2 === 0 ? [...result, array.slice(index, index + 2)] : result, []);
 
 const getCirlcePoints = (coords: [number, number], radius: number, n: number): Polygon => {
     const points: Pair[] = []
@@ -28,7 +26,7 @@ const getCirlcePoints = (coords: [number, number], radius: number, n: number): P
 
 const polyToEarcut = (poly: Polygon): Earcut => {
     const flat: number[] = poly.flat(Infinity) as number[];
-    const lenghts = poly.map(ring => ring.length * 2);
+    const lenghts = poly.map(ring => ring.length);
     const indices = lenghts.map(((sum: number) => (value: number) => sum += value)(0));
     indices.pop()
     return {
@@ -44,10 +42,28 @@ const example_triang = (): number[][][] => {
     const flatToTriangles = arr => arr.reduce((result, value, index, array) => index % 3 === 0 ? [...result, [...array.slice(index, index + 3), array[index]]] : result, []);
     const points = getCirlcePoints([0.5, 0.5], 0.1, 10);
     const t = polyToEarcut(points)
+
     const tria = earcut(t.vertices, t.hole_indices)
     const tria2 = flatToTriangles(tria)
     const finito = tria2.map(t => t.map(t2 => points[0][t2]))
     return finito
+}
+
+const example_triang2 = (): number[][][] => {
+    const flatToTriangles = arr => arr.reduce((result, value, index, array) => index % 3 === 0 ? [...result, [...array.slice(index, index + 3), array[index]]] : result, []);
+    const points: Polygon = [[[0.1, 0.1], [0.1, 0.9], [0.9, 0.9], [0.9, 0.1]], [[0.3, 0.3], [0.3, 0.6], [0.6, 0.6], [0.6, 0.3]]];
+    const t = polyToEarcut(points)
+    const tria = earcut(t.vertices, t.hole_indices)
+    const tria2 = flatToTriangles(tria)
+    const finito = tria2.map(t => t.map(t2 => points.flat(1)[t2]))
+    return finito
+}
+
+const example_cut = (): Ring[] => {
+    const points: Polygon = [[[0.1, 0.1], [0.1, 0.9], [0.9, 0.9], [0.9, 0.1]], [[0.3, 0.3], [0.3, 0.6], [0.6, 0.6], [0.6, 0.3]]];
+    const polys = ninja_cut(points)
+    console.log(polys)
+    return polys
 }
 
 const polyToTriangles = (poly: Polygon): number[][][] => {
@@ -60,62 +76,163 @@ const polyToTriangles = (poly: Polygon): number[][][] => {
     return finito
 }
 
+const ninja_cut = (poly: Polygon): Ring[] => {
+    const res: Ring[] = []
+    const with_holes: Polygon[] = [poly.filter(ring => ring.length > 3)]
+    let i = 0
+
+    while (with_holes.length > 0) {
+        i++
+        const poly_to_investigate = with_holes.pop()!
+        if (poly_to_investigate.length == 1) {
+            res.push(poly_to_investigate[0])
+            console.log("Poly no holes")
+            continue
+        }
+        const outer_ring = poly_to_investigate[0]
+        const hole = poly_to_investigate[1]
+        if (hole.length < 4) {
+            res.push(poly_to_investigate[0])
+            console.log("Too small hole")
+            continue
+        }
+        const a = hole[0]
+        const b = hole[Math.ceil(hole.length / 2)]
+        // console.log("Ring", hole)
+        // console.log(a, b)
+        const distances = outer_ring.map((ring_point, index) => [Math.abs(distancePairToLine(a, b, ring_point)), index])
+        const normal_distances = outer_ring.map((ring_point) => distancePairToOrthogonalLine(a, b, ring_point))
+        // console.log("Dist", distances)
+        // console.log("Normal", normal_distances)
+        // console.log("Dist filtered", distances.filter(r => normal_distances[r[1]] >= 0))
+        // console.log("Dist filtered", distances.filter(r => normal_distances[r[1]] < 0))
+        const outer_a = distances.filter(r => normal_distances[r[1]] >= 0).reduce((min, current) => current[0] < min[0] ? current : min)
+        const outer_b = distances.filter(r => normal_distances[r[1]] < 0).reduce((min, current) => current[0] < min[0] ? current : min)
+        // console.log(outer_a[1], outer_b[1])
+        const boundary = outer_a[1] > outer_b[1] ? [outer_b[1], outer_a[1]] : [outer_a[1], outer_b[1]]
+        let poly_a: Polygon = [[]]
+        let poly_b: Polygon = [[]]
+        for (let i = 0; i < outer_ring.length; i++) {
+            if (i == boundary[0] || i == boundary[1]) {
+                poly_a[0].push(outer_ring[i])
+                poly_b[0].push(outer_ring[i])
+            }
+            else if (boundary[0] < i && i < boundary[1]) poly_a[0].push(outer_ring[i])
+            else if (i < boundary[0] || boundary[1] < i ) poly_b[0].push(outer_ring[i])
+        }
+        poly_a[0].push([poly_a[0][0][0], poly_a[0][0][1]])
+        poly_b[0].push([poly_a[0][0][0], poly_a[0][0][1]])
+
+        polygonClipping.difference(poly_to_investigate, poly_a).forEach(p => {
+            p.length > 1 ? with_holes.push(p) : res.push(p[0])
+        })
+        polygonClipping.difference(poly_to_investigate, poly_b).forEach(p => {
+            p.length > 1 ? with_holes.push(p) : res.push(p[0])
+        })
+
+        // poly_a = polygonClipping.difference(poly_to_investigate, poly_a)[0]
+        // poly_b = polygonClipping.difference(poly_to_investigate, poly_b)[0]
+        // poly_a.length > 1 ? with_holes.push(poly_a) : res.push(poly_a[0])
+        // poly_b.length > 1 ? with_holes.push(poly_b) : res.push(poly_b[0])
+        console.log(poly_a)
+        console.log(poly_b)
+        if (i > 100) {
+            console.log(with_holes)
+            console.log(res)
+            console.log("Emergency break")
+            break
+        }
+    }
+    // console.log("Res before", res)
+    for (let i = 0; i < res.length; i++) {
+        res[i].push(res[i][0])
+    }
+    // console.log("Res after", res)
+    return res
+}
+
 export default function BrushDemo(): ReactElement {
     const xScale = d3.scaleLinear()
     const yScale = d3.scaleLinear()
     const traceRef = useRef<number[][]>([])
     const polyRef = useRef<MultiPolygon>([]);
     const trianRef = useRef<number[][][]>([]);
+    const last_point_ref = useRef<Pair | null>(null);
+    const radius_ref = useRef<number>(0.05)
 
-    const trace = fc.seriesSvgPoint().crossValue(d => d[0]).mainValue(d => d[1])
+    useEffect(() => {
+        // trianRef.current = example_triang2();
+        // trianRef.current = example_cut()
+        render()
+    }, []);
 
-    const polygonOutline = fc.seriesSvgPoint()
-        .crossValue(d => d[0])
-        .mainValue(d => d[1])
-        .size(d => 8)
-        .decorate(sel => {
-            sel.enter().attr('fill', d => "#1f77b4").attr('stroke', d => null);
-        });
 
-    const trianglesD3 = fc.seriesSvgLine().crossValue(d => d[0]).mainValue(d => d[1]).decorate((selection) => {
-        selection.enter().attr('fill', 'lightblue').attr('stroke', 'navy').attr("opacity", 0.2);
+
+    const trace = fc.seriesCanvasPoint().crossValue(d => d[0]).mainValue(d => d[1])
+
+    const trianglesD3 = fc.seriesCanvasLine().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
+        // selection.enter().attr('fill', 'lightblue').attr('stroke', 'navy').attr("opacity", 0.2);
+        context.globalAlpha = 0.2;
+        context.fillStyle = "lightblue";
+        context.strokeStyle = "navy";
     })
 
-    const triangulationD3 = fc.seriesSvgRepeat()
+    const triangulationD3 = fc.seriesCanvasRepeat()
         .xScale(xScale)
         .yScale(yScale)
         .orient("horizontal")
         .series(trianglesD3);
 
     const pointer = betterPointer().on("point", ([coord]: { x: number; y: number, buttons: number }[]) => {
-        if (!coord || coord.buttons === 0) return;
+        if (!coord || coord.buttons === 0) {
+            last_point_ref.current = null;
+            return;
+        }
         const x = xScale.invert(coord.x);
         const y = yScale.invert(coord.y);
         traceRef.current = [...traceRef.current, [x, y]];
-        const points: MultiPolygon = [getCirlcePoints([x, y], 0.1, 20)]
+        const points: MultiPolygon = [getCirlcePoints([x, y], radius_ref.current, 20)]
         if (polyRef.current === null) polyRef.current = points;
         else polyRef.current = polygonClipping.union(polyRef.current, points)
-        console.log(polyRef.current)
-        trianRef.current = polyRef.current.map(polyToTriangles).flat(1);
+
+        if (last_point_ref.current !== null) {
+            const distance = Math.sqrt(Math.pow(x - last_point_ref.current[0], 2) + Math.pow(y - last_point_ref.current[1], 2))
+            const n_fill_points = Math.floor(distance / (radius_ref.current / 2));
+            const step_vector = [
+                (x - last_point_ref.current[0]) / (n_fill_points + 1),
+                (y - last_point_ref.current[1]) / (n_fill_points + 1)
+            ];
+            const current = [...last_point_ref.current]
+            for (let i = 0; i < n_fill_points; i++) {
+                current[0] += step_vector[0]
+                current[1] += step_vector[1]
+                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, radius_ref.current, 20)]
+                polyRef.current = polygonClipping.union(polyRef.current, points_fill)
+                traceRef.current = [...traceRef.current, [...current as Pair]];
+            }
+        }
+
+
+
+        // trianRef.current = polyRef.current.map(polyToTriangles).flat(1);
+        trianRef.current = polyRef.current.map(ninja_cut).flat(1);
+        last_point_ref.current = [x, y]
         render();
     })
 
     const chart = fc
         .chartCartesian(xScale, yScale)
-        .svgPlotArea(fc.seriesSvgMulti().series([trace, polygonOutline, triangulationD3]).mapping((data, index, series) => {
+        .canvasPlotArea(fc.seriesCanvasMulti().series([trace, triangulationD3]).mapping((data, index, series) => {
             switch (series[index]) {
                 case trace:
                     return data.trace;
-                case polygonOutline:
-                    return data.polygonOutline;
                 case triangulationD3:
                     return data.triangles;
             }
         }))
         .decorate(sel =>
             sel
-                .enter()
-                .select("d3fc-svg.plot-area")
+                .select("d3fc-canvas.plot-area")
                 .call(pointer)
         );
 
@@ -127,7 +244,6 @@ export default function BrushDemo(): ReactElement {
     }
 
     const render = () => {
-        const triangles = example_triang()
         d3.select(`#demo`).datum({
             trace: traceRef.current,
             polygonOutline: [],
@@ -135,16 +251,13 @@ export default function BrushDemo(): ReactElement {
         }).call(chart);
     };
 
-    useEffect(() => {
-        render()
-    }, []);
 
     return <div className="p-10">
         <button type="button" onClick={() => reset()}
                 className="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  me-2 mb-2">
             Reset
         </button>
-        <div id={"demo"} style={{width: 600, height: 600}} className="border-gray-700 border-2">
+        <div id={"demo"} style={{width: 900, height: 900}} className="border-gray-700 border-2">
         </div>
     </div>
 }
