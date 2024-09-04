@@ -1,15 +1,30 @@
-import {ReactElement, useEffect, useRef} from "react";
+import {ReactElement, useEffect, useMemo, useRef} from "react";
 import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer";
 import polygonClipping, {MultiPolygon, Pair, Polygon, Ring} from 'polygon-clipping';
 import earcut from 'earcut';
 import {distToNormalSegment, distToSegment} from "lib/util";
-import {distancePairToLine, distancePairToOrthogonalLine, polygonIntersects} from "lib/geometryUtil";
+import {distancePairToLine, distancePairToOrthogonalLine, euclidean, polygonIntersects} from "lib/geometryUtil";
+import RBush from 'rbush';
 
 type Earcut = {
     vertices: number[],
     hole_indices: number[]
+}
+
+class MyRBush extends RBush {
+    toBBox([x, y]) {
+        return {minX: x, minY: y, maxX: x, maxY: y};
+    }
+
+    compareMinX(a, b) {
+        return a.x - b.x;
+    }
+
+    compareMinY(a, b) {
+        return a.y - b.y;
+    }
 }
 
 const getCirlcePoints = (coords: [number, number], radius: number, n: number): Polygon => {
@@ -135,9 +150,8 @@ const ninja_cut = (poly: Polygon): Ring[] => {
             if (i == boundary[0] || i == boundary[1]) {
                 poly_a[0].push(outer_ring[i])
                 poly_b[0].push(outer_ring[i])
-            }
-            else if (boundary[0] < i && i < boundary[1]) poly_a[0].push(outer_ring[i])
-            else if (i < boundary[0] || boundary[1] < i ) poly_b[0].push(outer_ring[i])
+            } else if (boundary[0] < i && i < boundary[1]) poly_a[0].push(outer_ring[i])
+            else if (i < boundary[0] || boundary[1] < i) poly_b[0].push(outer_ring[i])
         }
         poly_a[0].push([poly_a[0][0][0], poly_a[0][0][1]])
         poly_b[0].push([poly_a[0][0][0], poly_a[0][0][1]])
@@ -179,8 +193,20 @@ export default function BrushDemo(): ReactElement {
     const last_point_ref = useRef<Pair | null>(null);
     const radius_ref = useRef<number>(0.035)
     const mouse_state = useRef<[number, number, number] | null>(null)
+    const selected_indices = useRef<Set<number>>(new Set())
 
     const fillColors = ["navy", "lightgreen", "red"]
+    const random_scatter = useMemo(() => [...Array(1000).keys()].map(i => [Math.random(), Math.random(), i]), [])
+    const rtree = new MyRBush()
+    rtree.load(random_scatter)
+    const res = rtree.search({
+        minX: 0.2,
+        minY: 0.2,
+        maxX: 0.7,
+        maxY: 0.7
+    });
+    console.log(res)
+
 
     useEffect(() => {
         // trianRef.current = example_triang2();
@@ -188,9 +214,72 @@ export default function BrushDemo(): ReactElement {
         render()
     }, []);
 
+    function findPoints(x: number, y: number, radius: number) {
+        const init_res = rtree.search({
+            minX: x - radius,
+            minY: y - radius,
+            maxX: x + radius,
+            maxY: y + radius
+        })
+        return init_res.filter(p => euclidean({x: p[0], y: p[1]}, {x, y}) < radius)
+    }
+
+    function handleBrush(x: number, y: number, button: number) {
+        const points: MultiPolygon = [getCirlcePoints([x, y], radius_ref.current, 20)]
+        if (polyRef.current === null) polyRef.current = points;
+        else polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points) : polygonClipping.difference(polyRef.current, points);
+        const scatterPoints = new Set(findPoints(x, y, radius_ref.current).map(p => p[2]));
+        selected_indices.current = button === 1 ?
+            new Set([...selected_indices.current, ...scatterPoints]) :
+            new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));
+        if (last_point_ref.current !== null) {
+            const distance = Math.sqrt(Math.pow(x - last_point_ref.current[0], 2) + Math.pow(y - last_point_ref.current[1], 2))
+            const n_fill_points = Math.floor(distance / (radius_ref.current / 2));
+            const step_vector = [
+                (x - last_point_ref.current[0]) / (n_fill_points + 1),
+                (y - last_point_ref.current[1]) / (n_fill_points + 1)
+            ];
+            const current = [...last_point_ref.current]
+            for (let i = 0; i < n_fill_points; i++) {
+                current[0] += step_vector[0]
+                current[1] += step_vector[1]
+                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, radius_ref.current, 20)]
+                polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points_fill) : polygonClipping.difference(polyRef.current, points_fill)
+                const scatterPoints = new Set(findPoints(...current, radius_ref.current).map(p => p[2]));
+        selected_indices.current = button === 1 ?
+            new Set([...selected_indices.current, ...scatterPoints]) :
+            new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));
+            }
+        }
+        trianRef.current = polyRef.current.map(polyToTriangles).flat(1);
+        // trianRef.current = polyRef.current.map(ninja_cut).flat(1);
+        last_point_ref.current = [x, y]
+    }
+
+    function handleMouseEvent(coord: { x: number; y: number, buttons: number }) {
+        if (!coord) {
+            last_point_ref.current = null;
+            return;
+        }
+        const x = xScale.invert(coord.x);
+        const y = yScale.invert(coord.y);
+        mouse_state.current = [x, y, coord.buttons];
+
+        if (coord.buttons === 0) {
+            render()
+            last_point_ref.current = null;
+            return;
+        }
+        handleBrush(x, y, coord.buttons)
+        render();
+    }
 
 
-    const trace = fc.seriesCanvasPoint().crossValue(d => d[0]).mainValue(d => d[1])
+    const trace = fc.seriesCanvasPoint().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
+        // selection.enter().attr('fill', 'lightblue').attr('stroke', 'navy').attr("opacity", 0.2);
+        context.fillStyle = selected_indices.current.has(index) ? "red" : "gray"
+        context.strokeStyle = "transparent";
+    });
 
     const trianglesD3 = fc.seriesCanvasLine().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
         // selection.enter().attr('fill', 'lightblue').attr('stroke', 'navy').attr("opacity", 0.2);
@@ -212,49 +301,11 @@ export default function BrushDemo(): ReactElement {
         .series(trianglesD3);
 
     const pointer = betterPointer().on("point", ([coord]: { x: number; y: number, buttons: number }[]) => {
-        if (!coord) {
-            last_point_ref.current = null;
-            return;
-        }
-        const x = xScale.invert(coord.x);
-        const y = yScale.invert(coord.y);
-        mouse_state.current = [x, y, coord.buttons];
+        handleMouseEvent(coord);
+    })
 
-        if (coord.buttons === 0) {
-            render()
-            last_point_ref.current = null;
-            return;
-        }
-
-
-        traceRef.current = [...traceRef.current, [x, y]];
-        const points: MultiPolygon = [getCirlcePoints([x, y], radius_ref.current, 20)]
-        if (polyRef.current === null) polyRef.current = points;
-        else polyRef.current = coord.buttons === 1 ? polygonClipping.union(polyRef.current, points) : polygonClipping.difference(polyRef.current, points);
-
-        if (last_point_ref.current !== null) {
-            const distance = Math.sqrt(Math.pow(x - last_point_ref.current[0], 2) + Math.pow(y - last_point_ref.current[1], 2))
-            const n_fill_points = Math.floor(distance / (radius_ref.current / 2));
-            const step_vector = [
-                (x - last_point_ref.current[0]) / (n_fill_points + 1),
-                (y - last_point_ref.current[1]) / (n_fill_points + 1)
-            ];
-            const current = [...last_point_ref.current]
-            for (let i = 0; i < n_fill_points; i++) {
-                current[0] += step_vector[0]
-                current[1] += step_vector[1]
-                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, radius_ref.current, 20)]
-                polyRef.current = coord.buttons === 1 ? polygonClipping.union(polyRef.current, points_fill) : polygonClipping.difference(polyRef.current, points_fill)
-                traceRef.current = [...traceRef.current, [...current as Pair]];
-            }
-        }
-
-
-
-        trianRef.current = polyRef.current.map(polyToTriangles).flat(1);
-        // trianRef.current = polyRef.current.map(ninja_cut).flat(1);
-        last_point_ref.current = [x, y]
-        render();
+    const pointerClick = betterPointer().on("click", ([coord]: { x: number; y: number, buttons: number }[]) => {
+        handleBrush(coord.x, coord.y, 1)
     })
 
     const chart = fc
@@ -279,12 +330,13 @@ export default function BrushDemo(): ReactElement {
         traceRef.current = [];
         polyRef.current = [];
         trianRef.current = [];
+        selected_indices.current = new Set()
         render();
     }
 
     const render = () => {
         d3.select(`#demo`).datum({
-            trace: [],
+            trace: random_scatter,
             polygonOutline: [],
             triangles: trianRef.current,
             mouse: mouse_state.current !== null ? mousePolygon(...mouse_state.current, radius_ref.current) : []

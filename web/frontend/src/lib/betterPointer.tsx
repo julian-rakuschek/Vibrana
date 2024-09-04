@@ -17,9 +17,9 @@ export default function betterPointer(): unknown {
         void pointEvent.call('point', this, []);
     }
 
-    function mouseclick(event) {
+    function mouseclick(event, button?: number) {
         const point = pointer(event);
-        pointEvent.call('click', this, [{ x: point[0], y: point[1] }]);
+        pointEvent.call('click', this, [{ x: point[0], y: point[1], buttons: button ? button : 1 }]);
     }
 
     const instance = (selection) => {
@@ -30,6 +30,7 @@ export default function betterPointer(): unknown {
             .on('click.pointer', mouseclick)
             .on("contextmenu", function (event, i) {
            event.preventDefault();
+           mouseclick(event, 2)
            // react on right-clicking
         })
     };

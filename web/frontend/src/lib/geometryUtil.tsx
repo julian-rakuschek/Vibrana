@@ -2,7 +2,7 @@ import {Point} from "../types";
 import {Pair, Ring} from "polygon-clipping";
 import {line} from "d3";
 
-function euclidean(p1: Point, p2: Point) {
+export function euclidean(p1: Point, p2: Point) {
     return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)
 }
 
