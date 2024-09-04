@@ -1,5 +1,6 @@
 import {Point} from "../types";
-import {Pair} from "polygon-clipping";
+import {Pair, Ring} from "polygon-clipping";
+import {line} from "d3";
 
 function euclidean(p1: Point, p2: Point) {
     return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)
@@ -72,4 +73,24 @@ export function distancePairToOrthogonalLine(line_a: Pair, line_b: Pair, query: 
         {x: line_b[0], y: line_b[1]},
         {x: query[0], y: query[1]},
     )
+}
+
+function lineOrientation(a: Pair, b: Pair, c: Pair) {
+    const mat = [
+        [a[0] - c[0], a[1] - c[1]],
+        [b[0] - c[0], b[1] - c[1]],
+    ]
+    const det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+    if (det < 0) return -1
+    else if (det > 0) return 1
+    else return 0
+}
+
+export function polygonIntersects(line_a: Pair, line_b: Pair, polygon: Ring) {
+    for (let i = 1; i < polygon.length; i++) {
+        const side_q = lineOrientation(line_a, line_b, polygon[i - 1]);
+        const side_p = lineOrientation(line_a, line_b, polygon[i]);
+        if (side_p !== side_q) return true;
+    }
+    return false;
 }
