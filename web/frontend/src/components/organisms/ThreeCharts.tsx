@@ -292,6 +292,12 @@ export default function ThreeCharts(
         }
     });
 
+    const resetRange = () => {
+        filterRangePercent.current = null;
+        filterRangeIndexed.current = null;
+        renderAll();
+    }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const selectorPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
@@ -550,7 +556,10 @@ export default function ThreeCharts(
 
     return <div className="flex flex-col gap-4">
         {active_charts.navigator && <div className="rounded-xl shadow-lg text-center">
-            <p>Click and drag over the time series to select a subset of the data.</p>
+            <p>
+                Click and drag over the time series to select a subset of the data.
+                (<span className="cursor-default text-indigo-500 border-b-2 border-indigo-500 border-dotted hover:text-indigo-700 hover:border-indigo-700" onClick={() => resetRange()}>Reset</span>)
+            </p>
             <div
                 id={navigatorId}
                 style={{
