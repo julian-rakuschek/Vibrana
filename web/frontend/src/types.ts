@@ -43,7 +43,7 @@ export type ThreeChartsSettingsType = {
 export type Annotation = {
     from: number;
     to: number;
-    color?: string;
+    color?: string | number;
 }
 
 export type Point = {
@@ -58,3 +58,19 @@ export type DataPoint = {
 }
 
 export type Dataset = DataPoint[];
+
+export type Earcut = {
+    vertices: number[],
+    hole_indices: number[]
+}
+
+export type TimeSeriesPoint = {
+    x: number;
+    y: number;
+}
+
+export type ProjectedPoint = {
+    timeSeriesIndex: number;
+    projectedIndex: number;
+    coords: number[]
+};

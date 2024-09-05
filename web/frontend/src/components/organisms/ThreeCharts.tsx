@@ -2,11 +2,23 @@ import {ReactElement, useEffect, useMemo, useRef, useState} from "react";
 import * as d3 from "d3";
 import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
-import {webglColor} from "lib/colorHelper";
-import {Annotation, ProjectionMode, ThreeChartsSettingsType, WindowMode} from "../../types";
+import {addAlphaToRGB, webglColor} from "lib/colorHelper";
+import {
+    Annotation,
+    ProjectedPoint,
+    ProjectionMode,
+    ThreeChartsSettingsType,
+    TimeSeriesPoint,
+    WindowMode
+} from "../../types";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
-import {PaintBrushIcon} from "@heroicons/react/24/solid";
+import {PaintBrushIcon, TrashIcon} from "@heroicons/react/24/solid";
+import TimeSeriesPathIcon from "components/atoms/TimeSeriesPathIcon";
+import {DemoRBush, getCirlcePoints, mousePolygon, polyToTriangles, ProjectedTimeSeriesRBush} from "lib/brushHelper";
+import polygonClipping, {MultiPolygon, Pair} from "polygon-clipping";
+import {MouseButtonLeft, MouseButtonRight, MouseScroll, VaadinShift} from "components/atoms/MouseKeyboardIcons";
+import {mergeIntervals} from "lib/util";
 
 type props = {
     timeseries: number[];
@@ -17,17 +29,6 @@ type props = {
     settings: ThreeChartsSettingsType;
     key: string | number;
 }
-
-type TimeSeriesPoint = {
-    x: number;
-    y: number;
-}
-
-type ProjectedPoint = {
-    timeSeriesIndex: number;
-    projectedIndex: number;
-    coords: number[]
-};
 
 const projectionPadding = 0.1;
 
@@ -58,6 +59,7 @@ const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): Projec
     return data.slice(0, start).concat(data.slice(end), middlePart);
 }
 
+
 /*
  * Yes I know, this component is far too large and violates the React phiolosophy, BUT:
  * When having all charts in one component, it makes data exchange much faster.
@@ -75,18 +77,19 @@ export default function ThreeCharts(
         settings,
         key
     }: props): ReactElement {
-    const navigatorId = `${machineId}-${sampleId}-nav-${key}`
-    const selectorId = `${machineId}-${sampleId}-sel-${key}`
-    const windowId = `${machineId}-${sampleId}-win-${key}`
-    const projectionId = `${machineId}-${sampleId}-pro-${key}`
+    const navigatorId = `${machineId}-${sampleId}-nav`
+    const selectorId = `${machineId}-${sampleId}-sel`
+    const windowId = `${machineId}-${sampleId}-win`
+    const projectionId = `${machineId}-${sampleId}-pro`
 
     const timeseriesIndexed: TimeSeriesPoint[] = timeseries.map((d, index) => ({
         x: index,
         y: d
     }))
+    const tsIndexOffset = Math.floor((timeseries.length - projected.length) / 2)
     const projectedIndexed = projected.map((d, i): ProjectedPoint => ({
         projectedIndex: i,
-        timeSeriesIndex: i + Math.floor((timeseries.length - projected.length) / 2),
+        timeSeriesIndex: i + tsIndexOffset,
         coords: d
     }))
     // Refs are used instead of React State since they don't trigger a re-render of the component, which is important for fast chart performance
@@ -103,7 +106,11 @@ export default function ThreeCharts(
 
     const [mode, setMode] = useState<string>("add")
     const [windowSize, setWindowSize] = useState<number>(1000);
-    const [brushMode, setBrushMode] = useState(false)
+    const [brushActive, setBrushActive] = useState(false)
+    const [selectedRadius, setSelectedRadius] = useState(0.03)
+    const [timeSeriesPathActive, setTimeSeriesPathActive] = useState(false)
+    const timeSeriesPathActiveRef = useRef<boolean>(false)
+    const brushActiveRef = useRef<boolean>(false)
 
     const min_value = useMemo(() => Math.min(...timeseries), [machineId, sampleId, timeseries.length])
     const max_value = useMemo(() => Math.max(...timeseries), [machineId, sampleId, timeseries.length])
@@ -112,7 +119,17 @@ export default function ThreeCharts(
     const min_y_value = useMemo(() => Math.min(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
     const max_y_value = useMemo(() => Math.max(...projected.map(d => d[1])), [machineId, sampleId, projected.length])
     const radius_colors = useMemo(() => compute_radius_norm(projected), [machineId, sampleId, projected.length]);
+    const rtree = new ProjectedTimeSeriesRBush()
+    rtree.load(projectedIndexed)
 
+    // Brushing Stuff
+    const polyRef = useRef<MultiPolygon>([]);
+    const trianRef = useRef<number[][][]>([]);
+    const last_point_ref = useRef<Pair | null>(null);
+    const radius_ref = useRef<number>(0.03)
+    const mouse_state = useRef<[number, number, number] | null>(null)
+    const selected_indices = useRef<Set<ProjectedPoint>>(new Set())
+    const fillColors = ["navy", "lightgreen", "red"]
 
     // All Scales for the plots
     const xScaleNavigator = d3.scaleLinear().domain([0, timeseries.length]).range([0, 1]);
@@ -141,16 +158,103 @@ export default function ThreeCharts(
         quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
     }, [projectedIndexed, filterRangeIndexed.current]);
 
+    useEffect(() => {
+        timeSeriesPathActiveRef.current = timeSeriesPathActive
+        renderAll();
+    }, [timeSeriesPathActive]);
+
+    useEffect(() => {
+        brushActiveRef.current = brushActive
+        renderAll();
+    }, [brushActive]);
+
+    useEffect(() => {
+        radius_ref.current = selectedRadius
+        renderAll();
+    }, [selectedRadius]);
+
     const queryClient = useQueryClient();
 
+    // ----------------------------------------------
+    // BRUSHING
+
+    const selectedToColoredIntervals = (selected: ProjectedPoint[]): Annotation[] => {
+        const annotations: Annotation[] = selected.map(p => ({
+            from: p.timeSeriesIndex - tsIndexOffset,
+            to: p.timeSeriesIndex + tsIndexOffset,
+            color: radius_colors[p.projectedIndex]
+        }))
+        const merged = mergeIntervals(annotations)
+        return merged
+    }
+
+    function handleBrush(x: number, y: number, button: number) {
+        const points: MultiPolygon = [getCirlcePoints([x, y], radius_ref.current, 20)]
+        if (polyRef.current === null) polyRef.current = points;
+        else polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points) : polygonClipping.difference(polyRef.current, points);
+        const scatterPoints = new Set(rtree.find(x, y, radius_ref.current));
+        selected_indices.current = button === 1 ?
+            new Set([...selected_indices.current, ...scatterPoints]) :
+            new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));
+        console.log(selected_indices)
+        if (last_point_ref.current !== null) {
+            const distance = Math.sqrt(Math.pow(x - last_point_ref.current[0], 2) + Math.pow(y - last_point_ref.current[1], 2))
+            const n_fill_points = Math.floor(distance / (radius_ref.current / 2));
+            const step_vector = [
+                (x - last_point_ref.current[0]) / (n_fill_points + 1),
+                (y - last_point_ref.current[1]) / (n_fill_points + 1)
+            ];
+            const current = [...last_point_ref.current]
+            for (let i = 0; i < n_fill_points; i++) {
+                current[0] += step_vector[0]
+                current[1] += step_vector[1]
+                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, radius_ref.current, 20)]
+                polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points_fill) : polygonClipping.difference(polyRef.current, points_fill)
+                const scatterPoints = new Set(rtree.find(current[0], current[1], radius_ref.current));
+                selected_indices.current = button === 1 ?
+                    new Set([...selected_indices.current, ...scatterPoints]) :
+                    new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));
+            }
+        }
+        trianRef.current = polyRef.current.map(polyToTriangles).flat(1);
+        // trianRef.current = polyRef.current.map(ninja_cut).flat(1);
+        last_point_ref.current = [x, y]
+    }
+
+    const resetBrush = () => {
+        polyRef.current = [];
+        trianRef.current = [];
+        selected_indices.current = new Set()
+        renderAll();
+    }
+
+    const trianglesD3 = fc.seriesCanvasLine().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
+        // selection.enter().attr('fill', 'lightblue').attr('stroke', 'navy').attr("opacity", 0.2);
+        context.globalAlpha = 0.2;
+        context.fillStyle = datum[0].length === 3 ? fillColors[datum[0][2]] : "gray"
+        context.strokeStyle = "transparent";
+    });
+
+    const triangulationD3 = fc.seriesCanvasRepeat()
+        .xScale(xScaleProjection)
+        .yScale(yScaleProjection)
+        .orient("horizontal")
+        .series(trianglesD3);
+
+    const triangulationMouseD3 = fc.seriesCanvasRepeat()
+        .xScale(xScaleProjection)
+        .yScale(yScaleProjection)
+        .orient("horizontal")
+        .series(trianglesD3);
 
     // ----------------------------------------------
     // DATA FUNCTIONS
 
-    const timeseriesLine = fc.seriesWebglLine().crossValue((d: TimeSeriesPoint) => d.x).mainValue((d: TimeSeriesPoint) => d.y);
+    const timeseriesLine = fc.seriesWebglLine().equals((previousData, currentData) => previousData === currentData).crossValue((d: TimeSeriesPoint) => d.x).mainValue((d: TimeSeriesPoint) => d.y);
 
     const scatterplot = fc
         .seriesWebglPoint()
+        .equals((previousData, currentData) => previousData === currentData)
         .size(5)
         .crossValue((d: ProjectedPoint) => d.coords[0])
         .mainValue((d: ProjectedPoint) => d.coords[1])
@@ -236,10 +340,21 @@ export default function ThreeCharts(
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    const projectionPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
-        if (!coord || !quadtree.current) return;
+    const projectionPointer = betterPointer().on("point", ([coord]: { x: number; y: number, buttons: number }[]) => {
+        if (!coord || !quadtree.current) {
+            last_point_ref.current = null;
+            return;
+        }
         const x = xScaleProjection.invert(coord.x);
         const y = yScaleProjection.invert(coord.y);
+
+        mouse_state.current = [x, y, coord.buttons];
+        if (coord.buttons === 0) {
+            last_point_ref.current = null;
+        } else {
+            handleBrush(x, y, coord.buttons)
+        }
+
         const span_width = (Math.abs(max_x_value - min_x_value) + Math.abs(max_y_value - min_y_value)) / 2
         const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - (span_width * 0.2)));
         const p = quadtree.current.find(x, y, radius);
@@ -273,6 +388,8 @@ export default function ThreeCharts(
             xScaleProjection.domain(event.transform.rescaleX(xScaleProjectionOriginal).domain());
             yScaleProjection.domain(event.transform.rescaleY(yScaleProjectionOriginal).domain());
             renderAll();
+        }).filter(event => {
+            return (event.type === "mousedown" && event.shiftKey) || event.type === 'wheel'
         });
 
     // ----------------------------------------------
@@ -285,6 +402,18 @@ export default function ThreeCharts(
         .yScale(yScaleSelector)
         .decorate(se => {
             se.selectAll('.band').attr('fill', 'rgba(0, 120, 0, 0.4)');
+        });
+
+    const brushedSelectionAnnotations = fc
+        .annotationSvgBand()
+        .orient("vertical")
+        .xScale(xScaleSelector)
+        .yScale(yScaleSelector)
+        .decorate((se, data) => {
+            se.selectAll('.band').attr('fill', (d, i) => {
+                const value = d.color || data[i].color;
+                return addAlphaToRGB(d3.interpolateTurbo(value), 0.5)
+            });
         });
 
     const selectorHoverBand = fc
@@ -303,12 +432,14 @@ export default function ThreeCharts(
     const navigatorChart = fc
         .chartCartesian(xScaleNavigator, yScaleNavigator)
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
-        .svgPlotArea(fc.seriesSvgMulti().series([savedSelectionAnnotations, brushNavigator]).mapping((data, index, series) => {
+        .svgPlotArea(fc.seriesSvgMulti().series([savedSelectionAnnotations, brushNavigator, brushedSelectionAnnotations]).mapping((data, index, series) => {
             switch (series[index]) {
                 case savedSelectionAnnotations:
                     return data.selected;
                 case brushNavigator:
                     return filterRangePercent.current;
+                case brushedSelectionAnnotations:
+                    return data.brushed;
             }
         }));
 
@@ -322,13 +453,15 @@ export default function ThreeCharts(
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
         .svgPlotArea(
             fc.seriesSvgMulti()
-                .series([savedSelectionAnnotations, selectorHoverBand])
+                .series([savedSelectionAnnotations, selectorHoverBand, brushedSelectionAnnotations])
                 .mapping((data, index, series) => {
                     switch (series[index]) {
                         case savedSelectionAnnotations:
                             return data.selected;
                         case selectorHoverBand:
                             return data.hover;
+                        case brushedSelectionAnnotations:
+                            return data.brushed;
                     }
                 })
         )
@@ -337,6 +470,14 @@ export default function ThreeCharts(
     const projectionChart = fc
         .chartCartesian(xScaleProjection, yScaleProjection)
         .webglPlotArea(fc.seriesWebglMulti().series([scatterplot]).mapping(d => d.data))
+        .canvasPlotArea(fc.seriesCanvasMulti().series([triangulationD3, triangulationMouseD3]).mapping((data, index, series) => {
+            switch (series[index]) {
+                case triangulationD3:
+                    return data.triangles;
+                case triangulationMouseD3:
+                    return data.mouse;
+            }
+        }))
         .svgPlotArea(fc.seriesSvgMulti().series([trace, current_dot]).mapping((data, index, series) => {
             switch (series[index]) {
                 case trace:
@@ -362,7 +503,8 @@ export default function ThreeCharts(
     const renderNavigator = () => {
         d3.select(`#${navigatorId}`).datum({
             data: timeseriesIndexed,
-            selected: labelRef.current
+            selected: labelRef.current,
+            brushed: selectedToColoredIntervals(Array.from(selected_indices.current))
         }).call(navigatorChart)
     };
 
@@ -373,7 +515,8 @@ export default function ThreeCharts(
             hover: [{
                 from: hoverRange.current ? hoverRange.current[0] : 0,
                 to: hoverRange.current ? hoverRange.current[1] : 0
-            }]
+            }],
+            brushed: selectedToColoredIntervals(Array.from(selected_indices.current))
         }).call(selectorChart)
     };
 
@@ -388,8 +531,10 @@ export default function ThreeCharts(
     const renderProjection = () => {
         d3.select(`#${projectionId}`).datum({
             data: moveMiddleToEnd(projectedIndexed, filterRangeIndexed.current),
-            trace: hoverRange.current && settings.projection === ProjectionMode.Paths ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange.current[0] && p.timeSeriesIndex < hoverRange.current[1]).map(p => p.coords) : [],
-            hoverPoint: hoverPoint.current ? [hoverPoint.current.coords] : []
+            trace: timeSeriesPathActiveRef.current && hoverRange.current && settings.projection === ProjectionMode.Paths ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange.current[0] && p.timeSeriesIndex < hoverRange.current[1]).map(p => p.coords) : [],
+            hoverPoint: !brushActiveRef.current && hoverPoint.current ? [hoverPoint.current.coords] : [],
+            triangles: brushActiveRef.current ? trianRef.current : [],
+            mouse: brushActiveRef.current && mouse_state.current !== null ? mousePolygon(...mouse_state.current, radius_ref.current) : []
         }).call(projectionChart)
     };
 
@@ -448,22 +593,76 @@ export default function ThreeCharts(
                 }}
             ></div>}
         </div>}
-        {active_charts.projection && <div className="relative rounded-xl shadow-lg text-center">
-            <p>Point cloud of the time series. By hovering a point, the path may be inspected and by clicking it, the
-                path is saved as a reference window.</p>
-            <div
-                id={projectionId}
-                style={{
-                    width: "100%",
-                    height: 500
-                }}
-            ></div>
-            <div
-                onClick={() => setBrushMode(!brushMode)}
-                className={`absolute top-3 left-3 ${brushMode ? 'bg-indigo-700 text-white' : 'bg-white text-black'}  rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl`}
-            >
-                <PaintBrushIcon className="w-5 h-5" />
-            </div>
-        </div>}
+        {active_charts.projection &&
+            <div className="relative rounded-xl shadow-lg text-center w-full flex flex-row justify-center">
+                <div
+                    id={projectionId}
+                    style={{
+                        width: 500,
+                        height: 500
+                    }}
+                ></div>
+                <div className="flex flex-col justify-start">
+                    <div className="flex flex-row flex-nowrap justify-start items-center gap-3">
+                        <MouseButtonLeft className="w-5 h-5"/>
+                        <span>Brush: Select points</span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap justify-start items-center gap-3">
+                        <MouseButtonRight className="w-5 h-5"/>
+                        <span>Brush: Deselect points</span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap justify-start items-center gap-3">
+                        <MouseScroll className="w-5 h-5"/>
+                        <span>Zoom</span>
+                    </div>
+                    <div className="flex flex-row flex-nowrap justify-start items-center gap-3">
+                        <div className="flex flex-row flex-nowrap justify-start items-center gap-1">
+                            <MouseButtonLeft className="w-5 h-5"/>
+                            <span>+</span>
+                            <VaadinShift className="w-7 h-5"/>
+                        </div>
+                        <span>Move point cloud</span>
+                    </div>
+                </div>
+                <div
+                    onClick={() => {
+                        setTimeSeriesPathActive(!timeSeriesPathActive);
+                        setBrushActive(false)
+                    }}
+                    className={`absolute top-3 left-3 ${timeSeriesPathActive ? 'bg-indigo-700 text-white' : 'bg-white text-black'} w-10 h-10 rounded-full shadow-lg flex justify-center items-center transition hover:shadow-xl`}
+                >
+                    <TimeSeriesPathIcon className="w-8 h-8" color={timeSeriesPathActive ? "white" : "black"}/>
+                </div>
+                <div
+                    onClick={() => {
+                        setTimeSeriesPathActive(false);
+                        setBrushActive(!brushActive);
+                    }}
+                    className={`absolute top-14 left-3 ${brushActive ? 'bg-indigo-700 text-white' : 'bg-white text-black'} w-10 h-10 rounded-full shadow-lg flex justify-center items-center transition hover:shadow-xl`}
+                >
+                    <PaintBrushIcon className="w-5 h-5"/>
+                </div>
+                {brushActive && <div className={`absolute top-14 left-14 flex flex-row gap-1`}>
+                    <div onClick={() => resetBrush()}
+                         className=" w-10 h-10 rounded-full shadow-lg flex justify-center items-center transition hover:shadow-xl hover:text-white hover:bg-red-500">
+                        <TrashIcon className="w-5 h-5"/>
+                    </div>
+                    <div onClick={() => setSelectedRadius(0.01)}
+                         className={`w-10 h-10 rounded-full shadow-lg flex justify-center items-center ${selectedRadius === 0.01 ? "bg-indigo-500" : "bg-white"} transition hover:shadow-xl hover:bg-indigo-500 group`}>
+                        <div
+                            className={`w-3 h-3 rounded-full ${selectedRadius === 0.01 ? "bg-white" : "bg-black/90"} transition group-hover:bg-white`}/>
+                    </div>
+                    <div onClick={() => setSelectedRadius(0.02)}
+                         className={`w-10 h-10 rounded-full shadow-lg flex justify-center items-center ${selectedRadius === 0.02 ? "bg-indigo-500" : "bg-white"} transition hover:shadow-xl hover:bg-indigo-500 group`}>
+                        <div
+                            className={`w-4 h-4 rounded-full ${selectedRadius === 0.02 ? "bg-white" : "bg-black/90"} transition group-hover:bg-white`}/>
+                    </div>
+                    <div onClick={() => setSelectedRadius(0.03)}
+                         className={`w-10 h-10 rounded-full shadow-lg flex justify-center items-center ${selectedRadius === 0.03 ? "bg-indigo-500" : "bg-white"} transition hover:shadow-xl hover:bg-indigo-500 group`}>
+                        <div
+                            className={`w-5 h-5 rounded-full ${selectedRadius === 0.03 ? "bg-white" : "bg-black/90"} transition group-hover:bg-white`}/>
+                    </div>
+                </div>}
+            </div>}
     </div>
 }

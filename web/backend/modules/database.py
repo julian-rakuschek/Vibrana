@@ -4,6 +4,7 @@ from pathlib import Path
 
 import flask
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 db_app = flask.Blueprint("db", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
@@ -38,6 +39,8 @@ def flask_get_projection(machine, sampleId):
     if not os.path.exists(sample_path):
         return "Sample not found", 404
     values: np.ndarray = np.load(os.path.join(sample_path, "projected.npy"))
+    values = MinMaxScaler().fit_transform(values)
+    values = StandardScaler(with_std=False).fit_transform(values)
     return values.tolist()
 
 

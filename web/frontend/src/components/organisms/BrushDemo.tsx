@@ -7,54 +7,8 @@ import earcut from 'earcut';
 import {distToNormalSegment, distToSegment} from "lib/util";
 import {distancePairToLine, distancePairToOrthogonalLine, euclidean, polygonIntersects} from "lib/geometryUtil";
 import RBush from 'rbush';
+import {getCirlcePoints, mousePolygon, DemoRBush, polyToEarcut, polyToTriangles} from "lib/brushHelper";
 
-type Earcut = {
-    vertices: number[],
-    hole_indices: number[]
-}
-
-class MyRBush extends RBush {
-    toBBox([x, y]) {
-        return {minX: x, minY: y, maxX: x, maxY: y};
-    }
-
-    compareMinX(a, b) {
-        return a.x - b.x;
-    }
-
-    compareMinY(a, b) {
-        return a.y - b.y;
-    }
-}
-
-const getCirlcePoints = (coords: [number, number], radius: number, n: number): Polygon => {
-    const points: Pair[] = []
-    for (let i = 0; i < n; i++) {
-        const x = Math.cos(i / n * Math.PI * 2) * radius + coords[0];
-        const y = Math.sin(i / n * Math.PI * 2) * radius + coords[1];
-        points.push([x, y])
-    }
-    points.push([points[0][0], points[0][1]])
-    return [points];
-}
-
-
-const polyToEarcut = (poly: Polygon): Earcut => {
-    const flat: number[] = poly.flat(Infinity) as number[];
-    const lenghts = poly.map(ring => ring.length);
-    const indices = lenghts.map(((sum: number) => (value: number) => sum += value)(0));
-    indices.pop()
-    return {
-        vertices: flat,
-        hole_indices: indices
-    }
-}
-
-const mousePolygon = (x: number, y: number, button: number, radius: number): number[][][] => {
-    const points = getCirlcePoints([x, y], radius, 20);
-    const triang = polyToTriangles(points);
-    return triang.map(t => t.map(p => [...p, button]))
-}
 
 // const transformTriangulation = (triangulation: number[], poly: Polygon): Triangle[] => {
 // }
@@ -86,26 +40,6 @@ const example_cut = (): Ring[] => {
     return polys
 }
 
-const polyToTriangles = (poly: Polygon): number[][][] => {
-    const flatToTriangles = (arr: number[]) => {
-        const polyFlat = poly.flat(1)
-        const result = [];
-        for (let i = 0; i < arr.length; i += 3) {
-            result.push([
-                polyFlat[arr[i]],
-                polyFlat[arr[i + 1]],
-                polyFlat[arr[i + 2]],
-                polyFlat[arr[i]]
-            ]);
-        }
-        return result;
-    };
-
-
-    const t = polyToEarcut(poly)
-    const tria = earcut(t.vertices, t.hole_indices)
-    return flatToTriangles(tria)
-}
 
 const ninja_cut = (poly: Polygon): Ring[] => {
     const res: Ring[] = []
@@ -196,8 +130,8 @@ export default function BrushDemo(): ReactElement {
     const selected_indices = useRef<Set<number>>(new Set())
 
     const fillColors = ["navy", "lightgreen", "red"]
-    const random_scatter = useMemo(() => [...Array(1000).keys()].map(i => [Math.random(), Math.random(), i]), [])
-    const rtree = new MyRBush()
+    const random_scatter: [number, number, number][] = useMemo(() => [...Array(1000).keys()].map(i => [Math.random(), Math.random(), i]), [])
+    const rtree = new DemoRBush()
     rtree.load(random_scatter)
     const res = rtree.search({
         minX: 0.2,
@@ -214,21 +148,13 @@ export default function BrushDemo(): ReactElement {
         render()
     }, []);
 
-    function findPoints(x: number, y: number, radius: number) {
-        const init_res = rtree.search({
-            minX: x - radius,
-            minY: y - radius,
-            maxX: x + radius,
-            maxY: y + radius
-        })
-        return init_res.filter(p => euclidean({x: p[0], y: p[1]}, {x, y}) < radius)
-    }
+
 
     function handleBrush(x: number, y: number, button: number) {
         const points: MultiPolygon = [getCirlcePoints([x, y], radius_ref.current, 20)]
         if (polyRef.current === null) polyRef.current = points;
         else polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points) : polygonClipping.difference(polyRef.current, points);
-        const scatterPoints = new Set(findPoints(x, y, radius_ref.current).map(p => p[2]));
+        const scatterPoints = new Set(rtree.find(x, y, radius_ref.current).map(p => p[2]));
         selected_indices.current = button === 1 ?
             new Set([...selected_indices.current, ...scatterPoints]) :
             new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));
@@ -245,7 +171,7 @@ export default function BrushDemo(): ReactElement {
                 current[1] += step_vector[1]
                 const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, radius_ref.current, 20)]
                 polyRef.current = button === 1 ? polygonClipping.union(polyRef.current, points_fill) : polygonClipping.difference(polyRef.current, points_fill)
-                const scatterPoints = new Set(findPoints(...current, radius_ref.current).map(p => p[2]));
+                const scatterPoints = new Set(rtree.find(current[0], current[1], radius_ref.current).map(p => p[2]));
         selected_indices.current = button === 1 ?
             new Set([...selected_indices.current, ...scatterPoints]) :
             new Set([...selected_indices.current].filter(x => !scatterPoints.has(x)));

@@ -3,7 +3,11 @@ import {useClusteredProjection, useLabels, useSampleProjected, useSampleValues} 
 import ThreeCharts from "components/organisms/ThreeCharts";
 import {ProjectionMode, ThreeChartsSettingsType} from "../../types";
 
-export default function ThreeChartsWrapper({machineId, sampleId, settings}: {machineId: string; sampleId: string; settings: ThreeChartsSettingsType}): ReactElement {
+export default function ThreeChartsWrapper({machineId, sampleId, settings}: {
+    machineId: string;
+    sampleId: string;
+    settings: ThreeChartsSettingsType
+}): ReactElement {
     const timeseries = useSampleValues(machineId, sampleId);
     const projected = useSampleProjected(machineId, sampleId);
     const clustered = useClusteredProjection(machineId, sampleId, settings.window_size);
@@ -12,13 +16,16 @@ export default function ThreeChartsWrapper({machineId, sampleId, settings}: {mac
 
     useEffect(() => {
         setChartKey(chartKey + 1);
-    }, [timeseries, projected, clustered, settings]);
+    }, [settings]);
 
     return <>
         {timeseries.length > 0 && projected.length > 0 && clustered.length > 0 &&
-            <ThreeCharts key={chartKey}
+            <ThreeCharts
+                key={chartKey}
                 sampleId={sampleId} machineId={machineId} timeseries={timeseries}
-                labels={labels} projected={settings.projection === ProjectionMode.Paths ? projected : clustered} settings={settings}
+                labels={labels}
+                projected={settings.projection === ProjectionMode.Paths ? projected : clustered}
+                settings={settings}
             />
         }
     </>
