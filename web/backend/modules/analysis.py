@@ -5,11 +5,13 @@ import random
 
 import flask
 import numpy as np
+import stumpy
 from numpy.lib.stride_tricks import sliding_window_view
 from scipy.spatial import distance
 from sklearn.manifold import MDS
 
 from algorithms.lmds import landmark_MDS
+from web.backend.modules.database import get_db
 
 analysis_app = flask.Blueprint("analysis", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
@@ -61,3 +63,22 @@ def flask_get_clustering2(machine, sampleId):
     xl_2 = landmark_MDS(Dl2, lands, 2)
     return xl_2.tolist()
 
+@analysis_app.get("<machine>/<sampleId>/distances")
+def flask_get_distances(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    labels = list(get_db()["labels"].find({"machine": machine}))
+    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
+    distances = []
+    for label in labels:
+        d = stumpy.mass(values[label["from"]:label["to"]], values, normalize=False)
+        d[d < 10] = np.mean(d)
+        distances.append(d)
+    if not distances:
+        return []
+    distances = np.max(np.array(distances), axis=0)
+    print(np.array(distances))
+    return distances.tolist()

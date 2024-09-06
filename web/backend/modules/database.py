@@ -4,10 +4,22 @@ from pathlib import Path
 
 import flask
 import numpy as np
+import pymongo
+from bson import ObjectId, json_util
+from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 db_app = flask.Blueprint("db", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
+
+def serialize_mongodb(output):
+    temp = json.dumps(output, default=json_util.default)
+    return json.loads(temp)
+
+def get_db() -> Database:
+    conn = pymongo.MongoClient("mongodb://localhost:27017/")
+    db: Database = conn["Vibrana"]
+    return db
 
 @db_app.get("machines")
 def flask_get_machines_list():
@@ -54,49 +66,48 @@ def flask_get_sample_thumb(machine, sampleId):
     return flask.send_file(os.path.join(sample_path, "preview.png"), mimetype='image/png')
 
 
-# WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
-# Might switch to proper database in the future, but for prototype this is fine
-@db_app.get("<machine>/labels/<sampleId>")
+@db_app.get("labels/<machine>/<sampleId>")
 def flask_get_labels(machine, sampleId):
-    with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
-        labels_json = json.load(f)
-    machine_json = labels_json.get(machine, {})
-    sample_labels_json = machine_json.get(sampleId, [])
-    return sample_labels_json
+    res = list(get_db()["labels"].find({"machine": machine, "sampleId": sampleId}))
+    return serialize_mongodb(res)
 
 
-# WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
-# Might switch to proper database in the future, but for prototype this is fine
-@db_app.post("<machine>/labels/<sampleId>")
-def flask_add_label(machine, sampleId):
+@db_app.post("labels")
+def flask_add_label():
     data = flask.request.get_json()
-    print("Add", data)
-    with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
-        json_file = json.load(f)
-    if machine not in json_file:
-        json_file[machine] = {}
-    if sampleId not in json_file[machine]:
-        json_file[machine][sampleId] = []
-    json_file[machine][sampleId].append(data)
-    with open(os.path.join(Path(__file__).parent, "labels.json"), "w") as f:
-        f.write(json.dumps(json_file, indent=4))
+    db = get_db()["labels"]
+    print(data)
+    res = list(db.find({
+        "machine": data["machine"],
+        "sampleId": data["sampleId"],
+        "$or": [
+            {"$and": [
+                {"from": {"$gt": data["from"]}},
+                {"from": {"$lt": data["to"]}},
+            ]},
+            {"$and": [
+                {"to": {"$gt": data["from"]}},
+                {"to": {"$lt": data["to"]}},
+            ]}
+        ],
+    }))
+    for item in res:
+        db.delete_one({"_id": item["_id"]})
+
+    data["from"] = min([*res, data], key=lambda x: x['from'])["from"]
+    data["to"] = max([*res, data], key=lambda x: x['to'])["to"]
+    print(data)
+    db.insert_one(data)
     return "OK", 200
 
 
-# WARNING: NOT THREAD SAFE!!! This will break if multiple users use the application at the same time
-# Might switch to proper database in the future, but for prototype this is fine
-@db_app.delete("<machine>/labels/<sampleId>")
-def flask_delete_label(machine, sampleId):
-    data = flask.request.get_json()
-    index = int(data["index"])
-    print("Delete", data)
-    with open(os.path.join(Path(__file__).parent, "labels.json"), "r") as f:
-        json_file = json.load(f)
-    if machine not in json_file:
-        json_file[machine] = {}
-    if sampleId not in json_file[machine]:
-        json_file[machine][sampleId] = []
-    json_file[machine][sampleId] = [item for item in json_file[machine][sampleId] if index < item["from"] or item["to"] < index]
-    with open(os.path.join(Path(__file__).parent, "labels.json"), "w") as f:
-        f.write(json.dumps(json_file, indent=4))
+@db_app.delete("labels/byId/<labelId>")
+def flask_delete_label(labelId):
+    get_db()["labels"].delete_one({"_id": ObjectId(labelId)})
+    return "OK", 200
+
+@db_app.delete("labels/byPosition/<pos>")
+def flask_delete_label_by_pos(pos):
+    pos = int(pos)
+    get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}]})
     return "OK", 200

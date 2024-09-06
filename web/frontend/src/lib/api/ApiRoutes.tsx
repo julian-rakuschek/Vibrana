@@ -1,5 +1,5 @@
 import {ApiRoute} from "lib/api/ApiRoute";
-import {Annotation} from "../../types";
+import {Annotation, Label, LabelBase} from "../../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -14,9 +14,10 @@ export const dbRoutes = {
   getMachineSamples: new ApiRoute<undefined, {machine: string}, undefined, string[]>("GET", "/db/:machine/samples"),
   getSampleValues: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[]>("GET", "/db/:machine/samples/:sampleId/values"),
   getSampleProjected: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machine/samples/:sampleId/projected"),
-  getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Annotation[]>("GET", "/db/:machineId/labels/:sampleId"),
-  addLabel: new ApiRoute<Annotation, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/:machineId/labels/:sampleId"),
-  deleteLabel: new ApiRoute<{index: number}, {machineId: string; sampleId: string}, undefined, undefined>("DELETE", "/db/:machineId/labels/:sampleId"),
+  getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Label[]>("GET", "/db/labels/:machineId/:sampleId"),
+  addLabel: new ApiRoute<LabelBase, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/labels"),
+  deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
+  deleteLabelByPos: new ApiRoute<undefined, {pos: string | number}, undefined, undefined>("DELETE", "/db/labels/byPosition/:pos"),
 };
 
 export const analysisRoutes = {

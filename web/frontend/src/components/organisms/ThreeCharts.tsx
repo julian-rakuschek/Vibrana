@@ -4,7 +4,7 @@ import * as fc from "d3fc";
 import betterPointer from "lib/betterPointer"
 import {addAlphaToRGB, webglColor} from "lib/colorHelper";
 import {
-    Annotation,
+    Annotation, Label,
     ProjectedPoint,
     ProjectionMode,
     ThreeChartsSettingsType,
@@ -23,7 +23,7 @@ import {mergeIntervals} from "lib/util";
 type props = {
     timeseries: number[];
     projected: number[][];
-    labels: Annotation[];
+    labels: Label[];
     sampleId: string;
     machineId: string;
     settings: ThreeChartsSettingsType;
@@ -250,7 +250,18 @@ export default function ThreeCharts(
     // ----------------------------------------------
     // DATA FUNCTIONS
 
-    const timeseriesLine = fc.seriesWebglLine().equals((previousData, currentData) => previousData === currentData).crossValue((d: TimeSeriesPoint) => d.x).mainValue((d: TimeSeriesPoint) => d.y);
+    const timeseriesLine = fc
+        .seriesWebglLine()
+        .equals((previousData, currentData) => previousData === currentData)
+        .crossValue((d: TimeSeriesPoint) => d.x)
+        .mainValue((d: TimeSeriesPoint) => d.y)
+        .decorate((program) => fc
+            .webglStrokeColor()
+            .value((d: TimeSeriesPoint) => {
+                const col = d3.interpolateTurbo(radius_colors[d.x])
+                return webglColor(col, 1)
+            })
+            .data(timeseriesIndexed)(program));
 
     const scatterplot = fc
         .seriesWebglPoint()
@@ -326,12 +337,19 @@ export default function ThreeCharts(
             Math.floor(Math.min(timeseries.length - 1, x + windowSizeRef.current / 2))
         ]
         if (modeRef.current === "add") {
-            await ApiRoutes.addLabel.fetch({data: {from: selected[0], to: selected[1]}, params: {sampleId, machineId}})
+            await ApiRoutes.addLabel.fetch({
+                data: {
+                    from: selected[0],
+                    to: selected[1],
+                    sampleId: sampleId,
+                    machine: machineId
+                }
+            })
         }
         if (modeRef.current === "delete") {
-            await ApiRoutes.deleteLabel.fetch({data: {index: x}, params: {sampleId, machineId}})
+            await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x)}})
         }
-        await queryClient.invalidateQueries({queryKey: [`/db/${machineId}/labels/${sampleId}`]});
+        await queryClient.invalidateQueries({queryKey: [`/db/labels/${machineId}/${sampleId}`]});
     });
 
     const selectorBrushWindowSize = fc.brushX().on('brush', (e: { selection: number[] }) => {
@@ -558,7 +576,9 @@ export default function ThreeCharts(
         {active_charts.navigator && <div className="rounded-xl shadow-lg text-center">
             <p>
                 Click and drag over the time series to select a subset of the data.
-                (<span className="cursor-default text-indigo-500 border-b-2 border-indigo-500 border-dotted hover:text-indigo-700 hover:border-indigo-700" onClick={() => resetRange()}>Reset</span>)
+                (<span
+                className="cursor-default text-indigo-500 border-b-2 border-indigo-500 border-dotted hover:text-indigo-700 hover:border-indigo-700"
+                onClick={() => resetRange()}>Reset</span>)
             </p>
             <div
                 id={navigatorId}

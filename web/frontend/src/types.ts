@@ -7,6 +7,10 @@ export type Diff<T, U> = T extends U ? never : T;
 export type Successful<T> = Diff<T, { success: false }>;
 export type Failed<T> = Diff<T, { success: true }>;
 
+export type ObjectId = {
+  $oid: string;
+};
+
 export enum ToastType {
   Info = "Info",
   Success = "Success",
@@ -44,6 +48,15 @@ export type Annotation = {
     from: number;
     to: number;
     color?: string | number;
+}
+
+export type LabelBase = Annotation & {
+    machine: string;
+    sampleId: string;
+}
+
+export type Label = LabelBase & {
+    _id: ObjectId;
 }
 
 export type Point = {

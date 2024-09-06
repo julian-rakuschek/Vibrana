@@ -7,7 +7,7 @@ export default function Home(): ReactElement {
     <DefaultPageWithBoundaries showHeader>
         <div className="grow flex flex-col items-center justify-center">
             <img width={400} alt="" src="/vibrava.png"></img>
-            <p className="text-[#1c2934] text-6xl font-bold">Vibrava</p>
+            <p className="text-[#1c2934] text-6xl font-bold">Vibrana</p>
             <p className="text-[#1c2934] text-xl">Analyze and Annotate Vibration Signals Easily</p>
         </div>
     </DefaultPageWithBoundaries>

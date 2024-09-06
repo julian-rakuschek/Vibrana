@@ -17,7 +17,7 @@ export default function Navbar({ headerText, darkMode = false }: { headerText?: 
         <div className="flex lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5 flex flex-row flex-nowrap gap-4 items-center">
             <img width={50} alt="" src="/vibrava.png"></img>
-            <span className={`${(darkMode) ? "text-white" : "text-black"} font-bold text-2xl`}>Vibrava</span>
+            <span className={`${(darkMode) ? "text-white" : "text-black"} font-bold text-2xl`}>Vibrana</span>
           </Link>
         </div>
         <div className="flex lg:hidden">

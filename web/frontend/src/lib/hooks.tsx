@@ -1,6 +1,6 @@
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryFetch} from "lib/api/api";
-import {Annotation} from "../types";
+import {Annotation, Label} from "../types";
 
 export const useMachines = (): string[] => {
   const data = useQueryFetch(ApiRoutes.getMachinesList);
@@ -27,7 +27,7 @@ export const useClusteredProjection = (machine: string, sampleId: string, window
   return data ?? [];
 }
 
-export const useLabels = (machineId: string, sampleId: string): Annotation[] => {
+export const useLabels = (machineId: string, sampleId: string): Label[] => {
   const data = useQueryFetch(ApiRoutes.getLabels, {params: {sampleId, machineId}});
   return data ?? [];
 }
