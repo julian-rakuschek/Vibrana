@@ -19,6 +19,7 @@ import {DemoRBush, getCirlcePoints, mousePolygon, polyToTriangles, ProjectedTime
 import polygonClipping, {MultiPolygon, Pair} from "polygon-clipping";
 import {MouseButtonLeft, MouseButtonRight, MouseScroll, VaadinShift} from "components/atoms/MouseKeyboardIcons";
 import {mergeIntervals} from "lib/util";
+import * as events from "node:events";
 
 type props = {
     timeseries: number[];
@@ -28,6 +29,7 @@ type props = {
     machineId: string;
     settings: ThreeChartsSettingsType;
     key: string | number;
+    events: number[];
 }
 
 const projectionPadding = 0.1;
@@ -75,6 +77,7 @@ export default function ThreeCharts(
         machineId,
         sampleId,
         settings,
+        events,
         key
     }: props): ReactElement {
     const navigatorId = `${machineId}-${sampleId}-nav`
@@ -152,7 +155,7 @@ export default function ThreeCharts(
         labelRef.current = labels
         settingsRef.current = settings
         renderAll();
-    }, [timeseries, projected, mode, labels, settings]);
+    }, [timeseries, projected, mode, labels, settings, events]);
 
     useEffect(() => {
         quadtree.current = compute_quadtree(projectedIndexed, filterRangeIndexed.current)
@@ -419,6 +422,29 @@ export default function ThreeCharts(
     // ----------------------------------------------
     // ANNOTATIONS
 
+    const eventMarkerNavigator = fc
+        .annotationSvgLine()
+        .orient('vertical')
+        .label('')
+        .xScale(xScaleNavigator)
+        .yScale(yScaleNavigator)
+        .decorate(se => {
+        se.selectAll('line')
+            .style('stroke', 'rgba(255, 0, 0, 0.4)')  // Red color
+            .style('stroke-width', '3px');          // Heavier stroke
+    });
+
+    const eventMarkerSelector = fc
+        .annotationSvgLine()
+        .orient('vertical')
+        .label('')
+        .xScale(xScaleSelector)
+        .yScale(yScaleSelector).decorate(se => {
+        se.selectAll('line')
+            .style('stroke', 'rgba(255, 0, 0, 0.4)')  // Red color
+            .style('stroke-width', '3px');          // Heavier stroke
+    });
+
     const savedSelectionAnnotations = fc
         .annotationSvgBand()
         .orient('vertical')
@@ -456,7 +482,7 @@ export default function ThreeCharts(
     const navigatorChart = fc
         .chartCartesian(xScaleNavigator, yScaleNavigator)
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
-        .svgPlotArea(fc.seriesSvgMulti().series([savedSelectionAnnotations, brushNavigator, brushedSelectionAnnotations]).mapping((data, index, series) => {
+        .svgPlotArea(fc.seriesSvgMulti().series([savedSelectionAnnotations, brushNavigator, brushedSelectionAnnotations, eventMarkerNavigator]).mapping((data, index, series) => {
             switch (series[index]) {
                 case savedSelectionAnnotations:
                     return data.selected;
@@ -464,6 +490,8 @@ export default function ThreeCharts(
                     return filterRangePercent.current;
                 case brushedSelectionAnnotations:
                     return data.brushed;
+                case eventMarkerNavigator:
+                    return data.events
             }
         }));
 
@@ -477,7 +505,7 @@ export default function ThreeCharts(
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
         .svgPlotArea(
             fc.seriesSvgMulti()
-                .series([savedSelectionAnnotations, selectorHoverBand, brushedSelectionAnnotations])
+                .series([savedSelectionAnnotations, selectorHoverBand, brushedSelectionAnnotations, eventMarkerSelector])
                 .mapping((data, index, series) => {
                     switch (series[index]) {
                         case savedSelectionAnnotations:
@@ -486,6 +514,8 @@ export default function ThreeCharts(
                             return data.hover;
                         case brushedSelectionAnnotations:
                             return data.brushed;
+                        case eventMarkerSelector:
+                            return data.events
                     }
                 })
         )
@@ -528,7 +558,8 @@ export default function ThreeCharts(
         d3.select(`#${navigatorId}`).datum({
             data: timeseriesIndexed,
             selected: labelRef.current,
-            brushed: selectedToColoredIntervals(Array.from(selected_indices.current))
+            brushed: selectedToColoredIntervals(Array.from(selected_indices.current)),
+            events: events
         }).call(navigatorChart)
     };
 
@@ -540,7 +571,8 @@ export default function ThreeCharts(
                 from: hoverRange.current ? hoverRange.current[0] : 0,
                 to: hoverRange.current ? hoverRange.current[1] : 0
             }],
-            brushed: selectedToColoredIntervals(Array.from(selected_indices.current))
+            brushed: selectedToColoredIntervals(Array.from(selected_indices.current)),
+            events: events
         }).call(selectorChart)
     };
 
@@ -548,6 +580,7 @@ export default function ThreeCharts(
         d3.select(`#${windowId}`).datum({
             data: timeseriesIndexed,
             windowSelection: selectorBrushRangeWindowSize.current,
+            events: events
         }).call(windowSizeChart)
     };
 

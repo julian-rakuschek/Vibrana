@@ -1,7 +1,8 @@
 import {ReactElement, useEffect, useState} from "react";
-import {useClusteredProjection, useLabels, useSampleProjected, useSampleValues} from "lib/hooks";
+import {useClusteredProjection, useLabels, useSampleEvents, useSampleProjected, useSampleValues} from "lib/hooks";
 import ThreeCharts from "components/organisms/ThreeCharts";
 import {ProjectionMode, ThreeChartsSettingsType} from "../../types";
+import ThreeChartsOptimized from "components/organisms/ThreeChartsOptimized";
 
 export default function ThreeChartsWrapper({machineId, sampleId, settings}: {
     machineId: string;
@@ -12,6 +13,8 @@ export default function ThreeChartsWrapper({machineId, sampleId, settings}: {
     const projected = useSampleProjected(machineId, sampleId);
     const clustered = useClusteredProjection(machineId, sampleId, settings.window_size);
     const labels = useLabels(machineId, sampleId);
+    const events = useSampleEvents(machineId, sampleId)
+    console.log(events)
     const [chartKey, setChartKey] = useState(0);
 
     useEffect(() => {
@@ -26,6 +29,7 @@ export default function ThreeChartsWrapper({machineId, sampleId, settings}: {
                 labels={labels}
                 projected={settings.projection === ProjectionMode.Paths ? projected : clustered}
                 settings={settings}
+                events={events}
             />
         }
     </>

@@ -8,6 +8,8 @@ import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.decomposition import PCA
 
+from util import find_nearest
+
 
 def save_preview_image(data, save_path):
     plt.clf()
@@ -24,13 +26,19 @@ def save_preview_image(data, save_path):
 
 # folder = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt"
 folder = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62"
+target = "dummy2"
 base_path = os.path.join(Path(__file__).parents[1], "data", folder)
 folder_values = np.load(os.path.join(base_path, "values.npy"))
 folder_values = folder_values[80_000:950_000]
+folder_events = np.load(os.path.join(base_path, "event_timestamps.npy"))
+folder_timestamps = np.load(os.path.join(base_path, "timestamps.npy"))
+folder_timestamps = folder_timestamps[80_000:950_000]
+event_indices = [find_nearest(folder_timestamps, e) for e in folder_events]
 
-if os.path.exists("dummy2"):
-    shutil.rmtree("dummy2")
-os.mkdir("dummy2")
+
+if os.path.exists(target):
+    shutil.rmtree(target)
+os.mkdir(target)
 
 window_size = 100_000
 needle = 0
@@ -38,10 +46,13 @@ while needle < len(folder_values):
     name = str(needle // window_size).zfill(4)
     print(name)
     extracted = folder_values[needle:needle+window_size]
-    os.mkdir(os.path.join("dummy2", name))
-    np.save(os.path.join("dummy2", name, "values.npy"), extracted)
-    save_preview_image(extracted, os.path.join("dummy2", name, "preview.png"))
+    os.mkdir(os.path.join(target, name))
+    np.save(os.path.join(target, name, "values.npy"), extracted)
+    window_events = [e - needle for e in event_indices if needle <= e <= needle + window_size]
+    print(window_events)
+    np.save(os.path.join(target, name, "events.npy"), window_events)
+    save_preview_image(extracted, os.path.join(target, name, "preview.png"))
     windows = sliding_window_view(extracted, window_shape=2000)
     projected = PCA(n_components=2).fit_transform(windows)
-    np.save(os.path.join("dummy2", name, "projected.npy"), projected)
+    np.save(os.path.join(target, name, "projected.npy"), projected)
     needle += window_size

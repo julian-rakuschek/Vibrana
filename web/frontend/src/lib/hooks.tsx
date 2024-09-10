@@ -22,6 +22,11 @@ export const useSampleProjected = (machine: string, sampleId: string): number[][
   return data ?? [];
 };
 
+export const useSampleEvents = (machine: string, sampleId: string): number[] => {
+  const data = useQueryFetch(ApiRoutes.getSampleEvents, {params: {machine, sampleId}});
+  return data ?? [];
+};
+
 export const useClusteredProjection = (machine: string, sampleId: string, window_size: number): number[][] => {
   const data = useQueryFetch(ApiRoutes.getMDSEmbedding, {params: {machine, sampleId}, queryParams: {window_size}});
   return data ?? [];
