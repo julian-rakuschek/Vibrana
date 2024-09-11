@@ -12,18 +12,22 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 db_app = flask.Blueprint("db", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
+
 def serialize_mongodb(output):
     temp = json.dumps(output, default=json_util.default)
     return json.loads(temp)
+
 
 def get_db() -> Database:
     conn = pymongo.MongoClient("mongodb://localhost:27017/")
     db: Database = conn["Vibrana"]
     return db
 
+
 @db_app.get("machines")
 def flask_get_machines_list():
-    return ["dummy", "dummy2"]
+    return os.listdir(samples_folder)
+
 
 @db_app.get("<machine>/samples")
 def flask_get_samples(machine):
@@ -120,8 +124,38 @@ def flask_delete_label(labelId):
     get_db()["labels"].delete_one({"_id": ObjectId(labelId)})
     return "OK", 200
 
+
 @db_app.delete("labels/byPosition/<pos>")
 def flask_delete_label_by_pos(pos):
     pos = int(pos)
     get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}]})
     return "OK", 200
+
+
+@db_app.get("normals/<machine>")
+def flask_get_normals(machine):
+    machine_samples = get_db()["normals"].find_one({"machine": machine})
+    if not machine_samples:
+        return []
+    return machine_samples.get("samples", [])
+
+
+@db_app.post("normals/<machine>/<sampleId>")
+def flask_add_normal(machine, sampleId):
+    db = get_db()["normals"]
+    machine_samples = db.find_one({"machine": machine})
+    if not machine_samples:
+        db.insert_one({"machine": machine, "samples": [sampleId]})
+        return {"success": True}
+    db.update_one({"machine": machine}, {"$addToSet": {"samples": sampleId}})
+    return {"success": True}
+
+
+@db_app.delete("normals/<machine>/<sampleId>")
+def flask_delete_normal(machine, sampleId):
+    db = get_db()["normals"]
+    machine_samples = db.find_one({"machine": machine})
+    if not machine_samples:
+        return {"success": True}
+    db.update_one({"machine": machine}, {"$pull": {"samples": sampleId}})
+    return {"success": True}

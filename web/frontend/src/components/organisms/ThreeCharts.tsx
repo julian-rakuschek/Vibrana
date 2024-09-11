@@ -80,10 +80,10 @@ export default function ThreeCharts(
         events,
         key
     }: props): ReactElement {
-    const navigatorId = `${machineId}-${sampleId}-nav`
-    const selectorId = `${machineId}-${sampleId}-sel`
-    const windowId = `${machineId}-${sampleId}-win`
-    const projectionId = `${machineId}-${sampleId}-pro`
+    const navigatorId = `M${machineId}-${sampleId}-nav`
+    const selectorId = `M${machineId}-${sampleId}-sel`
+    const windowId = `M${machineId}-${sampleId}-win`
+    const projectionId = `M${machineId}-${sampleId}-pro`
 
     const timeseriesIndexed: TimeSeriesPoint[] = timeseries.map((d, index) => ({
         x: index,

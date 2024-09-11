@@ -1,5 +1,5 @@
 import {ApiRoute} from "lib/api/ApiRoute";
-import {Annotation, Label, LabelBase} from "../../types";
+import {Annotation, DefaultAppResponse, Label, LabelBase} from "../../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -19,6 +19,9 @@ export const dbRoutes = {
   addLabel: new ApiRoute<LabelBase, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
   deleteLabelByPos: new ApiRoute<undefined, {pos: string | number}, undefined, undefined>("DELETE", "/db/labels/byPosition/:pos"),
+  getNormals: new ApiRoute<undefined, { machineId: string }, undefined, string[]>("GET", "/db/normals/:machineId"),
+  addNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("POST", "/db/normals/:machineId/:sampleId"),
+  removeNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("DELETE", "/db/normals/:machineId/:sampleId"),
 };
 
 export const analysisRoutes = {

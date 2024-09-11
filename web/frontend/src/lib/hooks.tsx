@@ -37,3 +37,7 @@ export const useLabels = (machineId: string, sampleId: string): Label[] => {
   return data ?? [];
 }
 
+export const useNormals = (machineId: string): string[] => {
+  const data = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}});
+  return data ?? [];
+}

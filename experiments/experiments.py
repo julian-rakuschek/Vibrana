@@ -212,13 +212,13 @@ def cloud_with_trace(folder):
 
 def sim_search(folder):
     with open("labels.json") as f:
-        labels = json.load(f)["dummy"]
+        labels = json.load(f)["abnormal"]
     ex = Experiment(
         folder, name="distances", plot_rows=1
     )
     distances = []
     for sampleId in labels:
-        values = np.load(os.path.join(Path(__file__).parents[1], "data", "samples", "dummy", sampleId, "values.npy"))
+        values = np.load(os.path.join(Path(__file__).parents[1], "data", "samples", "abnormal", sampleId, "values.npy"))
         for window in labels[sampleId]:
             print(sampleId, window["from"], window["to"])
             d = stumpy.mass(values[window["from"]:window["to"]], ex.values, normalize=False)

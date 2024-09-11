@@ -16,21 +16,6 @@ from web.backend.modules.database import get_db
 analysis_app = flask.Blueprint("analysis", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
-def dicker_fisch():
-    path = "C:\\Users\\jrakusch\\Coding\\present-binder-use-case\\data\\samples\\dummy\\0001\\values.npy"
-    path2 = "C:\\Users\\jrakusch\\Coding\\present-binder-use-case\\data\\5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1 t pro h\\values.npy"
-    values = np.load(path2)
-    windows = sliding_window_view(values, window_shape=2000)
-    lands = random.sample(range(0, windows.shape[0], 1), 200)
-    lands = np.array(lands, dtype=int)
-    Dl2 = distance.cdist(windows[lands, :], windows, 'euclidean')
-    xl_2 = landmark_MDS(Dl2, lands, 2)
-
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 3), facecolor="white", constrained_layout=True)
-    fig.set_size_inches((20, 20))
-    plot_2d(ax, xl_2, None, "LMDS")
-    plt.show()
-
 
 @analysis_app.get("<machine>/<sampleId>/clustering_old")
 def flask_get_clustering(machine, sampleId):
@@ -46,6 +31,7 @@ def flask_get_clustering(machine, sampleId):
     distances = [[np.linalg.norm(ffts[i] - ffts[j]) for j in range(len(windows))] for i in range(len(windows))]
     embedding: np.ndarray = MDS(dissimilarity="precomputed").fit_transform(distances)
     return embedding.tolist()
+
 
 @analysis_app.get("<machine>/<sampleId>/clustering")
 def flask_get_clustering2(machine, sampleId):
@@ -63,8 +49,9 @@ def flask_get_clustering2(machine, sampleId):
     xl_2 = landmark_MDS(Dl2, lands, 2)
     return xl_2.tolist()
 
-@analysis_app.get("<machine>/<sampleId>/distances")
-def flask_get_distances(machine, sampleId):
+
+@analysis_app.get("<machine>/<sampleId>/similarities")
+def flask_get_similarities(machine, sampleId):
     if not os.path.exists(os.path.join(samples_folder, machine)):
         return "Machine not found", 404
     sample_path = os.path.join(samples_folder, machine, sampleId)
@@ -72,13 +59,13 @@ def flask_get_distances(machine, sampleId):
         return "Sample not found", 404
     labels = list(get_db()["labels"].find({"machine": machine}))
     values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    distances = []
+    similarities = []
     for label in labels:
         d = stumpy.mass(values[label["from"]:label["to"]], values, normalize=False)
         d[d < 10] = np.mean(d)
-        distances.append(d)
-    if not distances:
+        similarities.append(d)
+    if not similarities:
         return []
-    distances = np.max(np.array(distances), axis=0)
-    print(np.array(distances))
-    return distances.tolist()
+    similarities = np.max(np.array(similarities), axis=0)
+    print(np.array(similarities))
+    return similarities.tolist()
