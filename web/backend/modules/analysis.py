@@ -11,7 +11,7 @@ from scipy.spatial import distance
 from sklearn.manifold import MDS
 
 from algorithms.lmds import landmark_MDS
-from web.backend.modules.database import get_db
+from web.backend.modules.database import get_db, flask_get_normals
 
 analysis_app = flask.Blueprint("analysis", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
@@ -69,3 +69,18 @@ def flask_get_similarities(machine, sampleId):
     similarities = np.max(np.array(similarities), axis=0)
     print(np.array(similarities))
     return similarities.tolist()
+
+
+@analysis_app.get("<machine>/normal_band")
+def flask_get_normal_tube(machine):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    normals = flask_get_normals(machine)
+    normal_min, normal_max = [], []
+    for normal in normals:
+        similarities = flask_get_similarities(machine, normal)
+        normal_min.append(np.min(similarities))
+        normal_max.append(np.max(similarities))
+    normal_min = np.mean(normal_min)
+    normal_max = np.mean(normal_max)
+    return [normal_min, normal_max]

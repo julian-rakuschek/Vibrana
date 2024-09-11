@@ -14,9 +14,9 @@ export default function MachinePage(): ReactElement {
                 <div className="w-full flex flex-row flex-nowrap justify-between px-5">
                     <span className="text-xl font-semibold">Samples</span>
                     <div onClick={() => setSelectModeActive(!selectModeActive)}
-                         className={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-2 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}
+                         className={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-1 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}
                     >
-                        {!selectModeActive ? "Enter Selection Mode" : "Exit Selection Mode"}
+                        {!selectModeActive ? "Select Anomaly-Free Samples" : "Exit Selection Mode"}
                     </div>
                 </div>
                 {machineID && <SamplesList machine={machineID} selectModeActive={selectModeActive} />}

@@ -39,3 +39,11 @@ export function mergeIntervals(intervals: Annotation[]): Annotation[] {
 
   return merged;
 }
+
+export function padArray<T>(arr: T[], n: number): T[] {
+    const firstElement = arr[0];
+    const lastElement = arr[arr.length - 1];
+    const frontPadding = Array(Math.floor(n / 2)).fill(firstElement);
+    const backPadding = Array(Math.ceil(n / 2)).fill(lastElement);
+    return [...frontPadding, ...arr, ...backPadding];
+}

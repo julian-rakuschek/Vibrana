@@ -30,6 +30,8 @@ type props = {
     settings: ThreeChartsSettingsType;
     key: string | number;
     events: number[];
+    colors_ts: string[];
+    colors_projected: string[];
 }
 
 const projectionPadding = 0.1;
@@ -78,6 +80,8 @@ export default function ThreeCharts(
         sampleId,
         settings,
         events,
+        colors_ts,
+        colors_projected,
         key
     }: props): ReactElement {
     const navigatorId = `M${machineId}-${sampleId}-nav`
@@ -261,7 +265,7 @@ export default function ThreeCharts(
         .decorate((program) => fc
             .webglStrokeColor()
             .value((d: TimeSeriesPoint) => {
-                const col = d3.interpolateTurbo(radius_colors[d.x])
+                const col = colors_ts[d.x]
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -275,7 +279,7 @@ export default function ThreeCharts(
         .decorate((program) => fc
             .webglFillColor()
             .value((d: ProjectedPoint) => {
-                const col = d3.interpolateTurbo(radius_colors[d.projectedIndex])
+                const col = colors_projected[d.projectedIndex]
                 if (!filterRangeIndexed.current) return webglColor(col, 1)
                 return webglColor(
                     d.timeSeriesIndex > filterRangeIndexed.current[0] && d.timeSeriesIndex <= filterRangeIndexed.current[1] ? col : "black",

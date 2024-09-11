@@ -1,7 +1,7 @@
 import {ReactElement} from "react";
 import {useNormals, useSamples} from "lib/hooks";
 import {Link, useNavigate} from "react-router-dom";
-import {CheckCircleIcon as CheckCircleIconOutline} from "@heroicons/react/24/outline";
+import {CheckCircleIcon as CheckCircleIconOutline, CheckIcon} from "@heroicons/react/24/outline";
 import {CheckCircleIcon as CheckCircleIconSolid} from "@heroicons/react/24/solid";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
@@ -31,11 +31,11 @@ export default function SamplesList({machine, selectModeActive}: { machine: stri
                 onClick={() => handleClick(s)}
                 className={`overflow-hidden group border-2 border-solid border-transparent ${selectModeActive ? "hover:border-green-600" : ""} relative flex flex-col justify-center items-center w-[400px] h-[150px] shadow-lg rounded-lg px-2 transition hover:shadow-xl`}
             >
-                {selectModeActive && normals.indexOf(s) === -1 && <div className="absolute top-1 left-1 hidden group-hover:block">
+                {selectModeActive && normals.indexOf(s) === -1 && <div className="absolute top-1 left-1 hidden group-hover:block px-2 py-1">
                     <CheckCircleIconOutline className="w-5 h-5 text-green-600"/>
                 </div>}
-                {normals.indexOf(s) !== -1 && <div className="absolute top-1 left-1">
-                    <CheckCircleIconSolid className="w-5 h-5 text-green-600"/>
+                {normals.indexOf(s) !== -1 && <div className="absolute top-1 left-1 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
+                    <CheckCircleIconSolid className="w-4 h-4 text-white"/> Anomaly-Free
                 </div>}
                 <img src={`/api/db/${machine}/samples/${s}/thumbnail`} alt="thumbnail"/>
                 <span className="mb-4">{s}</span>

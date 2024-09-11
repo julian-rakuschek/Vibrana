@@ -41,3 +41,12 @@ export const useNormals = (machineId: string): string[] => {
   const data = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}});
   return data ?? [];
 }
+
+export const useSimilarities = (machineId: string, sampleId: string): number[] => {
+  const data = useQueryFetch(ApiRoutes.getSimilarities, {params: {machineId, sampleId}});
+  return data ?? [];
+}
+
+export const useNormalBand = (machineId: string): [number, number] | undefined => {
+  return useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}});
+}
