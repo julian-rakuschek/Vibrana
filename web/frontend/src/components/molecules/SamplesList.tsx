@@ -1,10 +1,11 @@
 import {ReactElement} from "react";
-import {useNormals, useSamples} from "lib/hooks";
+import {useAnomalyScore, useNormals, useSamples} from "lib/hooks";
 import {Link, useNavigate} from "react-router-dom";
 import {CheckCircleIcon as CheckCircleIconOutline, CheckIcon} from "@heroicons/react/24/outline";
 import {CheckCircleIcon as CheckCircleIconSolid} from "@heroicons/react/24/solid";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
+import AnomalyRatio from "components/atoms/AnomalyRatio";
 
 export default function SamplesList({machine, selectModeActive}: { machine: string; selectModeActive: boolean }): ReactElement {
     const samples = useSamples(machine);
@@ -38,7 +39,7 @@ export default function SamplesList({machine, selectModeActive}: { machine: stri
                     <CheckCircleIconSolid className="w-4 h-4 text-white"/> Anomaly-Free
                 </div>}
                 <img src={`/api/db/${machine}/samples/${s}/thumbnail`} alt="thumbnail"/>
-                <span className="mb-4">{s}</span>
+                <span className="mb-4">{s} <AnomalyRatio machineId={machine} sampleId={s} /></span>
 
             </div>)}
     </div>

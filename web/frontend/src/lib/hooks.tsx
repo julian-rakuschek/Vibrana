@@ -50,3 +50,7 @@ export const useSimilarities = (machineId: string, sampleId: string): number[] =
 export const useNormalBand = (machineId: string): [number, number] | undefined => {
   return useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}});
 }
+
+export const useAnomalyScore = (machineId: string, sampleId: string): number | undefined => {
+  return useQueryFetch(ApiRoutes.getAnomalyRatio, {params: {machineId, sampleId}});
+}
