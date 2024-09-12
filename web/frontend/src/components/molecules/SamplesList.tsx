@@ -39,8 +39,10 @@ export default function SamplesList({machine, selectModeActive}: { machine: stri
                     <CheckCircleIconSolid className="w-4 h-4 text-white"/> Anomaly-Free
                 </div>}
                 <img src={`/api/db/${machine}/samples/${s}/thumbnail`} alt="thumbnail"/>
-                <span className="mb-4">{s} <AnomalyRatio machineId={machine} sampleId={s} /></span>
-
+                <div className="flex flex-row justify-between items-center w-full mb-3">
+                    <span>{s}</span>
+                    <AnomalyRatio machineId={machine} sampleId={s}/>
+                </div>
             </div>)}
     </div>
 }
