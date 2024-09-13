@@ -26,7 +26,7 @@ export default function SamplesList({machine, selectModeActive}: { machine: stri
         else navigate(`/machines/${machine}/analyze/${sampleId}`)
     }
 
-    return <div className="flex flex-row flex-wrap gap-6 p-4 justify-center">
+    return <div className="flex flex-row flex-wrap gap-6 py-4 justify-between">
         {samples.map(s =>
             <div
                 onClick={() => handleClick(s)}

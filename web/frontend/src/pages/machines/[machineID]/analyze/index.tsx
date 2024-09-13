@@ -10,8 +10,8 @@ export default function MachinePage(): ReactElement {
 
     return <DefaultPageWithBoundaries showHeader >
         <div className="grow grid grid-cols-12">
-            <div className="h-full col-span-8 border-r-2 border-dashed border-gray-700/50">
-                <div className="w-full flex flex-row flex-nowrap justify-between px-5">
+            <div className="h-full col-span-8 border-r-2 border-dashed border-gray-700/50 px-10 ">
+                <div className="w-full flex flex-row flex-nowrap justify-between">
                     <span className="text-xl font-semibold">Samples</span>
                     <div onClick={() => setSelectModeActive(!selectModeActive)}
                          className={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-1 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}

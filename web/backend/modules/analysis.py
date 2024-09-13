@@ -9,6 +9,7 @@ import stumpy
 from numpy.lib.stride_tricks import sliding_window_view
 from scipy.spatial import distance
 from sklearn.manifold import MDS
+from tslearn.preprocessing import TimeSeriesResampler
 
 from algorithms.lmds import landmark_MDS
 from web.backend.modules.database import get_db, flask_get_normals
@@ -59,7 +60,6 @@ def flask_get_similarities(machine, sampleId):
         return "Sample not found", 404
     labels = list(get_db()["labels"].find({"machine": machine}))
     values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    print("Values", values)
     similarities = []
     extracted_label_values = []
     for label in labels:
@@ -68,11 +68,11 @@ def flask_get_similarities(machine, sampleId):
     for label in extracted_label_values:
         d = stumpy.mass(label, values, normalize=False)
         d[d < 10] = np.mean(d)
+        d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
         similarities.append(d)
     if not similarities:
         return []
     similarities = np.max(np.array(similarities), axis=0)
-    print(np.array(similarities))
     return similarities.tolist()
 
 
