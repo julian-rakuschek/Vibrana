@@ -80,6 +80,8 @@ def flask_get_similarities(machine, sampleId):
 def flask_get_normal_tube(machine):
     if not os.path.exists(os.path.join(samples_folder, machine)):
         return "Machine not found", 404
+    if len(list(get_db()["labels"].find({"machine": machine}))) == 0:
+        return flask.jsonify([0, 0])
     normals = flask_get_normals(machine)
     normal_min, normal_max = [], []
     for normal in normals:
@@ -125,6 +127,8 @@ def flask_get_anomaly_ratio(machine, sampleId):
     sample_path = os.path.join(samples_folder, machine, sampleId)
     if not os.path.exists(sample_path):
         return "Sample not found", 404
+    if len(list(get_db()["labels"].find({"machine": machine}))) == 0:
+        return flask.jsonify(None)
     sim = flask_get_similarities(machine, sampleId)
     normal_tube = flask_get_normal_tube(machine)
     above = (np.array(sim) >= normal_tube[1]).sum()

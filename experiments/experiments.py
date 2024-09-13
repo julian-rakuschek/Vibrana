@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 
+import matplotlib
+from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
@@ -260,6 +262,43 @@ def entropy(folder):
     ex.save()
 
 
+def frequency_coloring(folder):
+    def moving_average(x, w):
+        return np.convolve(x, np.ones(w), 'valid') / w
+
+    ex = Experiment(
+        folder, name="freq_coloring", plot_rows=2, plot_fig_size=(35, 20)
+    )
+    dominant_frequencies = []
+    spectral_flux_values = []
+    prev_magnitude_spectrum = None
+    window_size = 10_00
+
+    for i in range(0, len(ex.values) - window_size + 1):
+        windowed_signal = ex.values[i:i + window_size]
+        fft_result = fft(windowed_signal)
+        magnitude_spectrum = np.abs(fft_result[:window_size // 2])
+        freqs = fftfreq(window_size, 1 / ex.sample_rate)
+        positive_freqs = freqs[:window_size // 2]
+        positive_fft = np.abs(fft_result[:window_size // 2])
+        dominant_idx = np.argmax(positive_fft)
+        dominant_frequency = positive_freqs[dominant_idx]
+        if prev_magnitude_spectrum is not None:
+            flux = np.sum((magnitude_spectrum - prev_magnitude_spectrum) ** 2)
+            spectral_flux_values.append(flux)
+        prev_magnitude_spectrum = magnitude_spectrum
+        dominant_frequencies.append(dominant_frequency)
+
+    dominant_frequencies = np.array(dominant_frequencies)
+    spectral_flux_values = np.array(spectral_flux_values)
+    print(dominant_frequencies)
+    matplotlib.rcParams['agg.path.chunksize'] = 10000
+    ex.plot_raw_signal()
+    # smoothed = savgol_filter(spectral_flux_values, 3000, polyorder=3)
+    smoothed = moving_average(spectral_flux_values, 3000)
+    ex.plot_time_series(smoothed, 1, "Spectral Flux", include_events=False, color="indigo")
+    ex.save()
+
 if __name__ == '__main__':
     # reduce_exp_1("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
     # cloud_with_trace("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
@@ -267,4 +306,5 @@ if __name__ == '__main__':
     # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     # cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
     # sim_search("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    entropy("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")

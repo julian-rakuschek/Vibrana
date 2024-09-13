@@ -59,10 +59,21 @@ def process_experiment(folder, target_folder, sample_prefix="", override=True):
         needle += window_size
 
 
-if __name__ == '__main__':
-    abnormal_ = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt" # abnormal
+def example1():
+    abnormal_ = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt"  # abnormal
     normal_ = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde"  # normal
-    # folder = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62" # interesting-curve
     base_target_path = os.path.join(Path(__file__).parents[1], "data", "samples")
     process_experiment(abnormal_, os.path.join(base_target_path, "5-10-1t-10-16"), "abnormal-", override=True)
     process_experiment(normal_, os.path.join(base_target_path, "5-10-1t-10-16"), "normal-", override=False)
+
+
+def example2():
+    abnormal_ = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62" # interesting-curve
+    normal_ = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde" # interesting-curve
+    base_target_path = os.path.join(Path(__file__).parents[1], "data", "samples")
+    process_experiment(abnormal_, os.path.join(base_target_path, "interesting-curve"), "abnormal-", override=True)
+    process_experiment(normal_, os.path.join(base_target_path, "interesting-curve"), "normal-", override=False)
+
+
+if __name__ == '__main__':
+    example2()
