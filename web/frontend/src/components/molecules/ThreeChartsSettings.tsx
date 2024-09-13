@@ -59,11 +59,11 @@ export default function ThreeChartsSettings({settings, setSettings}: {
             leaveTo="transform scale-50"
         >
             <Menu.Items className="bg-white rounded-xl p-3 mt-2 flex flex-col gap-y-3 shadow-lg">
-                {radioSelections.map(category => <div>
+                {radioSelections.map(category => <div key={category.key}>
                     <label className="text-base font-semibold text-gray-900">{category.label}</label>
                     <fieldset>
                         {category.options.map(option =>
-                            <div className="flex items-center">
+                            <div className="flex items-center" key={`${category.key}_${option.value}`}>
                                 <input
                                     id={`${category.key}_${option.value}`}
                                     name={category.key}

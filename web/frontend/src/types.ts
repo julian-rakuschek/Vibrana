@@ -7,6 +7,10 @@ export type Diff<T, U> = T extends U ? never : T;
 export type Successful<T> = Diff<T, { success: false }>;
 export type Failed<T> = Diff<T, { success: true }>;
 
+export type ObjectId = {
+  $oid: string;
+};
+
 export enum ToastType {
   Info = "Info",
   Success = "Success",
@@ -43,7 +47,21 @@ export type ThreeChartsSettingsType = {
 export type Annotation = {
     from: number;
     to: number;
-    color?: string;
+    color?: string | number;
+}
+
+export type LabelBase = Annotation & {
+    machine: string;
+    sampleId: string;
+}
+
+export type Label = LabelBase & {
+    _id: ObjectId;
+}
+
+export type Point = {
+    x: number;
+    y: number;
 }
 
 export type DataPoint = {
@@ -53,3 +71,19 @@ export type DataPoint = {
 }
 
 export type Dataset = DataPoint[];
+
+export type Earcut = {
+    vertices: number[],
+    hole_indices: number[]
+}
+
+export type TimeSeriesPoint = {
+    x: number;
+    y: number;
+}
+
+export type ProjectedPoint = {
+    timeSeriesIndex: number;
+    projectedIndex: number;
+    coords: number[]
+};

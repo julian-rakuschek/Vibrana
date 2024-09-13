@@ -66,3 +66,7 @@ export function  webglColor(color: string, opacity: number): number[] {
     }
     return [0, 0, 0, 1];
 }
+
+export function addAlphaToRGB(color: string, alpha: number): string {
+  return color.replace("rgb", "rgba").replace(")", `, ${alpha})`)
+}

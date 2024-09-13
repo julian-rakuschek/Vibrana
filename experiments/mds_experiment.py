@@ -62,7 +62,7 @@ def dtw_matrix(tsData):
     return y
 
 def dicker_fisch():
-    path = "C:\\Users\\jrakusch\\Coding\\present-binder-use-case\\data\\samples\\dummy\\0001\\values.npy"
+    path = "/data/samples/abnormal\\0001\\values.npy"
     path2 = "C:\\Users\\jrakusch\\Coding\\present-binder-use-case\\data\\5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1 t pro h\\values.npy"
     values = np.load(path)
     windows = sliding_window_view(values, window_shape=2000)
