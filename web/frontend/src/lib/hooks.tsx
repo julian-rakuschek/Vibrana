@@ -54,3 +54,7 @@ export const useNormalBand = (machineId: string): [number, number] | undefined =
 export const useAnomalyScore = (machineId: string, sampleId: string): number | undefined => {
   return useQueryFetch(ApiRoutes.getAnomalyRatio, {params: {machineId, sampleId}});
 }
+
+export const useAnomalyScores = (machineId: string): [string, number][] | undefined => {
+  return useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}});
+}

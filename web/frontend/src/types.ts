@@ -31,6 +31,10 @@ export enum WindowMode {
     Disjoint, Sliding
 }
 
+export enum SortMode {
+    Name, Score
+}
+
 export enum ProjectionMode {
     Paths, Cluster
 }
@@ -42,7 +46,10 @@ export type ThreeChartsSettingsType = {
     projection: ProjectionMode;
 }
 
-
+export type SamplesSettingsType = {
+    sort: SortMode;
+    split: boolean;
+}
 
 export type Annotation = {
     from: number;

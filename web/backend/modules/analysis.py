@@ -1,3 +1,4 @@
+import io
 import json
 import os.path
 from pathlib import Path
@@ -10,10 +11,10 @@ from numpy.lib.stride_tricks import sliding_window_view
 from scipy.spatial import distance
 from sklearn.manifold import MDS
 from tslearn.preprocessing import TimeSeriesResampler
-
+from matplotlib import pyplot as plt
 from algorithms.lmds import landmark_MDS
 from web.backend.modules.database import get_db, flask_get_normals
-
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 analysis_app = flask.Blueprint("analysis", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
@@ -67,13 +68,35 @@ def flask_get_similarities(machine, sampleId):
         extracted_label_values.append(label_values[label["from"]:label["to"]])
     for label in extracted_label_values:
         d = stumpy.mass(label, values, normalize=False)
-        d[d < 10] = np.mean(d)
+        # d[d < 10] = np.mean(d)
         d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
         similarities.append(d)
     if not similarities:
         return []
     similarities = np.max(np.array(similarities), axis=0)
     return similarities.tolist()
+
+@analysis_app.get("<machine>/<sampleId>/similarities/img")
+def flask_get_similarities_img(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
+    sim = flask_get_similarities(machine, sampleId)
+    print(sim)
+    plt.clf()
+    fig, ax = plt.subplots(nrows=2, ncols=1)
+    ax[0].set_title("Raw Signal")
+    ax[0].set_xlim([0, len(values)])
+    ax[0].plot(values)
+    ax[1].set_title("Similarities")
+    ax[1].set_xlim([0, len(sim)])
+    ax[1].plot(sim)
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return flask.Response(output.getvalue(), mimetype='image/png')
 
 
 @analysis_app.get("<machine>/normal_band")
@@ -133,3 +156,22 @@ def flask_get_anomaly_ratio(machine, sampleId):
     normal_tube = flask_get_normal_tube(machine)
     above = (np.array(sim) >= normal_tube[1]).sum()
     return flask.jsonify(above / len(sim))
+
+@analysis_app.get("<machine>/anomaly_ratios")
+def flask_get_anomaly_ratios(machine):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    samples = os.listdir(os.path.join(samples_folder, machine))
+    normal_tube = flask_get_normal_tube(machine)
+    samples_dict = {}
+    n_labels = len(list(get_db()["labels"].find({"machine": machine})))
+    for sample in samples:
+        if n_labels == 0:
+            samples_dict[sample] = 0
+        else:
+            sim = flask_get_similarities(machine, sample)
+            above = (np.array(sim) >= normal_tube[1]).sum()
+            samples_dict[sample] = above / len(sim)
+    samples = [(name, score) for name, score in samples_dict.items()]
+    samples.sort(key=lambda x: x[1], reverse=True)
+    return samples

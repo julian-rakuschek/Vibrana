@@ -92,6 +92,18 @@ class TakenMethod(Experiment):
         ax.scatter(self.projected[:, 0], self.projected[:, 1], s=s, c=colors)
         ax.plot(self.projected[start_i:end_i+1, 0], self.projected[start_i:end_i+1, 1], c="black")
 
+    def plot_point_curve(self, scores):
+        row = "cloud" if self.plot_mosaic else 0
+        ax = self.ax if self.plot_size == (1, 1) and self.plot_mosaic is None else self.ax[row]
+        ax.set_axis_off()
+        ax.set_xlim([np.min(self.projected[:, 0]), np.max(self.projected[:, 0])])
+        ax.set_ylim([np.min(self.projected[:, 1]), np.max(self.projected[:, 1])])
+        colors = cm.get_cmap('turbo')(scores)
+        # for t in tqdm(range(self.projected.shape[0] - 1)):
+        for t in tqdm(range(10)):
+            ax.plot([self.projected[t, 0], self.projected[t, 1]], [self.projected[t + 1, 0], self.projected[t + 1, 1]], color=colors[t])
+        ax.scatter(self.projected[:10, 0], self.projected[:10, 1], s=0.5, c=colors[:10])
+
     def plot_colored_signal(self, scores, title: str = "Raw Signal", include_events: bool = True):
         row = "raw" if self.plot_mosaic else 0
         ax = self.ax if self.plot_size == (1, 1) and self.plot_mosaic is None else self.ax[row]

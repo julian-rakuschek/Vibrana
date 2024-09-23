@@ -22,6 +22,7 @@ export const dbRoutes = {
   getNormals: new ApiRoute<undefined, { machineId: string }, undefined, string[]>("GET", "/db/normals/:machineId"),
   addNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("POST", "/db/normals/:machineId/:sampleId"),
   removeNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("DELETE", "/db/normals/:machineId/:sampleId"),
+  reset: new ApiRoute<undefined, {machine: string}, undefined, DefaultAppResponse>("POST", "/db/reset/:machine"),
 };
 
 export const analysisRoutes = {
@@ -29,6 +30,7 @@ export const analysisRoutes = {
   getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/similarities"),
   getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_band"),
   getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number>("GET", "/analysis/:machineId/:sampleId/anomaly_ratio"),
+  getAnomalyRatios: new ApiRoute<undefined, {machineId: string;}, undefined, [string, number][]>("GET", "/analysis/:machineId/anomaly_ratios"),
 }
 
 export const ApiRoutes = {

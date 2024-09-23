@@ -1,48 +1,54 @@
 import {ReactElement} from "react";
-import {useAnomalyScore, useNormals, useSamples} from "lib/hooks";
-import {Link, useNavigate} from "react-router-dom";
-import {CheckCircleIcon as CheckCircleIconOutline, CheckIcon} from "@heroicons/react/24/outline";
+import {useAnomalyScores, useNormals, useSamples} from "lib/hooks";
+import {useNavigate} from "react-router-dom";
+import {CheckCircleIcon as CheckCircleIconOutline} from "@heroicons/react/24/outline";
 import {CheckCircleIcon as CheckCircleIconSolid} from "@heroicons/react/24/solid";
 import {ApiRoutes} from "lib/api/ApiRoutes";
 import {useQueryClient} from "@tanstack/react-query";
 import AnomalyRatio from "components/atoms/AnomalyRatio";
+import {SamplesSettingsType, SortMode} from "../../types";
+import SampleCard from "components/atoms/SampleCard";
 
-export default function SamplesList({machine, selectModeActive}: { machine: string; selectModeActive: boolean }): ReactElement {
+export default function SamplesList({machine, selectModeActive, settings}: { machine: string; selectModeActive: boolean; settings: SamplesSettingsType }): ReactElement {
     const samples = useSamples(machine);
+    const anomaly_ratios = useAnomalyScores(machine);
     const navigate = useNavigate();
     const normals = useNormals(machine);
     const queryClient = useQueryClient();
 
+    let sample_sorted = samples.sort();
+    if (settings.sort === SortMode.Score && anomaly_ratios && samples) {
+        sample_sorted = anomaly_ratios.map(s => s[0])
+    }
+
     const handleClick = async (sampleId: string) => {
         if (selectModeActive) {
             if (normals.indexOf(sampleId) === -1) {
-                const res = await ApiRoutes.addNormal.fetch({params: {machineId: machine, sampleId: sampleId}})
+                await ApiRoutes.addNormal.fetch({params: {machineId: machine, sampleId: sampleId}})
             }
             else {
-                const res = await ApiRoutes.removeNormal.fetch({params: {machineId: machine, sampleId: sampleId}})
+                await ApiRoutes.removeNormal.fetch({params: {machineId: machine, sampleId: sampleId}})
             }
             await queryClient.invalidateQueries();
         }
         else navigate(`/machines/${machine}/analyze/${sampleId}`)
     }
 
-    return <div className="flex flex-row flex-wrap gap-6 py-4 justify-between">
-        {samples.map(s =>
-            <div
-                onClick={() => handleClick(s)}
-                className={`overflow-hidden group border-2 border-solid border-transparent ${selectModeActive ? "hover:border-green-600" : ""} relative flex flex-col justify-center items-center w-[400px] h-[150px] shadow-lg rounded-lg px-2 transition hover:shadow-xl`}
-            >
-                {selectModeActive && normals.indexOf(s) === -1 && <div className="absolute top-1 left-1 hidden group-hover:block px-2 py-1">
-                    <CheckCircleIconOutline className="w-5 h-5 text-green-600"/>
-                </div>}
-                {normals.indexOf(s) !== -1 && <div className="absolute top-1 left-1 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
-                    <CheckCircleIconSolid className="w-4 h-4 text-white"/> Anomaly-Free
-                </div>}
-                <img src={`/api/db/${machine}/samples/${s}/thumbnail`} alt="thumbnail"/>
-                <div className="flex flex-row justify-between items-center w-full mb-3">
-                    <span>{s}</span>
-                    <AnomalyRatio machineId={machine} sampleId={s}/>
-                </div>
-            </div>)}
+    return <div className="flex flex-row flex-wrap gap-6 py-4 justify-center">
+        {!settings.split && sample_sorted.map(s => <SampleCard machine={machine} sampleId={s} handleClick={handleClick} selectModeActive={selectModeActive} selected={normals.indexOf(s) !== -1} />)}
+        {settings.split && <div className="flex flex-row gap-20">
+            <div className="flex flex-col gap-4">
+                {sample_sorted
+                    .filter(s => s.startsWith("normal"))
+                    .map(s => <SampleCard machine={machine} sampleId={s} handleClick={handleClick} selectModeActive={selectModeActive} selected={normals.indexOf(s) !== -1}/>)
+                }
+            </div>
+            <div className="flex flex-col gap-4">
+                {sample_sorted
+                    .filter(s => s.startsWith("abnormal"))
+                    .map(s => <SampleCard machine={machine} sampleId={s} handleClick={handleClick} selectModeActive={selectModeActive} selected={normals.indexOf(s) !== -1}/>)
+                }
+            </div>
+        </div>}
     </div>
 }

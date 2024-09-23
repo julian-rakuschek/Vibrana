@@ -159,3 +159,10 @@ def flask_delete_normal(machine, sampleId):
         return {"success": True}
     db.update_one({"machine": machine}, {"$pull": {"samples": sampleId}})
     return {"success": True}
+
+@db_app.post("reset/<machine>")
+def flask_reset(machine):
+    db = get_db()
+    db["labels"].delete_many({"machine": machine})
+    db["normals"].delete_many({"machine": machine})
+    return {"success": True}

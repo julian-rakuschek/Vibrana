@@ -129,6 +129,9 @@ class Experiment:
         self.ax["event"].set_xlim([event_index, event_index + event_width])
         self.ax["event"].xaxis.set_major_formatter(self.formatter)
 
+    def show(self):
+        plt.show()
+
     def save(self):
         plt.savefig(f"{self.image_path}/{self.name}.png", bbox_inches='tight', dpi=200)
 
