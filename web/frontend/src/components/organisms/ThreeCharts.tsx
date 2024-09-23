@@ -20,6 +20,7 @@ import polygonClipping, {MultiPolygon, Pair} from "polygon-clipping";
 import {MouseButtonLeft, MouseButtonRight, MouseScroll, VaadinShift} from "components/atoms/MouseKeyboardIcons";
 import {mergeIntervals} from "lib/util";
 import * as events from "node:events";
+import SaveIcon from "components/atoms/SaveIcon";
 
 type props = {
     timeseries: number[];
@@ -233,6 +234,21 @@ export default function ThreeCharts(
         trianRef.current = [];
         selected_indices.current = new Set()
         renderAll();
+    }
+
+    const saveBrushes = async () => {
+        const intervals = selectedToColoredIntervals(Array.from(selected_indices.current))
+        for (const interval of intervals) {
+            await ApiRoutes.addLabel.fetch({
+                data: {
+                    from: interval.from,
+                    to: interval.to,
+                    sampleId: sampleId,
+                    machine: machineId
+                }
+            })
+        }
+        await queryClient.invalidateQueries({queryKey: [`/db/labels/${machineId}/${sampleId}`]});
     }
 
     const trianglesD3 = fc.seriesCanvasLine().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
@@ -630,7 +646,7 @@ export default function ThreeCharts(
                 <div
                     onClick={() => setMode("add")}
                     className={`${mode === "add" ? 'bg-indigo-700-accent text-white' : 'bg-white text-gray-800/80'} px-3 rounded-lg `}>
-                    Draw annotation
+                    Add annotation
                 </div>
                 <div
                     onClick={() => setMode("delete")}
@@ -727,6 +743,10 @@ export default function ThreeCharts(
                          className={`w-10 h-10 rounded-full shadow-lg flex justify-center items-center ${selectedRadius === 0.03 ? "bg-indigo-500" : "bg-white"} transition hover:shadow-xl hover:bg-indigo-500 group`}>
                         <div
                             className={`w-5 h-5 rounded-full ${selectedRadius === 0.03 ? "bg-white" : "bg-black/90"} transition group-hover:bg-white`}/>
+                    </div>
+                    <div onClick={() => saveBrushes()}
+                         className=" w-10 h-10 rounded-full shadow-lg flex justify-center items-center transition group hover:shadow-xl hover:text-white hover:bg-green-500">
+                        <SaveIcon className="w-5 h-5 group-hover:fill-white"/>
                     </div>
                 </div>}
             </div>}
