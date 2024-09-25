@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Vibrana</title>
+
+    <link rel="stylesheet" href="lib/revealjs/reset.css">
+    <link rel="stylesheet" href="lib/revealjs/reveal.css">
+    <link rel="stylesheet" href="lib/revealjs/theme/white.css">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="lib/plugin/highlight/monokai.css">
+
+    <script src="lib/tailwind.js"></script>
+    <script>
+        var colors = [
+            "#001219",
+            "#005f73",
+            "#0a9396",
+            "#94d2bd",
+            "#e9d8a6",
+            "#ee9b00",
+            "#ca6702",
+            "#bb3e03",
+            "#ae2012",
+            "#9b2226"
+        ]
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "indigo-100-accent": "#8c9eff",
+                        "indigo-200-accent": "#536dfe",
+                        "indigo-400-accent": "#3d5afe",
+                        "indigo-700-accent": "#304ffe",
+                        "teal-100-accent": "#a7ffeb",
+                        "teal-200-accent": "#64ffda",
+                        "teal-400-accent": "#1de9b6",
+                        "teal-700-accent": "#00bfa5",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .reveal .slide-number {
+            position: absolute;
+            display: inline-flex !important;
+            justify-content: center;
+            place-items: center;
+            right: 12px;
+            bottom: 12px;
+            z-index: 31;
+            font-family: Helvetica, sans-serif;
+            font-size: 25px;
+            color: #304ffe;
+            background-color: white;
+            border-radius: 50px;
+            width: 60px;
+            height: 60px;
+            padding: 0;
+        }
+
+        .reveal .slide-number a {
+            width: 60px;
+            height: 60px;
+            display: inline-flex !important;
+            justify-content: center;
+            place-items: center;
+        }
+
+        .reveal .slide-number a span {
+            display: inline-block;
+            line-height: 60px;
+            width: 60px;
+            height: 60px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h3>How to read these slides:</h3>
+            <ol>
+                <li>Use arrow keys to navigate.</li>
+                <li>Press O for switching to overview mode.</li>
+                <li>Press O again to zoom in.</li>
+            </ol>
+        </section>
+        <section data-background-color="white" style="color: black">
+            <div class="w-full justify-center flex">
+                <img src="media/images/vibrava.png" width="300px"/>
+            </div>
+            <h2>Vibrana</h2>
+            <p style="opacity: 0.7">Analyzing Vibration Signals</p>
+            <small style="opacity: 0.7;"><b>Julian Rakuschek</b><br /><b>Prof. Dr. Tobias Schreck</b></small>
+            <br/>
+            <div class="w-full justify-center flex">
+                <img src="media/images/tug.svg" width="100px"/>
+            </div>
+        </section>
+        <section>
+            <h2>The Problem</h2>
+            <div>
+                <img src="media/images/grav_wave.png" />
+            </div>
+            <p>One of them bears a secret</p>
+        </section>
+        <section>
+            <h2>The Problem</h2>
+            <div>
+                <img src="media/images/grav_wave_visible.png" />
+            </div>
+            <p>One of them bears a secret</p>
+        </section>
+        <section>
+            <h2>A Gravitational Wave</h2>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/grav-waves.mp4" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Preliminary: Time Delay Embedding</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/lof.webm" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Preliminary: Time Delay Embedding</h3>
+            <div class="justify-center flex">
+               <img src="media/images/topology.png" />
+            </div>
+        </section>
+        <section>
+            <h3>Exposing the Secret</h3>
+            <div class="flex flex-col">
+                <div class="flex flex-col justify-center items-center">
+                    <img src="media/images/signal-to-cloud-1.png" />
+                </div>
+            </div>
+        </section>
+        <section data-transition="zoom-in slide-out">
+            <h3>Exposing the Secret</h3>
+            <div class="flex flex-col">
+                <div class="flex flex-col justify-center items-center">
+                    <img src="media/images/signal-to-cloud-2.png" />
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3>But wait ... isn't this about vibrations?</h3>
+            <p class="fragment">Yes, but ...</p>
+            <div class="justify-center flex fragment">
+               <img src="media/images/nda.png" class="w-[200px]" />
+            </div>
+        </section>
+        <section>
+            <h3>Why vibrations?</h3>
+            <div class="justify-center flex">
+               <img src="media/images/vibration.png" />
+            </div>
+            <p>Strong Frequency Components!</p>
+            <p>Important for the 2D Projection.</p>
+        </section>
+        <section>
+            <h3>Research Question:</h3>
+            <p>Is the projection-based view effective to guide users towards interesting patterns?</p>
+        </section>
+        <section>
+            <h3>Related Work</h3>
+        </section>
+        <section>
+            <h3>Vibration Analysis Framework</h3>
+            <div class="flex flex-col justify-center items-center">
+                <img src="media/images/framework.png" class="h-[400px]" />
+            </div>
+            <div class="bg-[#304ffe] text-white rounded-lg p-3 text-sm w-[300px] mr-auto ml-auto">
+                    <b>Vibration Analysis for Machine Monitoring and Diagnosis: A
+Systematic Review</b> - Hazwan et al. (2021)
+                </div>
+        </section>
+        <section>
+            <h3>Using TDA to detect GWs</h3>
+            <div class="flex flex-col justify-center items-center">
+                <img src="media/images/proj-3d.png" />
+                <ol>
+                    <li>Embed Signal in lower dimensional space</li>
+                    <li>Extract features through persistent homology</li>
+                    <li>Train a CNN</li>
+                </ol>
+            </div>
+            <div class="bg-[#304ffe] text-white rounded-lg p-3 text-sm w-[300px] mr-auto ml-auto">
+                    <b>Detection of gravitational waves using topological data analysis and convolutional
+neural network: An improved approach</b> - Bresten et al. (2019)
+                </div>
+        </section>
+        <section>
+            <h3>Time Series Paths</h3>
+            <div class="flex flex-col justify-center items-center relative">
+                <img src="media/images/tspaths.png" />
+                <div class="absolute top-0 right-0 bg-[#304ffe] text-white rounded-lg p-3 text-sm w-[300px]">
+                    <b>TimeSeriesPaths: Projection-Based Explorative Analysis of
+Multivariate Time Series Data</b> - Bernard et al. (2012), Journal of WSCG
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3>Exploring Embeddings</h3>
+            <div class="flex flex-col justify-center items-center relative">
+                <img src="media/images/streit.png" />
+                <div class="absolute top-0 right-0 bg-[#304ffe] text-white rounded-lg p-3 text-sm w-[300px]">
+                    <b>Visual Exploration of Relationships and
+Structure in Low-Dimensional Embeddings</b> - Eckelt et al. (2023), IEEE Transactions on Visualization and Computer Graphics
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3>Interaction Design and Workflow</h3>
+        </section>
+        <section>
+            <h3>Our Starting Point</h3>
+            <div class="flex flex-col justify-center items-center">
+                    <img src="media/images/vibrana-samples.png" />
+                </div>
+        </section>
+        <section>
+            <h3>Analyzing One Signal</h3>
+            <div class="flex flex-col justify-center items-center relative">
+                <img src="media/images/vibrana-analyzing.png" />
+                <div class="absolute top-0 right-0 bg-[#304ffe] text-white rounded-lg p-1 text-sm w-[300px]">
+                    Selecting a Subset
+                </div>
+                <div class="absolute top-[120px] right-0 bg-[#304ffe] text-white rounded-lg p-1 text-sm w-[300px]">
+                    Marking annotations
+                </div>
+                <div class="absolute top-[250px] right-0 bg-[#304ffe] text-white rounded-lg p-1 text-sm w-[300px]">
+                    Explore through 2D Projection
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3>Selecting a Subset</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/selection.mp4" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Intermezzo: Advanced Brush</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/brush.mp4" class="h-[500px]" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Using the Brush to add Annotations</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/marking.mp4" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Using the labels</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/sim_search.mp4" data-autoplay muted></video>
+            </div>
+            <p>Perform similaritiy search to find anomalies</p>
+        </section>
+        <section>
+            <h3>How to decide anomaly threshold?</h3>
+            <div class="flex flex-col justify-center items-center">
+                    <img src="media/images/normal-ref.png" />
+                </div>
+            <p>Use an anomaly-free sample as reference</p>
+        </section>
+        <section>
+            <h3>Selecting Anomaly Free</h3>
+            <div class="justify-center flex fragment">
+               <video src="media/videos/select-normal.mp4" data-autoplay muted loop></video>
+            </div>
+        </section>
+        <section>
+            <h3>Example for an anomalous sample</h3>
+            <div class="flex flex-col justify-center items-center">
+                    <img src="media/images/abnormal-score.png" />
+                </div>
+            <p>Everything below the lower red line is considered abnormal.</p>
+        </section>
+        <section>
+            <h3>One good label is all you need!</h3>
+            <div class="justify-center flex">
+               <img src="media/images/split-view.png" />
+            </div>
+        </section>
+        <section>
+            <h3>Workflow Summary</h3>
+            <div class="justify-center flex">
+               <img src="media/images/flowchart.png" />
+            </div>
+        </section>
+
+        <section>
+            <h3>Our Vision</h3>
+            <div class="justify-center flex">
+               <img src="media/images/vision.png" />
+            </div>
+        </section>
+
+        <section>
+            <h3>Evaluation - WIP</h3>
+            <p>Partnering up with domain experts</p>
+        </section>
+        <section>
+            <h3>Conclusion</h3>
+            <ol>
+                <li>Projection-based visualizations help</li>
+                <li>Similarity search is often enough</li>
+                <li>A little help from the user avoids complicated deep learning</li>
+            </ol>
+        </section>
+
+        <section>
+            <h3>Thank you!</h3>
+        </section>
+    </div>
+</div>
+
+<script src="lib/revealjs/reveal.js"></script>
+<script src="lib/plugin/notes/notes.js"></script>
+<script src="lib/plugin/markdown/markdown.js"></script>
+<script src="lib/plugin/highlight/highlight.js"></script>
+<script src="lib/plugin/math/math.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+        slideNumber: true,
+        controls: false,
+        progress: true,
+        mouseWheel: true,
+        disableLayout: false,
+        pdfSeparateFragments: false,
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes, RevealMath.KaTeX]
+    });
+
+</script>
+</body>
+</html>
