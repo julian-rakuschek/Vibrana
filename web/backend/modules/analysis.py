@@ -67,13 +67,12 @@ def flask_get_similarities(machine, sampleId):
         label_values: np.ndarray = np.load(os.path.join(samples_folder, label["machine"], label["sampleId"], "values.npy"))
         extracted_label_values.append(label_values[label["from"]:label["to"]])
     for label in extracted_label_values:
-        d = stumpy.mass(label, values, normalize=False)
-        # d[d < 10] = np.mean(d)
+        d = stumpy.mass(label, values, normalize=True)
         d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
         similarities.append(d)
     if not similarities:
         return []
-    similarities = np.max(np.array(similarities), axis=0)
+    similarities = np.min(np.array(similarities), axis=0)
     return similarities.tolist()
 
 @analysis_app.get("<machine>/<sampleId>/similarities/img")
@@ -88,12 +87,16 @@ def flask_get_similarities_img(machine, sampleId):
     print(sim)
     plt.clf()
     fig, ax = plt.subplots(nrows=2, ncols=1)
+    fig.set_size_inches(20, 10)
     ax[0].set_title("Raw Signal")
     ax[0].set_xlim([0, len(values)])
-    ax[0].plot(values)
+    ax[0].plot(values, color="black")
     ax[1].set_title("Similarities")
     ax[1].set_xlim([0, len(sim)])
-    ax[1].plot(sim)
+    ax[1].plot(sim, color="navy")
+    normal_tube = flask_get_normal_tube(machine)
+    ax[1].axhline(normal_tube[0], color="red")
+    ax[1].axhline(normal_tube[1], color="red")
     output = io.BytesIO()
     FigureCanvas(fig).print_png(output)
     return flask.Response(output.getvalue(), mimetype='image/png')
@@ -155,7 +158,8 @@ def flask_get_anomaly_ratio(machine, sampleId):
     sim = flask_get_similarities(machine, sampleId)
     normal_tube = flask_get_normal_tube(machine)
     above = (np.array(sim) >= normal_tube[1]).sum()
-    return flask.jsonify(above / len(sim))
+    below = (np.array(sim) <= normal_tube[0]).sum()
+    return flask.jsonify(below / len(sim))
 
 @analysis_app.get("<machine>/anomaly_ratios")
 def flask_get_anomaly_ratios(machine):
@@ -171,7 +175,8 @@ def flask_get_anomaly_ratios(machine):
         else:
             sim = flask_get_similarities(machine, sample)
             above = (np.array(sim) >= normal_tube[1]).sum()
-            samples_dict[sample] = above / len(sim)
+            below = (np.array(sim) <= normal_tube[0]).sum()
+            samples_dict[sample] = below / len(sim)
     samples = [(name, score) for name, score in samples_dict.items()]
     samples.sort(key=lambda x: x[1], reverse=True)
     return samples
