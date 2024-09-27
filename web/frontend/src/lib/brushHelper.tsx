@@ -50,6 +50,10 @@ export class ProjectedTimeSeriesRBush extends RBush<ProjectedPoint> {
         })
         return init_res.filter(p =>Math.sqrt( euclidean({x: p.coords[0], y: p.coords[1]}, {x, y})) < radius)
     }
+
+    findBox(minX: number, maxX: number, minY: number, maxY: number): ProjectedPoint[] {
+         return this.search({minX, minY, maxX, maxY})
+    }
 }
 
 export const getCirlcePoints = (coords: [number, number], radius: number, n: number): Polygon => {
