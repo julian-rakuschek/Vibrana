@@ -32,7 +32,7 @@ const all_black = (n: number): string[] => {
     return [...Array(n).keys()].map(i => "#000000");
 }
 
-const compute_colors = (settings: ThreeChartsSettingsType, projected: number[][], similarities: number[], normal_tube: [number, number] | undefined, offset: number): {colors_ts: string[], colors_projected: string[]} => {
+export const compute_colors = (settings: ThreeChartsSettingsType, projected: number[][], similarities: number[], normal_tube: [number, number] | undefined, offset: number): {colors_ts: string[], colors_projected: string[]} => {
     if (settings.color === ColorMode.Distance && normal_tube !== undefined && similarities.length > 0) {
         const distance_colors = compute_distance_colors(similarities, normal_tube);
 

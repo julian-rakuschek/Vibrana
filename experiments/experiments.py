@@ -306,5 +306,6 @@ if __name__ == '__main__':
     # taken_anomaly_scores("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     # cloud_with_trace("16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62")
     # sim_search("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
-    frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    # frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
+    # frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    event_zoom("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")

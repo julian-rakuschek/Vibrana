@@ -56,3 +56,16 @@ export function colorIsDarkSimple(bgColor: string): boolean {
   const b = parseInt(color.substring(4, 6), 16); // hexToB
   return ((r * 0.299) + (g * 0.587) + (b * 0.114)) <= 186;
 }
+
+export function randomWalk(n: number): number[] {
+  const series: number[] = [0]; // Initialize the series with the starting value 0
+
+  for (let i = 1; i < n; i++) {
+    // Randomly choose either +1 or -1
+    const step = Math.random() < 0.5 ? -1 : 1;
+    // Add the step to the previous value to get the new value
+    series.push(series[i - 1] + step);
+  }
+
+  return series;
+}
