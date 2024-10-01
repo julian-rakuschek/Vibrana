@@ -5,6 +5,8 @@
   import {ColorMode, ProjectionMode, type ThreeChartsSettingsType, WindowMode} from "../lib/types";
   import {padArray} from "../lib/helper/util";
   import {interpolateTurbo, interpolateRdYlBu} from "d3";
+  import AnnotatorChart from "./AnnotatorChart.svelte";
+  import ScatterPlot from "./ScatterPlot.svelte";
 
   let count: number = 0
   const increment = () => {
@@ -13,6 +15,7 @@
 
 
   let values: number[] = [];
+  let projected: number[][] = [];
   let colors_ts: string[] = [];
   let dataLoaded: boolean = false;
   let settings = {color: ColorMode.Radius, window: WindowMode.Sliding, window_size: 1000, projection: ProjectionMode.Paths}
@@ -67,7 +70,7 @@ export const compute_colors = (settings: ThreeChartsSettingsType, projected: num
       values = await ApiRoutes.getSampleValues.fetch({
         params: { machine: "5-10-1t-10-16", sampleId: "abnormal-0003" }
       });
-      const projected = await ApiRoutes.getSampleProjected.fetch({
+      projected = await ApiRoutes.getSampleProjected.fetch({
         params: { machine: "5-10-1t-10-16", sampleId: "abnormal-0003" }
       });
       const normalBand = await ApiRoutes.getNormalTube.fetch({
@@ -91,6 +94,8 @@ export const compute_colors = (settings: ThreeChartsSettingsType, projected: num
 
 {#if dataLoaded}
   <NavigatorChart values={values} bind:filterRangePercent bind:filterRangeIndexed colors={colors_ts} />
+  <AnnotatorChart values={values} filterRangeIndexed={filterRangeIndexed} colors={colors_ts} />
+  <ScatterPlot projected={projected} colors={colors_ts} tsIndexOffset={values.length - projected.length} />
   <p>{filterRangePercent}</p>
 {:else}
   <p>Loading chart data...</p>
