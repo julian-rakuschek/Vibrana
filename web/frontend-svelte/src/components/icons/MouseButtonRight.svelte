@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" {...$$restProps}><g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={1.5}><path d="M4 10v4a8 8 0 1 0 16 0V9a7 7 0 0 0-7-7h-1a8 8 0 0 0-8 8Z"></path><path d="M12 2v6.4a.6.6 0 0 0 .6.6H20"></path></g></svg>

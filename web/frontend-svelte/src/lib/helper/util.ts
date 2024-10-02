@@ -1,4 +1,4 @@
-import type {Annotation} from "../types";
+import type {Annotation, ProjectedPoint} from "../types";
 
 export function classNames(...classes: string[]): string {
     return classes.filter(Boolean).join(" ");
@@ -203,4 +203,15 @@ export function minMaxDecimation(data: number[], availableWidth: number) {
     }
 
     return decimated;
+}
+
+export const selectedToColoredIntervals = (selected: ProjectedPoint[], colors: number[], offset: number): Annotation[] => {
+    console.log(selected)
+    const annotations: Annotation[] = selected.map(p => ({
+        from: p.timeSeriesIndex - offset,
+        to: p.timeSeriesIndex + offset,
+        color: colors[p.projectedIndex]
+    }))
+    console.log(annotations)
+    return mergeIntervals(annotations)
 }

@@ -31,6 +31,7 @@
     "vite-plugin-pages": "^0.32.1"
   },
   "devDependencies": {
+    "@rgossiaux/svelte-headlessui": "^2.0.0",
     "@types/d3": "^7.4.3",
     "@types/earcut": "^2.1.4",
     "@types/rbush": "^3.0.4",
