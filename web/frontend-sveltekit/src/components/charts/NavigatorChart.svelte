@@ -1,37 +1,33 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import type {ProjectedPoint, TimeSeriesPoint} from "../lib/types";
+    import type {Label, Point, ProjectedPoint} from "@lib/types";
     import {onMount} from "svelte";
-    import {addAlphaToRGB, webglColor} from "../lib/helper/colorHelper";
-    import {filterRangeIndexed, filterRangePercent} from "../lib/stores";
-    import {selectedToColoredIntervals} from "../lib/helper/util";
+    import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
+    import {filterRangeIndexed, filterRangePercent, selectedProjectedPoints} from "@lib/stores";
+    import {selectedToColoredIntervals} from "@lib/helper/util";
+    import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
 
-    export let values: number[];
-    export let colors: string[];
-    export let radius_colors: number[];
-    export let hoverPoint: ProjectedPoint | undefined = undefined;
-    export let hoverRange: number[] | undefined = undefined;
-    const timeseriesIndexed: TimeSeriesPoint[] = values.map((d, index) => ({
-        x: index,
-        y: d
-    }))
-    export let selectedIndices: Set<ProjectedPoint> = new Set();
-    export let offset: number;
+    export let timeSeries: number[];
+    export let projected: ProjectedPoint[];
+    export let labels: Label[];
+    export let events: number[];
 
-    let brushed = selectedToColoredIntervals(Array.from(selectedIndices), radius_colors, offset)
+    const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
+    const offset: number = timeSeries.length - projected.length;
+
+    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset)
 
 
-    const min_value = Math.min(...values)
-    const max_value = Math.max(...values)
-    const xScale = d3.scaleLinear().domain([0, values.length]).range([0, 1]);
+    const min_value = Math.min(...timeSeries)
+    const max_value = Math.max(...timeSeries)
+    const xScale = d3.scaleLinear().domain([0, timeSeries.length]).range([0, 1]);
     const yScale = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
 
     const brushNavigator = fc.brushX().on('brush', (e: { selection: [number, number] | null; }) => {
         if (e.selection) {
             filterRangePercent.set(e.selection);
-            filterRangeIndexed.set([e.selection[0] * values.length, e.selection[1] * values.length]);
-            // xScale.domain(filterRangeIndexed.current);
+            filterRangeIndexed.set([e.selection[0] * timeSeries.length, e.selection[1] * timeSeries.length]);
             render();
         }
     });
@@ -51,12 +47,12 @@
     const timeseriesLine = fc
         .seriesWebglLine()
         .equals((previousData, currentData) => previousData === currentData)
-        .crossValue((d: TimeSeriesPoint) => d.x)
-        .mainValue((d: TimeSeriesPoint) => d.y)
+        .crossValue((d: Point) => d.x)
+        .mainValue((d: Point) => d.y)
         .decorate((program) => fc
             .webglStrokeColor()
-            .value((d: TimeSeriesPoint) => {
-                const col = colors[d.x]
+            .value((d: Point) => {
+                const col = $colorsTimeSeries[d.x].color
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -82,15 +78,15 @@
         }).call(navigatorChart)
     };
 
-    filterRangeIndexed.subscribe((range) => {
+    filterRangeIndexed.subscribe(() => render())
+    selectedProjectedPoints.subscribe(() => {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
         render()
     })
-
-    $: {
-        brushed = selectedToColoredIntervals(Array.from(selectedIndices), radius_colors, offset);
-        console.log(brushed)
+    colorsTimeSeries.subscribe(() => {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
         render()
-    }
+    })
 
     onMount(() => {
         render()

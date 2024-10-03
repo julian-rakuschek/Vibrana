@@ -71,22 +71,9 @@ export type Point = {
     y: number;
 }
 
-export type DataPoint = {
-    x: number;
-    y: number;
-    meta_value: number;
-}
-
-export type Dataset = DataPoint[];
-
 export type Earcut = {
     vertices: number[],
     hole_indices: number[]
-}
-
-export type TimeSeriesPoint = {
-    x: number;
-    y: number;
 }
 
 export type ProjectedPoint = {
@@ -94,3 +81,8 @@ export type ProjectedPoint = {
     projectedIndex: number;
     coords: number[]
 };
+
+export type Color = {
+    color: string;
+    value: number;
+}

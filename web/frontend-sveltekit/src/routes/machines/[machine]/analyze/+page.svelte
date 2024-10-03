@@ -1,7 +1,7 @@
 <script lang="ts">
     import {page} from '$app/stores';
     import Navbar from "@components/Navbar.svelte";
-    import SampleList from "@components/lists/SampleList.svelte";
+    import SampleList from "@components/lists/SampleListWrapper.svelte";
     import {type SamplesSettingsType, SortMode} from "@lib/types";
     import SampleListSettings from "@components/SampleListSettings.svelte";
 
@@ -24,7 +24,7 @@
                 <SampleListSettings bind:settings machine={machine}/>
             </div>
         </div>
-        <SampleList machine={machine} settings={settings} selectModeActive={selectModeActive} />
+        <SampleList machineId={machine} settings={settings} selectModeActive={selectModeActive} />
     </div>
     <div class="h-full col-span-4 hidden">
         <div class="w-full flex flex-row flex-nowrap justify-between px-5">

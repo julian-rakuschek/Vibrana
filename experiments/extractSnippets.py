@@ -15,7 +15,7 @@ def save_preview_image(data, save_path):
     plt.clf()
     formatter = plticker.FuncFormatter(lambda x_val, tick_pos: f"{x_val}")
     fig, ax = plt.subplots(nrows=1, ncols=1)
-    fig.set_size_inches(30, 10)
+    fig.set_size_inches(10, 3)
     ax.plot(np.arange(len(data)), data, color="black")
     ax.set_xlim([0, len(data)])
     ax.xaxis.set_major_formatter(formatter)
@@ -80,4 +80,5 @@ def example2():
 
 
 if __name__ == '__main__':
+    example1()
     example2()

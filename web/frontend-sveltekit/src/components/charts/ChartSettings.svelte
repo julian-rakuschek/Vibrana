@@ -7,7 +7,7 @@
     } from "@rgossiaux/svelte-headlessui";
     import {Icon, Wrench} from "svelte-hero-icons";
     import {ColorMode, ProjectionMode, WindowMode, type ThreeChartsSettingsType} from "@lib/types.js";
-    export let settings: ThreeChartsSettingsType;
+    import {chartSettings} from "@lib/stores";
 
     const radioSelections = [
         {
@@ -37,6 +37,10 @@
         },
     ]
 
+    const updateSettings = (category, value: WindowMode | ProjectionMode | ColorMode): void => {
+        chartSettings.update(s => ({...s, [category]: value}))
+    }
+
 
 </script>
 
@@ -54,10 +58,10 @@
                             <input
                                     id={`${category.key}_${option.value}`}
                                     name={category.key}
-                                    checked={settings[category.key] === option.value}
+                                    checked={$chartSettings[category.key] === option.value}
                                     type="radio"
                                     class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-offset-0 focus:ring-0"
-                                    on:click={() => settings[category.key] = option.value}
+                                    on:click={() => updateSettings(category.key, option.value)}
                             />
                             <label htmlFor={`${category.key}_${option.value}`}
                                    class="ml-3 block text-sm font-medium leading-6 text-gray-900">{option.label}</label>

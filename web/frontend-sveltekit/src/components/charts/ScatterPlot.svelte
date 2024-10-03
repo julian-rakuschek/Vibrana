@@ -5,45 +5,28 @@
         type ProjectedPoint,
         ProjectionMode,
         type ThreeChartsSettingsType,
-        type TimeSeriesPoint, WindowMode
-    } from "../lib/types";
+        type Point, WindowMode
+    } from "@lib/types";
     import {onMount} from "svelte";
-    import {webglColor} from "../lib/helper/colorHelper";
-    import betterPointer from "../lib/helper/betterPointer";
-    import {filterRangeIndexed, filterRangePercent} from "../lib/stores";
-    import MouseButtonLeft from "./icons/MouseButtonLeft.svelte";
-    import MouseButtonRight from "./icons/MouseButtonRight.svelte";
-    import MouseScroll from "./icons/MouseScroll.svelte";
-    import VaadinShift from "./icons/VaadinShift.svelte";
-    import TimeSeriesPathIcon from "./icons/TimeSeriesPathIcon.svelte";
+    import {webglColor} from "@lib/helper/colorHelper";
+    import betterPointer from "@lib/helper/betterPointer";
+    import {filterRangeIndexed, filterRangePercent, selectedProjectedPoints, hoverPoint, hoverRange, chartSettings} from "@lib/stores";
+    import {colorsProjection} from "@lib/chartLogic/chartColors";
+    import MouseButtonLeft from "@components/icons/MouseButtonLeft.svelte";
+    import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
+    import MouseScroll from "@components/icons/MouseScroll.svelte";
+    import VaadinShift from "@components/icons/VaadinShift.svelte";
+    import TimeSeriesPathIcon from "@components/icons/TimeSeriesPathIcon.svelte";
     import {Icon, PaintBrush, Trash} from "svelte-hero-icons";
-    import SaveIcon from "./icons/SaveIcon.svelte";
+    import SaveIcon from "@components/icons/SaveIcon.svelte";
     import polygonClipping, {type MultiPolygon, type Pair} from "polygon-clipping";
-    import {getCirlcePoints, mousePolygon, polyToTriangles, ProjectedTimeSeriesRBush} from "../lib/helper/brushHelper";
-
-    const moveMiddleToEnd = (data: ProjectedPoint[], range: number[] | null): ProjectedPoint[] => {
-        if (range === null) return data;
-        const [start, end] = range;
-        const middlePart = data.slice(start, end);
-        return data.slice(0, start).concat(data.slice(end), middlePart);
-    }
-
-    const compute_quadtree = (data: ProjectedPoint[], filterRange: [number, number] | null): d3.Quadtree<ProjectedPoint> => {
-        const filteredData = filterRange ? data.filter(d => d.timeSeriesIndex >= filterRange[0] && d.timeSeriesIndex <= filterRange[1]) : data;
-        return d3.quadtree<ProjectedPoint>()
-            .x(d => d.coords[0])
-            .y(d => d.coords[1])
-            .addAll(filteredData);
-    }
-
-    export let colors: string[];
-    export let values: number[];
-    export let projected: number[][];
+    import {getCirlcePoints, mousePolygon, polyToTriangles, ProjectedTimeSeriesRBush} from "@lib/helper/brushHelper";
+    import {compute_quadtree, moveMiddleToEnd} from "@lib/chartLogic/chartUtil";
 
 
-    export let hoverPoint: ProjectedPoint | undefined = undefined;
-    export let hoverRange: number[] | undefined = undefined;
-    export let settings: ThreeChartsSettingsType;
+    export let timeSeries: number[];
+    export let projected: ProjectedPoint[];
+    export let mdsEmbedding: number[][];
 
 
     const projectionPadding = 0.1;
@@ -54,17 +37,17 @@
     let brushPolygon: MultiPolygon = [];
     let mouseState: [number, number, number] | null = null;
     let brushLastPoint: Pair | null = null;
-    export let selectedIndices: Set<ProjectedPoint> = new Set();
     const fillColors = ["navy", "lightgreen", "red"]
-    export let projectedIndexed: ProjectedPoint[]
-    const min_x_value = Math.min(...projected.map(d => d[0]))
-    const max_x_value = Math.max(...projected.map(d => d[0]))
-    const min_y_value = Math.min(...projected.map(d => d[1]))
-    const max_y_value = Math.max(...projected.map(d => d[1]))
-    let quadtree = compute_quadtree(projectedIndexed, $filterRangeIndexed)
-    let renderData = moveMiddleToEnd(projectedIndexed, $filterRangeIndexed)
+
+
+    const min_x_value = Math.min(...projected.map(d => d.coords[0]))
+    const max_x_value = Math.max(...projected.map(d => d.coords[0]))
+    const min_y_value = Math.min(...projected.map(d => d.coords[1]))
+    const max_y_value = Math.max(...projected.map(d => d.coords[1]))
+    let quadtree = compute_quadtree(projected, $filterRangeIndexed)
+    let renderData = moveMiddleToEnd(projected, $filterRangeIndexed)
     const rtree = new ProjectedTimeSeriesRBush()
-    rtree.load(projectedIndexed)
+    rtree.load(projected)
 
     const xScaleProjection = d3.scaleLinear()
         .domain([min_x_value - Math.abs(min_x_value - max_x_value) * projectionPadding, max_x_value + Math.abs(min_x_value - max_x_value) * projectionPadding])
@@ -75,15 +58,15 @@
 
     const xScaleProjectionOriginal = xScaleProjection.copy();
     const yScaleProjectionOriginal = yScaleProjection.copy();
-    
+
     function handleBrush(x: number, y: number, button: number) {
         const points: MultiPolygon = [getCirlcePoints([x, y], selectedRadius, 20)]
         if (brushPolygon === null) brushPolygon = points;
         else brushPolygon = button === 1 ? polygonClipping.union(brushPolygon, points) : polygonClipping.difference(brushPolygon, points);
         const scatterPoints = new Set(rtree.find(x, y, selectedRadius));
-        selectedIndices = button === 1 ?
-            new Set([...selectedIndices, ...scatterPoints]) :
-            new Set([...selectedIndices].filter(x => !scatterPoints.has(x)));
+        selectedProjectedPoints.update(prev => button === 1 ?
+            [...new Set([...prev, ...scatterPoints])] :
+            [...new Set([...prev].filter(x => !scatterPoints.has(x)))])
         if (brushLastPoint !== null) {
             const distance = Math.sqrt(Math.pow(x - brushLastPoint[0], 2) + Math.pow(y - brushLastPoint[1], 2))
             const n_fill_points = Math.floor(distance / (selectedRadius / 2));
@@ -95,12 +78,12 @@
             for (let i = 0; i < n_fill_points; i++) {
                 current[0] += step_vector[0]
                 current[1] += step_vector[1]
-                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair,selectedRadius, 20)]
+                const points_fill: MultiPolygon = [getCirlcePoints(current as Pair, selectedRadius, 20)]
                 brushPolygon = button === 1 ? polygonClipping.union(brushPolygon, points_fill) : polygonClipping.difference(brushPolygon, points_fill)
-                const scatterPoints = new Set(rtree.find(current[0], current[1],selectedRadius));
-                selectedIndices = button === 1 ?
-                    new Set([...selectedIndices, ...scatterPoints]) :
-                    new Set([...selectedIndices].filter(x => !scatterPoints.has(x)));
+                const scatterPoints = new Set(rtree.find(current[0], current[1], selectedRadius));
+                selectedProjectedPoints.update(prev => button === 1 ?
+                    [...new Set([...prev, ...scatterPoints])] :
+                    [...new Set([...prev].filter(x => !scatterPoints.has(x)))])
             }
         }
         brushTriangulation = brushPolygon.map(polyToTriangles).flat(1);
@@ -117,7 +100,7 @@
         .decorate((program) => fc
             .webglFillColor()
             .value((d: ProjectedPoint) => {
-                const col = colors[d.projectedIndex]
+                const col = $colorsProjection[d.projectedIndex].color
                 if (!$filterRangeIndexed) return webglColor(col, 1)
                 return webglColor(
                     d.timeSeriesIndex > $filterRangeIndexed[0] && d.timeSeriesIndex <= $filterRangeIndexed[1] ? col : "black",
@@ -161,36 +144,36 @@
         }
         const x = xScaleProjection.invert(coord.x);
         const y = yScaleProjection.invert(coord.y);
-        
+
         mouseState = [x, y, coord.buttons];
         if (coord.buttons === 0) {
             brushLastPoint = null;
         } else {
             handleBrush(x, y, coord.buttons)
         }
-        
+
         const span_width = (Math.abs(max_x_value - min_x_value) + Math.abs(max_y_value - min_y_value)) / 2
         const radius = Math.abs(xScaleProjection.invert(coord.x) - yScaleProjection.invert(coord.x - (span_width * 0.2)));
         const p = quadtree.find(x, y, radius);
-        hoverPoint = p;
+        hoverPoint.set(p);
         if (p && $filterRangeIndexed && (p.timeSeriesIndex < $filterRangeIndexed[0] || p.timeSeriesIndex > $filterRangeIndexed[1])) {
-            hoverRange = undefined
+            hoverRange.set(undefined)
         } else {
-            if (settings.projection === ProjectionMode.Cluster) {
-                hoverRange = p ? [
-                    Math.max(0, Math.floor(p.timeSeriesIndex - settings.windowSize / 2)),
-                    Math.min(Math.floor(p.timeSeriesIndex + settings.windowSize / 2), values.length - 1)
-                ] : undefined;
-            } else if (settings.window === WindowMode.Sliding) {
-                hoverRange = p ? [
-                    Math.max(0, Math.floor(p.timeSeriesIndex - settings.windowSize / 2)),
-                    Math.min(Math.floor(p.timeSeriesIndex + settings.windowSize / 2), values.length - 1)
-                ] : undefined;
+            if ($chartSettings.projection === ProjectionMode.Cluster) {
+                hoverRange.set(p ? [
+                    Math.max(0, Math.floor(p.timeSeriesIndex - $chartSettings.windowSize / 2)),
+                    Math.min(Math.floor(p.timeSeriesIndex + $chartSettings.windowSize / 2), timeSeries.length - 1)
+                ] : undefined)
+            } else if ($chartSettings.window === WindowMode.Sliding) {
+                hoverRange.set(p ? [
+                    Math.max(0, Math.floor(p.timeSeriesIndex - $chartSettings.windowSize / 2)),
+                    Math.min(Math.floor(p.timeSeriesIndex + $chartSettings.windowSize / 2), timeSeries.length - 1)
+                ] : undefined)
             } else {
-                hoverRange = p ? [
-                    Math.floor(Math.max(0, Math.floor(p.timeSeriesIndex / settings.windowSize) * settings.windowSize)),
-                    Math.floor(Math.min(values.length - 1, Math.ceil(p.timeSeriesIndex / settings.windowSize) * settings.windowSize))
-                ] : undefined;
+                hoverRange.set(p ? [
+                    Math.floor(Math.max(0, Math.floor(p.timeSeriesIndex / $chartSettings.windowSize) * $chartSettings.windowSize)),
+                    Math.floor(Math.min(timeSeries.length - 1, Math.ceil(p.timeSeriesIndex / $chartSettings.windowSize) * $chartSettings.windowSize))
+                ] : undefined)
             }
         }
         render();
@@ -241,8 +224,8 @@
     const render = () => {
         d3.select(`#scatter`).datum({
             data: renderData,
-            trace: (timeSeriesPathActive && hoverRange !== undefined && settings.projection === ProjectionMode.Paths) ? projectedIndexed.filter(p => p.timeSeriesIndex >= hoverRange[0] && p.timeSeriesIndex < hoverRange[1]).map(p => p.coords) : [],
-            hoverPoint: !brushActive && hoverPoint ? [hoverPoint.coords] : [],
+            trace: (timeSeriesPathActive && hoverRange !== undefined && $chartSettings.projection === ProjectionMode.Paths) ? projected.filter(p => p.timeSeriesIndex >= $hoverRange[0] && p.timeSeriesIndex < $hoverRange[1]).map(p => p.coords) : [],
+            hoverPoint: !brushActive && $hoverPoint ? [$hoverPoint.coords] : [],
             triangles: brushActive ? brushTriangulation : [],
             mouse: brushActive && mouseState ? mousePolygon(...mouseState, selectedRadius) : []
         }).call(projectionChart)
@@ -251,7 +234,7 @@
     const resetBrush = () => {
         brushPolygon = [];
         brushTriangulation = [];
-        selectedIndices = new Set();
+        selectedProjectedPoints.set([])
         render();
     }
 
@@ -260,14 +243,13 @@
     }
 
     filterRangeIndexed.subscribe((range) => {
-        renderData = moveMiddleToEnd(projectedIndexed, range)
-        quadtree = compute_quadtree(projectedIndexed, range)
+        renderData = moveMiddleToEnd(projected, range)
+        quadtree = compute_quadtree(projected, range)
         render()
     })
-
-    $: {
-        hoverRange, hoverPoint, render();
-    }
+    hoverRange.subscribe(() => render())
+    hoverPoint.subscribe(() => render())
+    chartSettings.subscribe(() => render())
 
 
     onMount(() => {

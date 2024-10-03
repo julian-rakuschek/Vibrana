@@ -1,48 +1,45 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {type ProjectedPoint, type ThreeChartsSettingsType, type TimeSeriesPoint, WindowMode} from "../lib/types";
+    import {type ProjectedPoint, type ThreeChartsSettingsType, type Point, WindowMode, type Label} from "@lib/types";
     import {onMount} from "svelte";
-    import {webglColor} from "../lib/helper/colorHelper";
-    import betterPointer from "../lib/helper/betterPointer";
-      import {filterRangeIndexed, filterRangePercent} from "../lib/stores";
-    export let values: number[];
-    export let colors: string[];
+    import {webglColor} from "@lib/helper/colorHelper";
+    import betterPointer from "@lib/helper/betterPointer";
+    import {filterRangeIndexed, filterRangePercent, chartSettings, hoverRange, hoverPoint} from "@lib/stores";
+    import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
+    export let timeSeries: number[];
+    export let projected: ProjectedPoint[];
+    export let labels: Label[];
+    export let events: number[];
 
-    export let hoverPoint: ProjectedPoint | undefined = undefined;
-    export let hoverRange: number[] | undefined = undefined;
-    export let settings: ThreeChartsSettingsType;
-    export let projectedIndexed: ProjectedPoint[]
-    export let selectedIndices: Set<ProjectedPoint> = new Set();
-
-    const timeseriesIndexed: TimeSeriesPoint[] = values.map((d, index) => ({
+    const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({
         x: index,
         y: d
     }))
 
-    const min_value = Math.min(...values)
-    const max_value = Math.max(...values)
-    const xScale = d3.scaleLinear().domain([0, values.length]).range([0, 1]);
+    const min_value = Math.min(...timeSeries)
+    const max_value = Math.max(...timeSeries)
+    const xScale = d3.scaleLinear().domain([0, timeSeries.length]).range([0, 1]);
     const yScale = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
-    
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const selectorPointer = betterPointer().on("point", ([coord]: { x: number; y: number }[]) => {
         if (!coord) return;
         const x = xScale.invert(coord.x);
-        if (settings.window === WindowMode.Sliding) {
-            hoverRange = [
-                Math.floor(Math.max(0, x - settings.windowSize / 2)),
-                Math.floor(Math.min(values.length - 1, x + settings.windowSize / 2))
-            ]
+        if ($chartSettings.window === WindowMode.Sliding) {
+            hoverRange.set([
+                Math.floor(Math.max(0, x - $chartSettings.windowSize / 2)),
+                Math.floor(Math.min(timeSeries.length - 1, x + $chartSettings.windowSize / 2))
+            ])
         } else {
-            hoverRange = [
-                Math.floor(Math.max(0, Math.floor(x / settings.windowSize) * settings.windowSize)),
-                Math.floor(Math.min(values.length - 1, Math.ceil(x / settings.windowSize) * settings.windowSize))
-            ]
+            hoverRange.set([
+                Math.floor(Math.max(0, Math.floor(x / $chartSettings.windowSize) * $chartSettings.windowSize)),
+                Math.floor(Math.min(timeSeries.length - 1, Math.ceil(x / $chartSettings.windowSize) * $chartSettings.windowSize))
+            ])
         }
 
-        hoverPoint = projectedIndexed.find(p => p.timeSeriesIndex === Math.floor(x))
+        hoverPoint.set(projected.find(p => p.timeSeriesIndex === Math.floor(x)))
 
         render();
     })
@@ -50,12 +47,12 @@
     const timeseriesLine = fc
         .seriesWebglLine()
         .equals((previousData, currentData) => previousData === currentData)
-        .crossValue((d: TimeSeriesPoint) => d.x)
-        .mainValue((d: TimeSeriesPoint) => d.y)
+        .crossValue((d: Point) => d.x)
+        .mainValue((d: Point) => d.y)
         .decorate((program) => fc
             .webglStrokeColor()
-            .value((d: TimeSeriesPoint) => {
-                const col = colors[d.x]
+            .value((d: Point) => {
+                const col = $colorsTimeSeries[d.x].color
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -73,7 +70,7 @@
     const navigatorChart = fc
         .chartCartesian(xScale, yScale)
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
-    .svgPlotArea(
+        .svgPlotArea(
             fc.seriesSvgMulti()
                 .series([selectorHoverBand])
                 .mapping((data, index, series) => {
@@ -88,20 +85,20 @@
         d3.select(`#annotator`).datum({
             data: timeseriesIndexed,
             hover: [{
-                from: hoverRange ? hoverRange[0] : 0,
-                to: hoverRange ? hoverRange[1] : 0
+                from: $hoverRange ? $hoverRange[0] : 0,
+                to: $hoverRange ? $hoverRange[1] : 0
             }],
         }).call(navigatorChart)
     };
 
     filterRangeIndexed.subscribe((range) => {
-        xScale.domain(range ? range : [0, values.length]);
+        xScale.domain(range ? range : [0, timeSeries.length]);
         render()
     })
 
-    $: {
-        hoverRange, render()
-    }
+    hoverRange.subscribe(() => render())
+    hoverPoint.subscribe(() => render())
+    chartSettings.subscribe(() => render())
 
     onMount(() => {
         render()

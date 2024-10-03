@@ -11,10 +11,10 @@ import type { DefaultAppResponse, Label, LabelBase } from "../types";
 
 export const dbRoutes = {
   getMachinesList: new ApiRoute<undefined, undefined, undefined, string[]>("GET", "/db/machines"),
-  getMachineSamples: new ApiRoute<undefined, {machine: string}, undefined, string[]>("GET", "/db/:machine/samples"),
-  getSampleValues: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[]>("GET", "/db/:machine/samples/:sampleId/values"),
-  getSampleProjected: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machine/samples/:sampleId/projected"),
-  getSampleEvents: new ApiRoute<undefined, {machine: string; sampleId: string}, undefined, number[]>("GET", "/db/:machine/samples/:sampleId/events"),
+  getMachineSamples: new ApiRoute<undefined, {machineId: string}, undefined, string[]>("GET", "/db/:machineId/samples"),
+  getSampleValues: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/values"),
+  getSampleProjected: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machineId/samples/:sampleId/projected"),
+  getSampleEvents: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/events"),
   getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Label[]>("GET", "/db/labels/:machineId/:sampleId"),
   addLabel: new ApiRoute<LabelBase, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
@@ -22,11 +22,11 @@ export const dbRoutes = {
   getNormals: new ApiRoute<undefined, { machineId: string }, undefined, string[]>("GET", "/db/normals/:machineId"),
   addNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("POST", "/db/normals/:machineId/:sampleId"),
   removeNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("DELETE", "/db/normals/:machineId/:sampleId"),
-  reset: new ApiRoute<undefined, {machine: string}, undefined, DefaultAppResponse>("POST", "/db/reset/:machine"),
+  reset: new ApiRoute<undefined, {machineId: string}, undefined, DefaultAppResponse>("POST", "/db/reset/:machineId"),
 };
 
 export const analysisRoutes = {
-  getMDSEmbedding: new ApiRoute<undefined, {machine: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machine/:sampleId/clustering"),
+  getMDSEmbedding: new ApiRoute<undefined, {machineId: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machineId/:sampleId/clustering"),
   getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/similarities"),
   getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_band"),
   getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number>("GET", "/analysis/:machineId/:sampleId/anomaly_ratio"),
