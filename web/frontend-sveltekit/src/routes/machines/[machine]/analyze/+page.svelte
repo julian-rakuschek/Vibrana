@@ -1,0 +1,34 @@
+<script lang="ts">
+    import {page} from '$app/stores';
+    import Navbar from "@components/Navbar.svelte";
+    import SampleList from "@components/lists/SampleList.svelte";
+    import {type SamplesSettingsType, SortMode} from "@lib/types";
+    import SampleListSettings from "@components/SampleListSettings.svelte";
+
+    let settings: SamplesSettingsType = {sort: SortMode.Score, split: false}
+    let selectModeActive: boolean = false
+
+    $: machine = $page.params.machine;
+</script>
+
+<Navbar/>
+<div class="grow grid grid-cols-12">
+    <div class="h-full col-span-full px-10 ">
+        <div class="w-full flex flex-row flex-nowrap justify-between relative z-50">
+            <span class="text-xl font-semibold">Samples</span>
+            <button on:click={() => selectModeActive = !selectModeActive}
+                    class={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-1 mr-20 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}>
+                {!selectModeActive ? "Select Anomaly-Free Samples" : "Exit Selection Mode"}
+            </button>
+            <div class="absolute top-0 right-0">
+                <SampleListSettings bind:settings machine={machine}/>
+            </div>
+        </div>
+        <SampleList machine={machine} settings={settings} selectModeActive={selectModeActive} />
+    </div>
+    <div class="h-full col-span-4 hidden">
+        <div class="w-full flex flex-row flex-nowrap justify-between px-5">
+            <span class="text-xl font-semibold">Live</span>
+        </div>
+    </div>
+</div>
