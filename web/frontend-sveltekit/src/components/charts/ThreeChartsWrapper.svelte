@@ -24,6 +24,8 @@
     <CenteredLoadingSpinner/>
 {:else}
     <ThreeCharts
+            machineId={machineId}
+            sampleId={sampleId}
             timeSeries={$timeSeriesQuery.data}
             projected={$projectedValuesQuery.data}
             normalTube={$normalTubeQuery.data}

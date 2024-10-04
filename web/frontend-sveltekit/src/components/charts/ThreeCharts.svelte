@@ -1,7 +1,7 @@
 <script lang="ts">
     import NavigatorChart from "./NavigatorChart.svelte";
     import {onMount} from "svelte";
-    import {type Label, type ProjectedPoint} from "@lib/types";
+    import {type Annotation, type Label, type ProjectedPoint, ProjectionMode} from "@lib/types";
     // import AnnotatorChart from "./AnnotatorChart.svelte";
     // import ScatterPlot from "./ScatterPlot.svelte";
     import {chartSettings, defaultChartSettings, filterRangeIndexed, filterRangePercent, hoverPoint, hoverRange, selectedProjectedPoints} from "@lib/stores";
@@ -10,20 +10,27 @@
     import AnnotatorChart from "@components/charts/AnnotatorChart.svelte";
     import ScatterPlot from "@components/charts/ScatterPlot.svelte";
 
+    export let machineId: string;
+    export let sampleId: string;
     export let timeSeries: number[] = [];
     export let projected: number[][] = [];
     export let normalTube: [number, number] = [0, 0];
     export let similarities: number[] = [];
     export let mdsEmbedding: number[][] = [];
-    export let labels: Label[] = [];
+    export let labels: Annotation[] = [];
     export let events: number[] = [];
 
     const offset: number = timeSeries.length - projected.length;
-    let projectedIndexed: ProjectedPoint[] = projected.map((d, i): ProjectedPoint => ({
-        projectedIndex: i,
-        timeSeriesIndex: i + offset,
-        coords: d
-    }));
+    let projectedIndexed: ProjectedPoint[] = [];
+    const indexProjectedPoints = (data: number[][]) => {
+        projectedIndexed = data.map((d, i): ProjectedPoint => ({
+            projectedIndex: i,
+            timeSeriesIndex: i + offset,
+            coords: d
+        }));
+        return projectedIndexed
+    }
+
 
     const reset = () => {
         filterRangeIndexed.set(null)
@@ -35,20 +42,25 @@
     }
 
     chartSettings.subscribe(() => {
-        computeColors($chartSettings, projected, similarities, normalTube, offset)
+        const projectionData = $chartSettings.projection === ProjectionMode.Paths ? projected : mdsEmbedding
+        computeColors($chartSettings, projectionData, similarities, normalTube, offset)
+        indexProjectedPoints(projectionData)
     })
 
     onMount(() => {
         reset()
+        indexProjectedPoints(projected)
         computeColors($chartSettings, projected, similarities, normalTube, offset)
     })
 </script>
 
-<button on:click={() => reset()}>Reset</button>
-
 <div class="fixed top-3 right-3 z-10">
-    <ChartSettings />
+    <ChartSettings/>
 </div>
-<NavigatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} />
-<AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} />
-<ScatterPlot timeSeries={timeSeries} projected={projectedIndexed} mdsEmbedding={mdsEmbedding} />
+<NavigatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events}/>
+<AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} machineId={machineId} sampleId={sampleId} />
+{#if $chartSettings.projection === ProjectionMode.Paths}
+    <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
+{:else}
+    <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
+{/if}

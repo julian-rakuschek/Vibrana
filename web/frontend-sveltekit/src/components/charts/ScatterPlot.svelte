@@ -26,7 +26,6 @@
 
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
-    export let mdsEmbedding: number[][];
 
 
     const projectionPadding = 0.1;
@@ -251,6 +250,13 @@
     hoverPoint.subscribe(() => render())
     chartSettings.subscribe(() => render())
 
+    // $: {
+    //     renderData = moveMiddleToEnd(projected, $filterRangeIndexed);
+    //     quadtree = compute_quadtree(projected, $filterRangeIndexed);
+    //     rtree.load(projected)
+    //     render()
+    // }
+
 
     onMount(() => {
         render();
@@ -258,7 +264,8 @@
 
 </script>
 
-<div class="relative rounded-xl shadow-lg text-center w-full flex flex-row justify-center">
+<p class="text-center mb-1"><span class="font-semibold">Projection</span>: <span class="text-black/70">Explore interesting parts of the signal through the projection.</span></p>
+<div class="relative text-center w-full flex flex-row justify-center">
     <div id="scatter" style="height: 500px; width: 500px"></div>
     <div class="flex flex-col justify-start">
         <div class="flex flex-row flex-nowrap justify-start items-center gap-3">
