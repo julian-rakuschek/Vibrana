@@ -3,19 +3,20 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {goto} from "$app/navigation";
     import {useQueryClient} from "@tanstack/svelte-query";
+    import type {AnomalyMetric} from "@lib/types";
 
     export let samples: string[];
     export let machineId: string;
     export let normals: string[];
-    export let anomaly_ratios: [string, number][];
+    export let anomaly_ratios: AnomalyMetric[];
     export let selectModeActive: boolean;
     export let fetching_anomalies: boolean;
 
     const client = useQueryClient()
 
-    const get_anomaly_ratio = (needle: string, anomaly_ratios: [string, number][]): number | undefined => {
-        const res = anomaly_ratios.find(a => a[0] == needle)
-        if (res) return res[1];
+    const get_anomaly_ratio = (needle: string, anomaly_ratios: AnomalyMetric[]): number | undefined => {
+        const res = anomaly_ratios.find(a => a.sampleId == needle)
+        if (res) return res.ratio;
         else return undefined;
     }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import {ApiRoutes} from "@lib/api/ApiRoutes";
-    import {type SamplesSettingsType, SortMode} from "@lib/types";
+    import {type AnomalyMetric, type SamplesSettingsType, SortMode} from "@lib/types";
     import {useQueryFetch} from "@lib/api/ApiQueries";
     import SampleList from "@components/lists/SampleList.svelte";
     import { fly } from "svelte/transition"
@@ -13,10 +13,10 @@
 
     export let selectModeActive: boolean;
 
-    const sort_samples = (samples: string[], anomaly_ratios: [string, number][]) => {
+    const sort_samples = (samples: string[], anomaly_ratios: AnomalyMetric[]): string[] => {
         let sample_sorted = samples.sort();
         if (settings.sort === SortMode.Score && anomaly_ratios.length == samples.length && samples) {
-            sample_sorted = anomaly_ratios.map(s => s[0])
+            sample_sorted = anomaly_ratios.map(s => s.sampleId)
         }
         return sample_sorted
     }
@@ -25,7 +25,7 @@
     const sampleListQuery = useQueryFetch(ApiRoutes.getMachineSamples, {params: {machineId}})
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}})
     const anomalyRatiosQuery = useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}})
-    let anomaly_ratios: [string, number][] = []
+    let anomaly_ratios: AnomalyMetric[] = []
     let fetching_anomalies = false;
 
     anomalyRatiosQuery.subscribe((value) => {

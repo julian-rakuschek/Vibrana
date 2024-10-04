@@ -2,10 +2,10 @@
     import {interpolateRdYlBu, color} from "d3";
     import {colorIsDarkSimple} from "@lib/helper/util";
     export let anomalyRatio: number;
-    const min_percentage = 0
-    const max_percentage = 0.1
-    $: anomalyRatioRounded = Math.round(anomalyRatio * 10000) / 100
-    $: background_color = interpolateRdYlBu(1 - (anomalyRatioRounded - min_percentage) / (max_percentage - min_percentage))
+    const min_ratio = 0
+    const max_ratio = 0.01
+    $: anomalyRatioRounded = (anomalyRatio).toFixed(4)
+    $: background_color = interpolateRdYlBu(1 - (anomalyRatioRounded - min_ratio) / (max_ratio - min_ratio))
     $: text_color = colorIsDarkSimple(color(background_color).hex()) ? '#FFFFFF' : '#000000';
 
 </script>

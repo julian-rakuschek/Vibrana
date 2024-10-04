@@ -1,90 +1,40 @@
 import io
-import json
 import os.path
 from pathlib import Path
-import random
 
 import flask
 import numpy as np
-import stumpy
-from numpy.lib.stride_tricks import sliding_window_view
-from scipy.spatial import distance
-from sklearn.manifold import MDS
-from tslearn.preprocessing import TimeSeriesResampler
 from matplotlib import pyplot as plt
-from algorithms.lmds import landmark_MDS
-from web.backend.modules.database import get_db, flask_get_normals
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+from web.backend.helper.analysis import compute_mds_embedding, compute_distance_profile, compute_normal_tube, count_anomaly_intervals, compute_anomaly_metrics
+from web.backend.helper.wrapper import validate_sample_path, validate_machine
+from web.backend.modules.database import get_db
+
 analysis_app = flask.Blueprint("analysis", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 
 
-@analysis_app.get("<machine>/<sampleId>/clustering_old")
-def flask_get_clustering(machine, sampleId):
+@analysis_app.get("<machineId>/<sampleId>/mdsEmbedding")
+@validate_sample_path
+def flask_get_mds_embedding(machineId, sampleId, sample_path):
     window_size = int(flask.request.args.get("window_size", 1000))
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    windows = sliding_window_view(values, window_shape=window_size)[::window_size]
-    ffts = [np.fft.fft(w) for w in windows]
-    distances = [[np.linalg.norm(ffts[i] - ffts[j]) for j in range(len(windows))] for i in range(len(windows))]
-    embedding: np.ndarray = MDS(dissimilarity="precomputed").fit_transform(distances)
-    return embedding.tolist()
-
-
-@analysis_app.get("<machine>/<sampleId>/clustering")
-def flask_get_clustering2(machine, sampleId):
-    window_size = int(flask.request.args.get("window_size", 1000))
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    windows = sliding_window_view(values, window_shape=window_size)
-    lands = random.sample(range(0, windows.shape[0], 1), 50)
-    lands = np.array(lands, dtype=int)
-    Dl2 = distance.cdist(windows[lands, :], windows, 'chebyshev')
-    xl_2 = landmark_MDS(Dl2, lands, 2)
+    xl_2 = compute_mds_embedding(sample_path, window_size)
     return xl_2.tolist()
 
 
-@analysis_app.get("<machine>/<sampleId>/similarities")
-def flask_get_similarities(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    labels = list(get_db()["labels"].find({"machine": machine}))
-    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    similarities = []
-    extracted_label_values = []
-    for label in labels:
-        label_values: np.ndarray = np.load(os.path.join(samples_folder, label["machine"], label["sampleId"], "values.npy"))
-        extracted_label_values.append(label_values[label["from"]:label["to"]])
-    for label in extracted_label_values:
-        d = stumpy.mass(label, values, normalize=True)
-        d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
-        similarities.append(d)
-    if not similarities:
-        return []
-    similarities = np.min(np.array(similarities), axis=0)
-    return similarities.tolist()
+@analysis_app.get("<machineId>/<sampleId>/distanceProfile")
+@validate_sample_path
+def flask_get_distance_profile(machineId, sampleId, sample_path):
+    distances = compute_distance_profile(get_db(), machineId, sample_path)
+    return distances.tolist()
 
-@analysis_app.get("<machine>/<sampleId>/similarities/img")
-def flask_get_similarities_img(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
+
+@analysis_app.get("<machineId>/<sampleId>/distanceProfile/img")
+@validate_sample_path
+def flask_get_distance_profile_img(machineId, sampleId, sample_path):
+    distances = compute_distance_profile(get_db(), machineId, sample_path)
     values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
-    sim = flask_get_similarities(machine, sampleId)
-    print(sim)
     plt.clf()
     fig, ax = plt.subplots(nrows=2, ncols=1)
     fig.set_size_inches(20, 10)
@@ -92,9 +42,9 @@ def flask_get_similarities_img(machine, sampleId):
     ax[0].set_xlim([0, len(values)])
     ax[0].plot(values, color="black")
     ax[1].set_title("Similarities")
-    ax[1].set_xlim([0, len(sim)])
-    ax[1].plot(sim, color="navy")
-    normal_tube = flask_get_normal_tube(machine)
+    ax[1].set_xlim([0, len(distances)])
+    ax[1].plot(distances, color="navy")
+    normal_tube = compute_normal_tube(get_db(), machineId)
     ax[1].axhline(normal_tube[0], color="red")
     ax[1].axhline(normal_tube[1], color="red")
     output = io.BytesIO()
@@ -102,81 +52,26 @@ def flask_get_similarities_img(machine, sampleId):
     return flask.Response(output.getvalue(), mimetype='image/png')
 
 
-@analysis_app.get("<machine>/normal_band")
-def flask_get_normal_tube(machine):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    if len(list(get_db()["labels"].find({"machine": machine}))) == 0:
-        return flask.jsonify([0, 0])
-    normals = flask_get_normals(machine)
-    normal_min, normal_max = [], []
-    for normal in normals:
-        similarities = flask_get_similarities(machine, normal)
-        normal_min.append(np.min(similarities))
-        normal_max.append(np.max(similarities))
-    normal_min = np.mean(normal_min)
-    normal_max = np.mean(normal_max)
-    return [normal_min, normal_max]
+@analysis_app.get("<machineId>/normal_tube")
+@validate_machine
+def flask_get_normal_tube(machineId, machine_path):
+    return compute_normal_tube(get_db(), machineId)
 
 
-@analysis_app.get("<machine>/<sampleId>/anomaly_count")
-def flask_get_anomaly_count(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    sim = flask_get_similarities(machine, sampleId)
-    normal_tube = flask_get_normal_tube(machine)
-    found_anomalies = 0
-    start = None
-    length = 0
-    for i, data_point in enumerate(sim):
-        if data_point >= normal_tube[1]:
-            if start is None:
-                start = i
-            length += 1
-        elif start is not None:
-            if length >= 100:
-                found_anomalies += 1
-            start = None
-            length = 0
-    if start is not None and length >= 100:
-        found_anomalies += 1
-    return flask.jsonify(found_anomalies)
+@analysis_app.get("<machineId>/anomaly_metrics/<sampleId>")
+@validate_sample_path
+def flask_get_anomaly_ratio(machineId, sampleId, sample_path):
+    return flask.jsonify(compute_anomaly_metrics(get_db(), machineId, sampleId))
 
 
-@analysis_app.get("<machine>/<sampleId>/anomaly_ratio")
-def flask_get_anomaly_ratio(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    if len(list(get_db()["labels"].find({"machine": machine}))) == 0:
-        return flask.jsonify(None)
-    sim = flask_get_similarities(machine, sampleId)
-    normal_tube = flask_get_normal_tube(machine)
-    above = (np.array(sim) >= normal_tube[1]).sum()
-    below = (np.array(sim) <= normal_tube[0]).sum()
-    return flask.jsonify(below / len(sim))
-
-@analysis_app.get("<machine>/anomaly_ratios")
-def flask_get_anomaly_ratios(machine):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    samples = os.listdir(os.path.join(samples_folder, machine))
-    normal_tube = flask_get_normal_tube(machine)
-    samples_dict = {}
-    n_labels = len(list(get_db()["labels"].find({"machine": machine})))
-    for sample in samples:
-        if n_labels == 0:
-            samples_dict[sample] = 0
-        else:
-            sim = flask_get_similarities(machine, sample)
-            above = (np.array(sim) >= normal_tube[1]).sum()
-            below = (np.array(sim) <= normal_tube[0]).sum()
-            samples_dict[sample] = below / len(sim)
-    samples = [(name, score) for name, score in samples_dict.items()]
-    samples.sort(key=lambda x: x[1], reverse=True)
-    return samples
+@analysis_app.get("<machineId>/anomaly_metrics")
+@validate_machine
+def flask_get_anomaly_ratios(machineId, machine_path):
+    samples = os.listdir(os.path.join(samples_folder, machineId))
+    db = get_db()
+    normals = compute_normal_tube(db, machineId)
+    anomaly_sample_metrics = []
+    for sampleId in samples:
+        anomaly_sample_metrics.append(compute_anomaly_metrics(db, machineId, sampleId, normals))
+    anomaly_sample_metrics.sort(key=lambda x: x["ratio"], reverse=True)
+    return anomaly_sample_metrics

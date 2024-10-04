@@ -86,3 +86,11 @@ export type Color = {
     color: string;
     value: number;
 }
+
+export type AnomalyMetric = {
+    ratio: number,
+    count: number,
+    distances_reduced: number[],
+    machineId: string,
+    sampleId: string
+}

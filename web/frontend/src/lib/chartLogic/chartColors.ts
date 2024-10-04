@@ -12,10 +12,17 @@ export const computeRadiiNormalized = (projectedPoints: number[][]): number[] =>
     return radii.map(r => r / max_rad);
 }
 
-const computeDistancesNormalized = (similarities: number[], normal_tube: [number, number]): number[] => {
-    const shifted_min = (normal_tube[0] + normal_tube[1]) / 2
-    const shifted_max = shifted_min + (normal_tube[1] - normal_tube[0])
-    return similarities.map(s => (s - shifted_min) / (shifted_max - shifted_min))
+const computeDistancesNormalized = (distances: number[], normal_tube: [number, number]): number[] => {
+    const tolerance = 1.1
+    const meanNormal = (normal_tube[0] + normal_tube[1]) / 2
+    const tubeRadius = Math.abs(normal_tube[0] - normal_tube[1]) / 2
+    const distancesToMeanNormal = distances.map(d => Math.abs(d - meanNormal))
+    const maxDistanceFromMean = tubeRadius * tolerance
+    return distancesToMeanNormal.map(s => s / maxDistanceFromMean)
+}
+
+const computeDistancesOutside = (distances: number[], normal_tube: [number, number]): number[] => {
+    return distances.map(d => d < normal_tube[0] || d > normal_tube[1] ? 1 : 0)
 }
 
 const allBlack = (n: number): string[] => {
@@ -24,7 +31,7 @@ const allBlack = (n: number): string[] => {
 
 export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints: number[][], similarities: number[], normalTube: [number, number] | undefined, offset: number): void => {
     if (settings.color === ColorMode.Distance && normalTube !== undefined && similarities.length > 0) {
-        const distanceValues = computeDistancesNormalized(similarities, normalTube);
+        const distanceValues = computeDistancesOutside(similarities, normalTube);
         const colors = distanceValues.map((d): Color => ({color: interpolateRdYlBu(1 - d), value: d}))
         colorsTimeSeries.set(colors)
         colorsProjection.set(colors.slice(0, projectedPoints.length))

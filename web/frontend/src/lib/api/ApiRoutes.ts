@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {Annotation, DefaultAppResponse, Label, LabelBase} from "../types";
+import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase} from "../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -26,11 +26,11 @@ export const dbRoutes = {
 };
 
 export const analysisRoutes = {
-  getMDSEmbedding: new ApiRoute<undefined, {machineId: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machineId/:sampleId/clustering"),
-  getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/similarities"),
-  getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_band"),
-  getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number>("GET", "/analysis/:machineId/:sampleId/anomaly_ratio"),
-  getAnomalyRatios: new ApiRoute<undefined, {machineId: string;}, undefined, [string, number][]>("GET", "/analysis/:machineId/anomaly_ratios"),
+  getMDSEmbedding: new ApiRoute<undefined, {machineId: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machineId/:sampleId/mdsEmbedding"),
+  getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/distanceProfile"),
+  getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_tube"),
+  getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, AnomalyMetric>("GET", "/analysis/:machineId/anomaly_metrics/:sampleId/"),
+  getAnomalyRatios: new ApiRoute<undefined, {machineId: string;}, undefined, AnomalyMetric[]>("GET", "/analysis/:machineId/anomaly_metrics"),
 }
 
 export const ApiRoutes = {
