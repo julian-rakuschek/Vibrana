@@ -10,6 +10,7 @@
     import {selectedToColoredIntervals} from "@lib/helper/util";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
+    import WindowSizePopup from "@components/WindowSizePopup.svelte";
 
     export let machineId: string;
     export let sampleId: string;
@@ -25,6 +26,7 @@
 
     let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset)
     let addAnnotation = true;
+    let windowSizeSelectionOpen = false;
 
     const min_value = Math.min(...timeSeries)
     const max_value = Math.max(...timeSeries)
@@ -182,11 +184,12 @@
         brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
         render()
     })
+
     onMount(() => {
         render()
     })
 </script>
-<p class="text-center"><span class="font-semibold">Annotator</span>: <span class="text-black/70">Save intervals of the signal for later anomaly detection.</span></p>
+<p class="text-center"><span class="font-semibold">Annotator</span>: <span class="text-black/70">Save intervals of the signal for later anomaly detection.</span> <button on:click={() => windowSizeSelectionOpen = true} class="cursor-default text-indigo-500 border-b-2 border-indigo-500 border-dotted hover:text-indigo-700 hover:border-indigo-700">Adjust Interval Size</button></p>
 <div class="flex flex-row w-full justify-center gap-4">
     <button class={`flex flex-row justify-center items-center shadow-xl rounded-lg px-3 py-2 transition ${addAnnotation ? "bg-indigo-500 text-white" : "bg-white text-black"}`} on:click={() => addAnnotation = true}>
         <span class="leading-none">Add Annotation</span>
@@ -196,3 +199,4 @@
     </button>
 </div>
 <div id="annotator" style="height: 200px; width: 100%"></div>
+<WindowSizePopup bind:isOpen={windowSizeSelectionOpen} timeSeries={timeSeries} />

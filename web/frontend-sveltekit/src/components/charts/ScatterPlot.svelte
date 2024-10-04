@@ -223,7 +223,7 @@
     const render = () => {
         d3.select(`#scatter`).datum({
             data: renderData,
-            trace: (timeSeriesPathActive && hoverRange !== undefined && $chartSettings.projection === ProjectionMode.Paths) ? projected.filter(p => p.timeSeriesIndex >= $hoverRange[0] && p.timeSeriesIndex < $hoverRange[1]).map(p => p.coords) : [],
+            trace: (timeSeriesPathActive && hoverRange !== undefined && $chartSettings.projection === ProjectionMode.Paths) ? projected.filter(p => $hoverRange && p.timeSeriesIndex >= $hoverRange[0] && p.timeSeriesIndex < $hoverRange[1]).map(p => p.coords) : [],
             hoverPoint: !brushActive && $hoverPoint ? [$hoverPoint.coords] : [],
             triangles: brushActive ? brushTriangulation : [],
             mouse: brushActive && mouseState ? mousePolygon(...mouseState, selectedRadius) : []
