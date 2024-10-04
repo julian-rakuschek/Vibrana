@@ -18,7 +18,7 @@ app.register_blueprint(analysis_app, url_prefix="/api/analysis")
 @app.route("/")
 @app.route("/<path:path>")
 def flask_main(path=None):
-    dist_path = os.path.join(Path(__file__).parents[1], "frontend", "dist")
+    dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
     if path is not None and os.path.exists(os.path.join(dist_path, path)):
         dist_path = os.path.join(dist_path, path)
         return flask.send_file(dist_path)
