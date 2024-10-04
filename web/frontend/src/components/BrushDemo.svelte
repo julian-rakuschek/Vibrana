@@ -1,15 +1,14 @@
 <script lang="ts">
-    import polygonClipping, {type MultiPolygon, type Pair, type Polygon, type Ring} from "polygon-clipping";
-    import * as d3 from "d3";
-    import * as fc from "d3fc";
-    import {DemoRBush, getCirlcePoints, mousePolygon, polyToTriangles} from "@lib/helper/brushHelper";
-    import betterPointer from "@lib/helper/betterPointer";
-    import {onMount} from "svelte";
+    import polygonClipping, { type MultiPolygon, type Pair } from 'polygon-clipping';
+    import * as d3 from 'd3';
+    import * as fc from 'd3fc';
+    import { DemoRBush, getCirlcePoints, mousePolygon, polyToTriangles } from '@lib/helper/brushHelper';
+    import betterPointer from '@lib/helper/betterPointer';
+    import { onMount } from 'svelte';
 
     const xScale = d3.scaleLinear()
     const yScale = d3.scaleLinear()
     
-    let trace: number[][] = []
     let poly: MultiPolygon = []
     let triangulation: number[][][] = []
     let lastPoint: Pair | null = null
@@ -121,7 +120,6 @@
         );
 
     const reset = () => {
-        trace = [];
         poly = [];
         triangulation = [];
         selected = new Set()
