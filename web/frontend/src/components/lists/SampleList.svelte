@@ -11,12 +11,13 @@
     export let anomaly_ratios: AnomalyMetric[];
     export let selectModeActive: boolean;
     export let fetching_anomalies: boolean;
+    export let normalTube: [number, number];
 
     const client = useQueryClient()
 
-    const get_anomaly_ratio = (needle: string, anomaly_ratios: AnomalyMetric[]): number | undefined => {
+    const get_anomaly = (needle: string, anomaly_ratios: AnomalyMetric[]): AnomalyMetric | undefined => {
         const res = anomaly_ratios.find(a => a.sampleId == needle)
-        if (res) return res.ratio;
+        if (res) return res;
         else return undefined;
     }
 
@@ -44,7 +45,8 @@
                 machineId={machineId}
                 selected={normals.indexOf(sample) !== -1}
                 selectModeActive={selectModeActive}
-                anomalyRatio={get_anomaly_ratio(sample, anomaly_ratios)}
+                anomaly={get_anomaly(sample, anomaly_ratios)}
+                normalTube={normalTube}
         />
     </div>
 {/each}

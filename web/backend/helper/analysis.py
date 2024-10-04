@@ -75,14 +75,17 @@ def count_anomaly_intervals(distances, normal_tube):
     return found_anomalies
 
 
-def reduce_distances(distances, n_segments):
+def reduce_distances(distances, normal_tube, n_segments):
     if n_segments >= len(distances):
         return distances
     window_size = len(distances) // n_segments
     distances_reduced = []
     for i in range(n_segments):
         subset = distances[i * window_size: (i + 1) * window_size]
-        distances_reduced.append(float(np.min(subset)))
+        if np.any(subset < normal_tube[0]):
+            distances_reduced.append(float(np.min(subset)))
+        else:
+            distances_reduced.append(float(np.mean(subset)))
     return distances_reduced
 
 
@@ -102,7 +105,7 @@ def compute_anomaly_metrics(db: Database, machineId, sampleId, normal_tube=None)
     return {
         "machineId": machineId,
         "sampleId": sampleId,
-        "distances_reduced": reduce_distances(distances, 100),
+        "distances_reduced": reduce_distances(distances, normal_tube, 100),
         "ratio": compute_anomaly_ratio(distances, normal_tube),
         "count": count_anomaly_intervals(distances, normal_tube)
     }
