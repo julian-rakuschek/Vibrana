@@ -3,6 +3,9 @@
     import {type SamplesSettingsType, SortMode} from "@lib/types";
     import {useQueryFetch} from "@lib/api/ApiQueries";
     import SampleList from "@components/lists/SampleList.svelte";
+    import { fly } from "svelte/transition"
+    import {onMount} from "svelte";
+    import {Jumper} from "svelte-loading-spinners";
 
     export let machineId: string;
 
@@ -23,13 +26,17 @@
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}})
     const anomalyRatiosQuery = useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}})
     let anomaly_ratios: [string, number][] = []
-    let fetching_anomalies = true;
+    let fetching_anomalies = false;
 
     anomalyRatiosQuery.subscribe((value) => {
         if (value.isSuccess) {
             anomaly_ratios = value.data
             fetching_anomalies = false;
         }
+    })
+
+    onMount(() => {
+        fetching_anomalies = anomaly_ratios.length == 0
     })
 
 </script>
@@ -39,7 +46,9 @@
 {/if}
 
 {#if fetching_anomalies}
-    <div class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md">Fetching anomaly scores ...</div>
+    <div transition:fly={{ x: -30, duration: 300 }} class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md flex flex-row justify-center items-center gap-3 z-50">
+        <span>Fetching anomaly scores</span> <Jumper color="white" size="30" />
+    </div>
 {/if}
 
 {#if $sampleListQuery.isSuccess && $normalsQuery.isSuccess}
