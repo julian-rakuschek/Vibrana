@@ -13,7 +13,7 @@ export const computeRadiiNormalized = (projectedPoints: number[][]): number[] =>
 }
 
 const computeDistancesNormalized = (distances: number[], normal_tube: [number, number]): number[] => {
-    const tolerance = 1.1
+    const tolerance = 2
     const meanNormal = (normal_tube[0] + normal_tube[1]) / 2
     const tubeRadius = Math.abs(normal_tube[0] - normal_tube[1]) / 2
     const distancesToMeanNormal = distances.map(d => Math.abs(d - meanNormal))
@@ -31,7 +31,7 @@ const allBlack = (n: number): string[] => {
 
 export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints: number[][], similarities: number[], normalTube: [number, number] | undefined, offset: number): void => {
     if (settings.color === ColorMode.Distance && normalTube !== undefined && similarities.length > 0) {
-        const distanceValues = computeDistancesOutside(similarities, normalTube);
+        const distanceValues = computeDistancesNormalized(similarities, normalTube);
         const colors = distanceValues.map((d): Color => ({color: interpolateRdYlBu(1 - d), value: d}))
         colorsTimeSeries.set(colors)
         colorsProjection.set(colors.slice(0, projectedPoints.length))

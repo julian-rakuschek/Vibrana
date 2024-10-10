@@ -10,7 +10,7 @@
     export let height = 10
 
     const normalizeDistances = () => {
-        const tolerance = 1.5
+        const tolerance = 2
         const meanNormal = (normalTube[0] + normalTube[1]) / 2
         const tubeRadius = Math.abs(normalTube[0] - normalTube[1]) / 2
         const distancesToMeanNormal = distances.map(d => Math.abs(d - meanNormal))

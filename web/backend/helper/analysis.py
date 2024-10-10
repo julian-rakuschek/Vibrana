@@ -75,7 +75,7 @@ def count_anomaly_intervals(distances, normal_tube):
     return found_anomalies
 
 
-def reduce_distances(distances, normal_tube, n_segments):
+def reduce_distances(distances, normal_tube, n_segments, keep_original_length=False):
     if n_segments >= len(distances):
         return distances
     window_size = len(distances) // n_segments
@@ -83,9 +83,15 @@ def reduce_distances(distances, normal_tube, n_segments):
     for i in range(n_segments):
         subset = distances[i * window_size: (i + 1) * window_size]
         if np.any(subset < normal_tube[0]):
-            distances_reduced.append(float(np.min(subset)))
+            if keep_original_length:
+                distances_reduced.extend(list(np.repeat(np.min(subset), window_size)))
+            else:
+                distances_reduced.append(float(np.min(subset)))
         else:
-            distances_reduced.append(float(np.mean(subset)))
+            if keep_original_length:
+                distances_reduced.extend(list(np.repeat(np.mean(subset), window_size)))
+            else:
+                distances_reduced.append(float(np.mean(subset)))
     return distances_reduced
 
 
@@ -105,7 +111,14 @@ def compute_anomaly_metrics(db: Database, machineId, sampleId, normal_tube=None)
     return {
         "machineId": machineId,
         "sampleId": sampleId,
-        "distances_reduced": reduce_distances(distances, normal_tube, 100),
+        "distances_reduced": reduce_distances(distances, normal_tube, 200),
         "ratio": compute_anomaly_ratio(distances, normal_tube),
         "count": count_anomaly_intervals(distances, normal_tube)
     }
+
+
+def compute_quantized_distance_profile(db: Database, machineId, sampleId):
+    sample_path = os.path.join(samples_folder, machineId, sampleId)
+    distances = compute_distance_profile(db, machineId, sample_path)
+    normal_tube = compute_normal_tube(db, machineId)
+    return reduce_distances(distances, normal_tube, 1000, True)

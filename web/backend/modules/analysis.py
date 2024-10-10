@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-from web.backend.helper.analysis import compute_mds_embedding, compute_distance_profile, compute_normal_tube, count_anomaly_intervals, compute_anomaly_metrics
+from web.backend.helper.analysis import *
 from web.backend.helper.wrapper import validate_sample_path, validate_machine
 from web.backend.modules.database import get_db
 
@@ -28,6 +28,12 @@ def flask_get_mds_embedding(machineId, sampleId, sample_path):
 def flask_get_distance_profile(machineId, sampleId, sample_path):
     distances = compute_distance_profile(get_db(), machineId, sample_path)
     return distances.tolist()
+
+@analysis_app.get("<machineId>/<sampleId>/distanceProfile/quantized")
+@validate_sample_path
+def flask_get_distance_profile_quantized(machineId, sampleId, sample_path):
+    distances = compute_quantized_distance_profile(get_db(), machineId, sample_path)
+    return distances
 
 
 @analysis_app.get("<machineId>/<sampleId>/distanceProfile/img")

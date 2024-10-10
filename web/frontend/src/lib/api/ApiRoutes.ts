@@ -27,7 +27,7 @@ export const dbRoutes = {
 
 export const analysisRoutes = {
   getMDSEmbedding: new ApiRoute<undefined, {machineId: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machineId/:sampleId/mdsEmbedding"),
-  getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/distanceProfile"),
+  getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/distanceProfile/quantized"),
   getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_tube"),
   getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, AnomalyMetric>("GET", "/analysis/:machineId/anomaly_metrics/:sampleId/"),
   getAnomalyRatios: new ApiRoute<undefined, {machineId: string;}, undefined, AnomalyMetric[]>("GET", "/analysis/:machineId/anomaly_metrics"),
