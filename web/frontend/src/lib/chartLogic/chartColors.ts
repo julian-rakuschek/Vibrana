@@ -51,3 +51,26 @@ export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints
         colorsProjection.set(allBlack(projectedPoints.length).map((c): Color => ({color: c, value: 0})));
     }
 }
+
+export type ColorInterpolateParams = {
+  start: number;
+  end: number;
+  reverse: boolean;
+  interpolateFunc: (t: number) => string;
+};
+
+// Src: https://medium.com/code-nebula/automatically-generate-chart-colors-with-chart-js-d3s-color-scales-f62e282b2b41
+export function createColorsArray(dataLength: number, colorInterpolateParams: ColorInterpolateParams): string[] {
+  const colorRange = colorInterpolateParams.end - colorInterpolateParams.start;
+  const intervalSize = colorRange / dataLength;
+  const colorArray = [];
+
+  for(let i = 0; i < dataLength; i++) {
+    const colorPoint: number = colorInterpolateParams.reverse ?
+      (colorInterpolateParams.end - (i * intervalSize)) :
+      (colorInterpolateParams.start + (i * intervalSize));
+    colorArray.push(colorInterpolateParams.interpolateFunc(colorPoint));
+  }
+
+  return colorArray;
+}

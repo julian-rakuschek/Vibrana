@@ -9,6 +9,7 @@
     import {computeColors} from "@lib/chartLogic/chartColors";
     import AnnotatorChart from "@components/charts/AnnotatorChart.svelte";
     import ScatterPlot from "@components/charts/ScatterPlot.svelte";
+    import ColorLegend from "@components/atoms/ColorLegend.svelte";
 
     export let machineId: string;
     export let sampleId: string;
@@ -64,3 +65,6 @@
 {:else}
     <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
 {/if}
+<div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg">
+    <ColorLegend colorMode={$chartSettings.color} />
+</div>

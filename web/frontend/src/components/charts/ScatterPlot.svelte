@@ -145,7 +145,7 @@
         const y = yScaleProjection.invert(coord.y);
 
         mouseState = [x, y, coord.buttons];
-        if (coord.buttons === 0) {
+        if (coord.buttons === 0 || !brushActive) {
             brushLastPoint = null;
         } else {
             handleBrush(x, y, coord.buttons)
