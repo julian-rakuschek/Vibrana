@@ -65,6 +65,6 @@
 {:else}
     <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
 {/if}
-<div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg">
+<div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
     <ColorLegend colorMode={$chartSettings.color} />
 </div>

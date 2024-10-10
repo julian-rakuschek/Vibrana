@@ -198,5 +198,5 @@
         <span class="leading-none">Remove Annotation</span>
     </button>
 </div>
-<div id="annotator" style="height: 200px; width: 100%"></div>
+<div id="annotator" style="height: 170px; width: 100%"></div>
 <WindowSizePopup bind:isOpen={windowSizeSelectionOpen} timeSeries={timeSeries} />

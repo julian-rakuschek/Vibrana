@@ -21,7 +21,9 @@
     <Icon src="{ArrowLeft}" class="w-5 h-5" />
 </a>
 {#if $timeSeriesQuery.isPending || $projectedValuesQuery.isPending || $normalTubeQuery.isPending || $similaritiesQuery.isPending || $mdsEmbeddingQuery.isPending || $labelsQuery.isPending || $eventsQuery.isPending}
-    <CenteredLoadingSpinner/>
+    <div class="absolute top-0 right-0 w-full h-full">
+        <CenteredLoadingSpinner/>
+    </div>
 {:else}
     <ThreeCharts
             machineId={machineId}

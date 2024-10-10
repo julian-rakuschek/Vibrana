@@ -126,4 +126,4 @@
 </script>
 
 <p class="text-center mt-5"><span class="font-semibold">Navigator</span>: <span class="text-black/70">Select a subset of the signal by dragging an area with the mouse.</span> <button on:click={resetRange} class="cursor-default text-indigo-500 border-b-2 border-indigo-500 border-dotted hover:text-indigo-700 hover:border-indigo-700">Reset Range</button></p>
-<div id="linechart" style="height: 200px; width: 100%"></div>
+<div id="linechart" style="height: 170px; width: 100%"></div>
