@@ -78,6 +78,9 @@ def flask_get_anomaly_ratios(machineId, machine_path):
     normals = compute_normal_tube(db, machineId)
     anomaly_sample_metrics = []
     for sampleId in samples:
-        anomaly_sample_metrics.append(compute_anomaly_metrics(db, machineId, sampleId, normals))
+        metrics = compute_anomaly_metrics(db, machineId, sampleId, normals)
+        if metrics is None:
+            continue
+        anomaly_sample_metrics.append(metrics)
     anomaly_sample_metrics.sort(key=lambda x: x["ratio"], reverse=True)
     return anomaly_sample_metrics

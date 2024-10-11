@@ -95,6 +95,28 @@ def spectrogram(folder):
     ex.ax["event"].set_title("Spectrogram", fontsize=20)
     ex.save()
 
+
+def time_varying_amplitude(folder):
+    ex = Experiment(
+        folder, name="time_varying_amplitude", plot_rows=3, plot_fig_size=(35, 20)
+    )
+
+    w = np.repeat(1, 1000)
+    SFT = ShortTimeFFT(w, hop=1, fs=ex.sample_rate, mfft=1000, scale_to='psd')
+    Sx = SFT.stft(ex.values)
+    Sx = np.mean(abs(Sx), axis=0)
+
+    print(len(Sx))
+    print(Sx)
+
+    var2 = signal_variance(Sx, window_size=1000)
+    ex.plot_raw_signal()
+    ex.plot_time_series(Sx, 1, "Mean FFT Amplitude over time", include_events=True, color="indigo")
+    ex.plot_time_series(var2, 2, "Variance of FFT Amplitude over time", include_events=True, color="indigo")
+
+    ex.save()
+
+
 def dwt_experiment(folder):
     ex = Experiment(
         folder, name="dwt", plot_rows=3, plot_fig_size=(30, 20)
@@ -308,4 +330,5 @@ if __name__ == '__main__':
     # sim_search("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
     # frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde")
     # frequency_coloring("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
-    event_zoom("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    # event_zoom("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")
+    time_varying_amplitude("5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt")

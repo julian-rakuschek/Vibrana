@@ -184,10 +184,10 @@ def process_data_folder():
                 shutil.rmtree(os.path.join(base_path, folder_name))
             os.makedirs(os.path.join(base_path, folder_name))
             shutil.move(os.path.join(base_path, file), os.path.join(base_path, folder_name, file))
-            process_folder(folder_name)
+            process_folder(folder_name, plot_projection=False)
         elif os.path.isdir(os.path.join(base_path, file)):
             if os.path.exists(os.path.join(base_path, file, f"{file}.dxd")):
-                process_folder(file)
+                process_folder(file, plot_projection=False)
 
 
 if __name__ == '__main__':

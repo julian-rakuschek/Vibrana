@@ -61,9 +61,9 @@
 <NavigatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events}/>
 <AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} machineId={machineId} sampleId={sampleId} />
 {#if $chartSettings.projection === ProjectionMode.Paths}
-    <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
+    <ScatterPlot  machineId={machineId} sampleId={sampleId} timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
 {:else}
-    <ScatterPlot timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
+    <ScatterPlot  machineId={machineId} sampleId={sampleId} timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
 {/if}
 <div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
     <ColorLegend colorMode={$chartSettings.color} />

@@ -1,16 +1,11 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {
-        type ProjectedPoint,
-        ProjectionMode,
-        type ThreeChartsSettingsType,
-        type Point, WindowMode
-    } from "@lib/types";
+    import {type ProjectedPoint, ProjectionMode, WindowMode} from "@lib/types";
     import {onMount} from "svelte";
     import {webglColor} from "@lib/helper/colorHelper";
     import betterPointer from "@lib/helper/betterPointer";
-    import {filterRangeIndexed, filterRangePercent, selectedProjectedPoints, hoverPoint, hoverRange, chartSettings} from "@lib/stores";
+    import {chartSettings, filterRangeIndexed, hoverPoint, hoverRange, selectedProjectedPoints} from "@lib/stores";
     import {colorsProjection} from "@lib/chartLogic/chartColors";
     import MouseButtonLeft from "@components/icons/MouseButtonLeft.svelte";
     import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
@@ -22,10 +17,17 @@
     import polygonClipping, {type MultiPolygon, type Pair} from "polygon-clipping";
     import {getCirlcePoints, mousePolygon, polyToTriangles, ProjectedTimeSeriesRBush} from "@lib/helper/brushHelper";
     import {compute_quadtree, moveMiddleToEnd} from "@lib/chartLogic/chartUtil";
+    import {selectedToColoredIntervals} from "@lib/helper/util";
+    import {ApiRoutes} from "@lib/api/ApiRoutes";
+    import {useQueryClient} from "@tanstack/svelte-query";
 
 
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
+    export let sampleId: string;
+    export let machineId: string;
+
+    const queryClient = useQueryClient();
 
 
     const projectionPadding = 0.1;
@@ -237,9 +239,21 @@
         render();
     }
 
-    const saveBrushes = () => {
-
+    const saveBrushes = async () => {
+        const intervals = selectedToColoredIntervals($selectedProjectedPoints, $colorsProjection, timeSeries.length - projected.length)
+        for (const interval of intervals) {
+            await ApiRoutes.addLabel.fetch({
+                data: {
+                    from: interval.from,
+                    to: interval.to,
+                    sampleId: sampleId,
+                    machine: machineId
+                }
+            })
+        }
+        await queryClient.invalidateQueries();
     }
+
 
     filterRangeIndexed.subscribe((range) => {
         renderData = moveMiddleToEnd(projected, range)
