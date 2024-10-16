@@ -4,9 +4,11 @@
     import SampleList from "@components/lists/SampleListWrapper.svelte";
     import {type SamplesSettingsType, SortMode} from "@lib/types";
     import SampleListSettings from "@components/SampleListSettings.svelte";
+    import UploadPopup from "@components/UploadPopup.svelte";
 
     let settings: SamplesSettingsType = {sort: SortMode.Score, split: false}
     let selectModeActive: boolean = false
+    let uploadOpen = false;
 
     $: machine = $page.params.machine;
 </script>
@@ -14,8 +16,12 @@
 <Navbar/>
 <div class="grow grid grid-cols-12">
     <div class="h-full col-span-full px-10 ">
-        <div class="w-full flex flex-row flex-nowrap justify-between relative z-50">
-            <span class="text-xl font-semibold">Samples</span>
+        <div class="w-full flex flex-row flex-nowrap justify-between relative z-20">
+            <div>
+                <span class="text-xl font-semibold">Samples</span>
+                <button on:click={() => uploadOpen = true} class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100" >Upload</button>
+            </div>
+
             <button on:click={() => selectModeActive = !selectModeActive}
                     class={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-1 mr-20 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}>
                 {!selectModeActive ? "Select Anomaly-Free Samples" : "Exit Selection Mode"}
@@ -32,3 +38,5 @@
         </div>
     </div>
 </div>
+
+<UploadPopup bind:isOpen={uploadOpen} />

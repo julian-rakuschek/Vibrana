@@ -48,6 +48,7 @@
     "earcut": "^3.0.0",
     "polygon-clipping": "^0.15.7",
     "rbush": "^4.0.1",
+    "svelte-file-dropzone": "^2.0.8",
     "svelte-hero-icons": "^5.2.0"
   }
 }
