@@ -29,6 +29,15 @@ def flask_get_machines_list():
     return os.listdir(samples_folder)
 
 
+@db_app.post("machines/add")
+def flask_add_machine():
+    machine_name = json.loads(flask.request.data.decode()).get("machineName", None)
+    if machine_name is None:
+        return {"success": False}
+    os.mkdir(os.path.join(samples_folder, machine_name))
+    return {"success": True}
+
+
 @db_app.get("<machine>/samples")
 def flask_get_samples(machine):
     if not os.path.exists(os.path.join(samples_folder, machine)):

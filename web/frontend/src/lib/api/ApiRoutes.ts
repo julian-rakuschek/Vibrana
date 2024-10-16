@@ -12,6 +12,7 @@ import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase} fr
 export const dbRoutes = {
   getMachinesList: new ApiRoute<undefined, undefined, undefined, string[]>("GET", "/db/machines"),
   getMachineSamples: new ApiRoute<undefined, {machineId: string}, undefined, string[]>("GET", "/db/:machineId/samples"),
+  addMachine: new ApiRoute<{machineName: string}, undefined, undefined, DefaultAppResponse>("POST", "/db/machines/add"),
   getSampleValues: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/values"),
   getSampleProjected: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machineId/samples/:sampleId/projected"),
   getSampleEvents: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/events"),
