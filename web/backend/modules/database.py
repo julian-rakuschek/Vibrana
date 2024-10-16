@@ -3,16 +3,19 @@ import os.path
 from pathlib import Path
 
 import flask
+import redis
 import numpy as np
 import pymongo
 from bson import ObjectId, json_util
 from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from werkzeug.utils import secure_filename
+import web.backend.helper.parser as parser
 
 db_app = flask.Blueprint("db", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
 data_folder = os.path.join(Path(__file__).parents[3], "data")
+r = redis.Redis(host="localhost", port=6379, db=1)
 
 ALLOWED_EXTENSIONS = {'dxd'}
 
@@ -84,7 +87,17 @@ def flask_upload(machine):
     filepath = os.path.join(data_folder, filename)
     with open(filepath, "wb") as f:
         f.write(file.read())
+    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed)
     return "OK", 200
+
+
+@db_app.get("<machine>/<filename>/upload/status")
+def flask_get_upload_status(machine, filename):
+    r_key = f"vibrana:{machine}:{filename}"
+    res = r.get(r_key)
+    if res is not None:
+        return json.loads(res)
+    return "File not found in Redis", 404
 
 
 @db_app.get("<machine>/samples")
