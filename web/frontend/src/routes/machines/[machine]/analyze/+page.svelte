@@ -39,4 +39,4 @@
     </div>
 </div>
 
-<UploadPopup bind:isOpen={uploadOpen} />
+<UploadPopup bind:isOpen={uploadOpen} machine={machine} />

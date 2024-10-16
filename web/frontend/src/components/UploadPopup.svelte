@@ -2,8 +2,8 @@
     import {Dialog, DialogOverlay, Transition, TransitionChild} from "@rgossiaux/svelte-headlessui";
     import Dropzone from "svelte-file-dropzone";
     import {type FileWithPath} from "file-selector";
+    import axios from "axios";
 
-    let selected_file: FileWithPath | undefined;
 
     function handleFilesSelect(e) {
         const {acceptedFiles, fileRejections} = e.detail;
@@ -13,12 +13,32 @@
     }
 
     export let isOpen = false;
+    export let machine: string;
+
     let prefix = ""
     let sampleSize = 100000
     let saveParsed = false;
+    let progress: number | null = null;
+    let selected_file: FileWithPath | undefined;
+
 
     const upload = () => {
-
+        if (!selected_file || sampleSize === null) return;
+        const formData = new FormData();
+        formData.append("file", selected_file);
+        formData.append("prefix", prefix);
+        formData.append("maxSampleSize", sampleSize.toString());
+        formData.append("saveParsed", saveParsed ? "true" : "false");
+        axios.post(`/api/db/${machine}/upload`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: progressEvent => progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }).then(() => {
+            prefix = ""
+            progress = 100;
+            selected_file = undefined;
+        }).catch(err => console.log(err))
     }
 </script>
 
@@ -71,6 +91,14 @@
                         <p>{selected_file.name}</p>
                     {/if}
                     <button on:click={upload} class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">Upload</button>
+                    {#if progress}
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-indigo-600 h-2.5 rounded-full" style={`width: ${progress}%`}></div>
+                        </div>
+                    {/if}
+                    {#if progress === 100}
+                        <p class="text-center text-green-500">Upload finished!</p>
+                    {/if}
                 </div>
             </TransitionChild>
         </div>

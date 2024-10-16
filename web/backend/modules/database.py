@@ -8,10 +8,13 @@ import pymongo
 from bson import ObjectId, json_util
 from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from werkzeug.utils import secure_filename
 
 db_app = flask.Blueprint("db", __name__)
 samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
+data_folder = os.path.join(Path(__file__).parents[3], "data")
 
+ALLOWED_EXTENSIONS = {'dxd'}
 
 def serialize_mongodb(output):
     temp = json.dumps(output, default=json_util.default)
@@ -36,6 +39,52 @@ def flask_add_machine():
         return {"success": False}
     os.mkdir(os.path.join(samples_folder, machine_name))
     return {"success": True}
+
+
+@db_app.post("<machine>/upload")
+def flask_upload(machine):
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    # Get and validate the prefix
+    prefix = flask.request.form["prefix"]
+    if not isinstance(prefix, str):
+        return "Invalid input: prefix must be a string.", 400
+    if prefix == "":
+        prefix = "signal"
+
+    # Get and validate the maxSampleSize
+    max_sample_size_str = flask.request.form.get("maxSampleSize", "")
+    try:
+        maxSampleSize = int(max_sample_size_str)
+    except ValueError:
+        return "Invalid input: maxSampleSize must be an integer.", 400
+
+    # Get and validate the saveParsed
+    save_parsed_str = flask.request.form.get("saveParsed", "").lower()
+    if save_parsed_str == "true":
+        saveParsed = True
+    elif save_parsed_str == "false":
+        saveParsed = False
+    else:
+        return "Invalid input: saveParsed must be a boolean (true/false, 1/0, yes/no).", 400
+
+    print(prefix, maxSampleSize, saveParsed)
+
+    if 'file' not in flask.request.files:
+        return "No file found in request", 400
+    file = flask.request.files['file']
+    if not file:
+        return "File upload failed", 400
+    if file.filename == "":
+        return "Filename must not be empty", 400
+    if not allowed_file(file.filename):
+        return "This file extension is not allowed", 400
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(data_folder, filename)
+    with open(filepath, "wb") as f:
+        f.write(file.read())
+    return "OK", 200
 
 
 @db_app.get("<machine>/samples")
