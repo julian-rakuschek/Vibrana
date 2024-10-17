@@ -22,12 +22,13 @@
     export let labels: Annotation[] = [];
     export let events: number[] = [];
 
-    const offset: number = timeSeries.length - projected.length;
+    let offset: number = timeSeries.length - projected.length;
+
     let projectedIndexed: ProjectedPoint[] = [];
     const indexProjectedPoints = (data: number[][]) => {
         projectedIndexed = data.map((d, i): ProjectedPoint => ({
             projectedIndex: i,
-            timeSeriesIndex: i + offset,
+            timeSeriesIndex: i + Math.floor(offset / 2),
             coords: d
         }));
         return projectedIndexed
@@ -45,6 +46,7 @@
 
     chartSettings.subscribe(() => {
         const projectionData = $chartSettings.projection === ProjectionMode.Paths ? projected : mdsEmbedding
+        offset = timeSeries.length - projected.length;
         computeColors($chartSettings, projectionData, similarities, freq, normalTube, offset)
         indexProjectedPoints(projectionData)
     })

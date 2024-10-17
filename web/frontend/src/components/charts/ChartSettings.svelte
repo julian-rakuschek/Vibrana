@@ -22,8 +22,8 @@
             "key": "projection",
             "label": "Projection",
             "options": [
-                {"label": "Time Series Paths", "value": ProjectionMode.Paths},
-                {"label": "Clustering", "value": ProjectionMode.Cluster},
+                {"label": "Time Delay Embedding", "value": ProjectionMode.Paths},
+                {"label": "Similarity Embedding", "value": ProjectionMode.Cluster},
             ],
         },
         {
@@ -31,7 +31,7 @@
             "label": "Coloring",
             "options": [
                 {"label": "Radius", "value": ColorMode.Radius},
-                {"label": "Mean amplitude of the SFFT over time.", "value": ColorMode.Frequency},
+                {"label": "Mean Amplitude of the SFFT Over Time", "value": ColorMode.Frequency},
                 {"label": "Distance", "value": ColorMode.Distance},
             ],
         },

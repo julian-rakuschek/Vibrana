@@ -22,9 +22,8 @@
     const client = useQueryClient()
 
     const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
-    const offset: number = timeSeries.length - projected.length;
 
-    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset)
+    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize)
     let addAnnotation = true;
     let windowSizeSelectionOpen = false;
 
@@ -175,15 +174,22 @@
 
     hoverRange.subscribe(() => render())
     hoverPoint.subscribe(() => render())
-    chartSettings.subscribe(() => render())
+    chartSettings.subscribe(() => {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        render()
+    })
     selectedProjectedPoints.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
         render()
     })
     colorsTimeSeries.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
         render()
     })
+    $: {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        render();
+    }
 
     onMount(() => {
         render()

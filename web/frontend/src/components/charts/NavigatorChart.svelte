@@ -4,7 +4,7 @@
     import type {Annotation, Point, ProjectedPoint} from "@lib/types";
     import {onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
-    import {filterRangeIndexed, filterRangePercent, selectedProjectedPoints} from "@lib/stores";
+    import {chartSettings, filterRangeIndexed, filterRangePercent, selectedProjectedPoints} from "@lib/stores";
     import {selectedToColoredIntervals} from "@lib/helper/util";
     import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
 
@@ -14,9 +14,8 @@
     export let events: number[];
 
     const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
-    const offset: number = timeSeries.length - projected.length;
 
-    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset)
+    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize)
 
 
     const min_value = Math.min(...timeSeries)
@@ -106,12 +105,16 @@
     };
 
     filterRangeIndexed.subscribe(() => render())
+    chartSettings.subscribe(() => {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        render()
+    })
     selectedProjectedPoints.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
         render()
     })
     colorsTimeSeries.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, offset);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
         render()
     })
 

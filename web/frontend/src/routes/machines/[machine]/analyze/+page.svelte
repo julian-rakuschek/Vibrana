@@ -16,7 +16,7 @@
 <Navbar/>
 <div class="grow grid grid-cols-12">
     <div class="h-full col-span-full px-10 ">
-        <div class="w-full flex flex-row flex-nowrap justify-between relative z-20">
+        <div class="w-full flex flex-row flex-nowrap justify-between relative z-20 h-10">
             <div>
                 <span class="text-xl font-semibold">Samples</span>
                 <button on:click={() => uploadOpen = true} class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100" >Upload</button>

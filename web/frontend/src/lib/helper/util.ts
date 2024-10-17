@@ -21,6 +21,15 @@ export function mergeIntervals(intervals: Annotation[]): Annotation[] {
     return merged;
 }
 
+export const selectedToColoredIntervals = (selected: ProjectedPoint[], colors: Color[], offset: number): Annotation[] => {
+    const annotations: Annotation[] = selected.map(p => ({
+        from: p.timeSeriesIndex - Math.floor(offset / 2),
+        to: p.timeSeriesIndex + Math.floor(offset / 2),
+        color: colors[p.timeSeriesIndex].value
+    }))
+    return mergeIntervals(annotations)
+}
+
 export function padArray<T>(arr: T[], n: number): T[] {
     const firstElement = arr[0];
     const lastElement = arr[arr.length - 1];
@@ -205,11 +214,3 @@ export function minMaxDecimation(data: number[], availableWidth: number) {
     return decimated;
 }
 
-export const selectedToColoredIntervals = (selected: ProjectedPoint[], colors: Color[], offset: number): Annotation[] => {
-    const annotations: Annotation[] = selected.map(p => ({
-        from: p.timeSeriesIndex - offset,
-        to: p.timeSeriesIndex + offset,
-        color: colors[p.projectedIndex].value
-    }))
-    return mergeIntervals(annotations)
-}

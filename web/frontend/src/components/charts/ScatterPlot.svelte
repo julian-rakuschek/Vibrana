@@ -101,6 +101,7 @@
         .decorate((program) => fc
             .webglFillColor()
             .value((d: ProjectedPoint) => {
+                if (!$colorsProjection[d.projectedIndex]) return webglColor("black", 1)
                 const col = $colorsProjection[d.projectedIndex].color
                 if (!$filterRangeIndexed) return webglColor(col, 1)
                 return webglColor(
