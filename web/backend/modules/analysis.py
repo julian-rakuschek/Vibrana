@@ -12,7 +12,7 @@ from web.backend.helper.wrapper import validate_sample_path, validate_machine
 from web.backend.modules.database import get_db
 
 analysis_app = flask.Blueprint("analysis", __name__)
-samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
+samples_folder = os.path.join(Path(__file__).parents[3], "data", "split")
 
 
 @analysis_app.get("<machineId>/<sampleId>/mdsEmbedding")

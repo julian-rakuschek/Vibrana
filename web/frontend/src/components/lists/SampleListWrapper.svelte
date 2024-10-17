@@ -28,18 +28,13 @@
     const anomalyRatiosQuery = useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}})
     const normalTubeQuery = useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}})
     let anomaly_ratios: AnomalyMetric[] = []
-    let fetching_anomalies = false;
 
     anomalyRatiosQuery.subscribe((value) => {
         if (value.isSuccess) {
             anomaly_ratios = value.data
-            fetching_anomalies = false;
         }
     })
 
-    onMount(() => {
-        fetching_anomalies = anomaly_ratios.length == 0
-    })
 
 </script>
 
@@ -47,7 +42,7 @@
     <p>Loading ...</p>
 {/if}
 
-{#if fetching_anomalies}
+{#if $anomalyRatiosQuery.isPending || $anomalyRatiosQuery.isRefetching || $anomalyRatiosQuery.isLoading}
     <div transition:fly={{ x: -30, duration: 300 }} class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md flex flex-row justify-center items-center gap-3 z-50">
         <span>Fetching anomaly scores</span> <Jumper color="white" size="30" />
     </div>
@@ -57,18 +52,18 @@
     <div class="flex flex-row flex-wrap gap-6 py-4 justify-center">
         {#if !settings.split}
             <SampleList samples={sort_samples($sampleListQuery.data, anomaly_ratios)} machineId={machineId} normals={$normalsQuery.data}
-                        anomaly_ratios={anomaly_ratios} selectModeActive={selectModeActive} bind:fetching_anomalies normalTube={$normalTubeQuery.data}/>
+                        anomaly_ratios={anomaly_ratios} selectModeActive={selectModeActive} normalTube={$normalTubeQuery.data}/>
         {:else}
             <div class="flex flex-row gap-20">
                 <div class="flex flex-col gap-4">
                     <SampleList samples={sort_samples($sampleListQuery.data, anomaly_ratios).filter(s => s.startsWith("normal"))}
                                 machineId={machineId} normals={$normalsQuery.data} anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
-                                selectModeActive={selectModeActive} bind:fetching_anomalies/>
+                                selectModeActive={selectModeActive}/>
                 </div>
                 <div class="flex flex-col gap-4">
                     <SampleList samples={sort_samples($sampleListQuery.data, anomaly_ratios).filter(s => s.startsWith("abnormal"))}
                                 machineId={machineId} normals={$normalsQuery.data} anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
-                                selectModeActive={selectModeActive} bind:fetching_anomalies/>
+                                selectModeActive={selectModeActive}/>
                 </div>
             </div>
         {/if}

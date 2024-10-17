@@ -10,7 +10,6 @@
     export let normals: string[];
     export let anomaly_ratios: AnomalyMetric[];
     export let selectModeActive: boolean;
-    export let fetching_anomalies: boolean;
     export let normalTube: [number, number];
 
     const client = useQueryClient()
@@ -29,7 +28,6 @@
             else {
                 await ApiRoutes.removeNormal.fetch({params: {machineId, sampleId}})
             }
-            fetching_anomalies = true;
             await client.invalidateQueries();
         }
         else goto(`/machines/${machineId}/analyze/${sampleId}`)
