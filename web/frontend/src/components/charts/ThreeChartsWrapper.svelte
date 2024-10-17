@@ -15,12 +15,13 @@
     const mdsEmbeddingQuery = useQueryFetch(ApiRoutes.getMDSEmbedding, {params: {machineId, sampleId}})
     const labelsQuery = useQueryFetch(ApiRoutes.getLabels, {params: {machineId, sampleId}})
     const eventsQuery = useQueryFetch(ApiRoutes.getSampleEvents, {params: {machineId, sampleId}})
+    const freqQuery = useQueryFetch(ApiRoutes.getSampleFreq, {params: {machineId, sampleId}})
 </script>
 
 <a class="fixed top-3 left-3 bg-white rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl z-10" href={`/machines/${machineId}/analyze`}>
     <Icon src="{ArrowLeft}" class="w-5 h-5" />
 </a>
-{#if $timeSeriesQuery.isPending || $projectedValuesQuery.isPending || $normalTubeQuery.isPending || $similaritiesQuery.isPending || $mdsEmbeddingQuery.isPending || $labelsQuery.isPending || $eventsQuery.isPending}
+{#if $timeSeriesQuery.isPending || $projectedValuesQuery.isPending || $normalTubeQuery.isPending || $similaritiesQuery.isPending || $mdsEmbeddingQuery.isPending || $labelsQuery.isPending || $eventsQuery.isPending || $freqQuery.isPending}
     <div class="absolute top-0 right-0 w-full h-full">
         <CenteredLoadingSpinner/>
     </div>
@@ -35,5 +36,6 @@
             mdsEmbedding={$mdsEmbeddingQuery.data}
             labels={$labelsQuery.data}
             events={$eventsQuery.data}
+            freq={$freqQuery.data}
     />
 {/if}

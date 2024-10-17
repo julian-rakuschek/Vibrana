@@ -1,6 +1,6 @@
 import {writable} from 'svelte/store';
 import {type Color, ColorMode, type ThreeChartsSettingsType} from "@lib/types";
-import {interpolateRdYlBu, interpolateTurbo} from "d3";
+import {interpolateRdYlBu, interpolateTurbo, interpolateViridis} from "d3";
 import {padArray} from "@lib/helper/util";
 
 export const colorsTimeSeries = writable<Color[]>([]);
@@ -29,7 +29,7 @@ const allBlack = (n: number): string[] => {
     return [...Array(n).keys()].map(() => "#000000");
 }
 
-export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints: number[][], similarities: number[], normalTube: [number, number] | undefined, offset: number): void => {
+export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints: number[][], similarities: number[], freq: number[], normalTube: [number, number] | undefined, offset: number): void => {
     if (settings.color === ColorMode.Distance && normalTube !== undefined && similarities.length > 0) {
         const distanceValues = computeDistancesNormalized(similarities, normalTube);
         const colors = distanceValues.map((d): Color => ({color: interpolateRdYlBu(1 - d), value: d}))
@@ -43,9 +43,9 @@ export const computeColors = (settings: ThreeChartsSettingsType, projectedPoints
         colorsTimeSeries.set(timeSeriesColors)
         colorsProjection.set(projectedColors)
     } else if (settings.color === ColorMode.Frequency) {
-        // Placeholder for Frequency
-        colorsTimeSeries.set(allBlack(projectedPoints.length + offset).map((c): Color => ({color: c, value: 0})));
-        colorsProjection.set(allBlack(projectedPoints.length).map((c): Color => ({color: c, value: 0})));
+        const colors = freq.map((d): Color => ({color: interpolateViridis(d), value: d}))
+        colorsTimeSeries.set(colors)
+        colorsProjection.set(colors.slice(0, projectedPoints.length))
     } else {
         colorsTimeSeries.set(allBlack(projectedPoints.length + offset).map((c): Color => ({color: c, value: 0})));
         colorsProjection.set(allBlack(projectedPoints.length).map((c): Color => ({color: c, value: 0})));

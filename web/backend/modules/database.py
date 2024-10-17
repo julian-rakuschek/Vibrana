@@ -142,6 +142,19 @@ def flask_get_projection(machine, sampleId):
     return values.tolist()
 
 
+@db_app.get("<machine>/samples/<sampleId>/freq")
+def flask_get_freq(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(sample_path):
+        return "Sample not found", 404
+    values: np.ndarray = np.load(os.path.join(sample_path, "freq.npy"))
+    values = np.array(values).reshape(-1, 1)
+    values = MinMaxScaler().fit_transform(values)
+    return values.flatten().tolist()
+
+
 @db_app.get("<machine>/samples/<sampleId>/thumbnail")
 def flask_get_sample_thumb(machine, sampleId):
     if not os.path.exists(os.path.join(samples_folder, machine)):

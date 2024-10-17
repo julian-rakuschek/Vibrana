@@ -31,7 +31,7 @@
             "label": "Coloring",
             "options": [
                 {"label": "Radius", "value": ColorMode.Radius},
-                {"label": "Frequency", "value": ColorMode.Frequency},
+                {"label": "Mean amplitude of the SFFT over time.", "value": ColorMode.Frequency},
                 {"label": "Distance", "value": ColorMode.Distance},
             ],
         },

@@ -17,6 +17,7 @@
     export let projected: number[][] = [];
     export let normalTube: [number, number] = [0, 0];
     export let similarities: number[] = [];
+    export let freq: number[] = [];
     export let mdsEmbedding: number[][] = [];
     export let labels: Annotation[] = [];
     export let events: number[] = [];
@@ -44,14 +45,14 @@
 
     chartSettings.subscribe(() => {
         const projectionData = $chartSettings.projection === ProjectionMode.Paths ? projected : mdsEmbedding
-        computeColors($chartSettings, projectionData, similarities, normalTube, offset)
+        computeColors($chartSettings, projectionData, similarities, freq, normalTube, offset)
         indexProjectedPoints(projectionData)
     })
 
     onMount(() => {
         reset()
         indexProjectedPoints(projected)
-        computeColors($chartSettings, projected, similarities, normalTube, offset)
+        computeColors($chartSettings, projected, similarities, freq, normalTube, offset)
     })
 </script>
 

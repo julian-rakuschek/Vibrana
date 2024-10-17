@@ -9,9 +9,10 @@ import matplotlib.ticker as plticker
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
 from redis import Redis
+from scipy.signal import ShortTimeFFT
 from sklearn.decomposition import PCA
 
-from parser.util import find_nearest
+from parser.util import find_nearest, derive_sample_rate, signal_variance
 
 
 def save_preview_image(data, save_path):
@@ -25,6 +26,15 @@ def save_preview_image(data, save_path):
     plt.axis('off')
     plt.savefig(save_path, bbox_inches='tight')
     plt.close(fig)
+
+
+def compute_time_varying_amplitude(values, timestamps):
+    w = np.repeat(1, 1000)
+    SFT = ShortTimeFFT(w, hop=1, fs=derive_sample_rate(timestamps), mfft=1000, scale_to='psd')
+    Sx = SFT.stft(values)
+    Sx = np.mean(abs(Sx), axis=0)
+    return signal_variance(Sx, window_size=1000)
+
 
 
 def process_experiment(folder, target_folder, sample_prefix="", override=True):
@@ -114,6 +124,7 @@ def split_and_process_time_series(
             redis_client.set(r_key, json.dumps(status))
 
         extracted = values[needle:needle + max_sample_size]
+        extracted_ts = timestamps[needle:needle + max_sample_size]
         os.mkdir(os.path.join(base_target_path, name))
         np.save(os.path.join(base_target_path, name, "values.npy"), extracted)
         window_events = [e - needle for e in event_indices if needle <= e <= needle + max_sample_size]
@@ -128,10 +139,11 @@ def split_and_process_time_series(
         projected = PCA(n_components=2).fit_transform(windows)
         np.save(os.path.join(base_target_path, name, "projected.npy"), projected)
 
-        # TODO
         if redis_client:
             status["split"]["items"][name] = "frequency"
             redis_client.set(r_key, json.dumps(status))
+        freq = compute_time_varying_amplitude(extracted, extracted_ts)
+        np.save(os.path.join(base_target_path, name, "freq.npy"), freq)
 
         if redis_client:
             status["split"]["items"][name] = "done"

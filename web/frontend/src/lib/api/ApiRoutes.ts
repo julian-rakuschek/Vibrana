@@ -16,6 +16,7 @@ export const dbRoutes = {
   getSampleValues: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/values"),
   getSampleProjected: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[][]>("GET", "/db/:machineId/samples/:sampleId/projected"),
   getSampleEvents: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/events"),
+  getSampleFreq: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/db/:machineId/samples/:sampleId/freq"),
   getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Annotation[]>("GET", "/db/labels/:machineId/:sampleId"),
   addLabel: new ApiRoute<LabelBase, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
