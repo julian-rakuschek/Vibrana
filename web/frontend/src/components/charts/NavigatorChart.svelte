@@ -117,6 +117,7 @@
         brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
         render()
     })
+    $: labels, render();
 
     const resetRange = () => {
         filterRangeIndexed.set(null)

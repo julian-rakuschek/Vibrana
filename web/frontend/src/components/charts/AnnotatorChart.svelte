@@ -191,6 +191,8 @@
         render();
     }
 
+    $: labels, render();
+
     onMount(() => {
         render()
     })

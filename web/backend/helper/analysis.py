@@ -25,17 +25,22 @@ def compute_mds_embedding(sample_path, window_size):
 
 def compute_distance_profile(db: Database, machineId, sample_path):
     labels = list(db["labels"].find({"machine": machineId}))
+    if not os.path.exists(os.path.join(sample_path, "values.npy")):
+        return []
     values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
     distances = []
     extracted_label_values = []
     for label in labels:
-        label_values: np.ndarray = np.load(os.path.join(samples_folder, label["machine"], label["sampleId"], "values.npy"))
+        label_path = os.path.join(samples_folder, label["machine"], label["sampleId"], "values.npy")
+        if not os.path.exists(label_path):
+            continue
+        label_values: np.ndarray = np.load(label_path)
         extracted_label_values.append(label_values[label["from"]:label["to"]])
     for label in extracted_label_values:
         d = stumpy.mass(label, values, normalize=True)
         d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
         distances.append(d)
-    return np.min(np.array(distances), axis=0) if distances else []
+    return np.min(np.array(distances), axis=0) if len(distances) > 0 else []
 
 
 def compute_normal_tube(db: Database, machineId):
@@ -49,6 +54,8 @@ def compute_normal_tube(db: Database, machineId):
     normal_min, normal_max = [], []
     for normal in normals:
         distances = compute_distance_profile(db, machineId, os.path.join(samples_folder, machineId, normal))
+        if len(distances) == 0:
+            continue
         normal_min.append(np.min(distances))
         normal_max.append(np.max(distances))
     normal_min = np.mean(normal_min)
@@ -97,6 +104,8 @@ def reduce_distances(distances, normal_tube, n_segments, keep_original_length=Fa
 
 def compute_anomaly_ratio(distances, normal_tube):
     below = (np.array(distances) <= normal_tube[0]).sum()
+    if len(distances) == 0:
+        return 0
     return below / len(distances)
 
 
