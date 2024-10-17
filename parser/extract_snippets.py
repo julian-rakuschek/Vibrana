@@ -38,62 +38,6 @@ def compute_time_varying_amplitude(values, timestamps, window_size, sample_rate=
     return signal_variance(Sx, window_size=window_size)
 
 
-
-def process_experiment(folder, target_folder, sample_prefix="", override=True):
-    base_path = os.path.join(Path(__file__).parents[1], "data", folder)
-    folder_values = np.load(os.path.join(base_path, "values.npy"))
-    folder_values = folder_values[80_000:950_000]
-    folder_events = np.load(os.path.join(base_path, "event_timestamps.npy"))
-    folder_timestamps = np.load(os.path.join(base_path, "timestamps.npy"))
-    folder_timestamps = folder_timestamps[80_000:950_000]
-    event_indices = [find_nearest(folder_timestamps, e) for e in folder_events]
-
-    print(folder)
-    print("Target", target_folder)
-    print("Total ts length:", len(folder_values))
-
-    if os.path.exists(target_folder) and override:
-        shutil.rmtree(target_folder)
-    if not os.path.exists(target_folder):
-        os.mkdir(target_folder)
-
-    window_size = 100_000
-    needle = 0
-    while needle < len(folder_values):
-        name = sample_prefix + str(needle // window_size).zfill(4)
-        print(name)
-        extracted = folder_values[needle:needle+window_size]
-        os.mkdir(os.path.join(target_folder, name))
-        np.save(os.path.join(target_folder, name, "values.npy"), extracted)
-        window_events = [e - needle for e in event_indices if needle <= e <= needle + window_size]
-        np.save(os.path.join(target_folder, name, "events.npy"), window_events)
-        save_preview_image(extracted, os.path.join(target_folder, name, "preview.png"))
-        windows = sliding_window_view(extracted, window_shape=2000)
-        projected = PCA(n_components=2).fit_transform(windows)
-        np.save(os.path.join(target_folder, name, "projected.npy"), projected)
-        needle += window_size
-
-
-def example1():
-    abnormal_ = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde 10-16 gemischt"  # abnormal
-    normal_ = "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1t pro Stunde"  # normal
-    base_target_path = os.path.join(Path(__file__).parents[1], "data", "samples")
-    if not os.path.exists(base_target_path):
-        os.makedirs(base_target_path)
-    process_experiment(abnormal_, os.path.join(base_target_path, "5-10-1t-10-16"), "abnormal-", override=True)
-    process_experiment(normal_, os.path.join(base_target_path, "5-10-1t-10-16"), "normal-", override=False)
-
-
-def example2():
-    abnormal_ = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde gemischt 31,5-62" # interesting-curve
-    normal_ = "16-31 Korngröse 5 cm, 45 Grad Aus Förderrinne 2t pro Stunde" # interesting-curve
-    base_target_path = os.path.join(Path(__file__).parents[1], "data", "samples")
-    if not os.path.exists(base_target_path):
-        os.makedirs(base_target_path)
-    process_experiment(abnormal_, os.path.join(base_target_path, "interesting-curve"), "abnormal-", override=True)
-    process_experiment(normal_, os.path.join(base_target_path, "interesting-curve"), "normal-", override=False)
-
-
 def split_and_process_time_series(
         values: np.ndarray, timestamps: np.ndarray, events: np.ndarray,
         filename: str, prefix: str, machine: str,
@@ -130,6 +74,11 @@ def split_and_process_time_series(
         extracted_ts = timestamps[needle:needle + max_sample_size]
         os.mkdir(os.path.join(base_target_path, name))
         np.save(os.path.join(base_target_path, name, "values.npy"), extracted)
+        np.save(os.path.join(base_target_path, name, "timestamps.npy"), extracted_ts)
+
+        with open(os.path.join(base_target_path, name, "meta.json"), "w") as f:
+            f.write(json.dumps({"original_file": filename, "machine": machine, "position": needle}))
+
         window_events = [e - needle for e in event_indices if needle <= e <= needle + max_sample_size]
         np.save(os.path.join(base_target_path, name, "events.npy"), window_events)
         save_preview_image(extracted, os.path.join(base_target_path, name, "preview.png"))
@@ -155,6 +104,3 @@ def split_and_process_time_series(
         needle += max_sample_size
 
 
-if __name__ == '__main__':
-    example1()
-    example2()
