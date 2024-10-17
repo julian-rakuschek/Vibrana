@@ -16,7 +16,7 @@ parsed_folder = os.path.join(Path(__file__).parents[3], "data", "parsed")
 split_folder = os.path.join(Path(__file__).parents[3], "data", "split")
 
 
-def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, save_parsed: bool, cutoff_ratio: float, redis_client: Redis):
+def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, save_parsed: bool, cutoff_ratio: float, projection_window_size: int, redis_client: Redis):
     print(f"Parsing {filename}")
     r_key = f"vibrana:{machine}:{filename}"
     if redis_client:
@@ -44,4 +44,4 @@ def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, s
         status["dwparse"]["status"] = "done"
         redis_client.set(r_key, json.dumps(status))
 
-    split_and_process_time_series(values, timestamps, events, filename, prefix, machine, max_sample_size, redis_client)
+    split_and_process_time_series(values, timestamps, events, filename, prefix, machine, max_sample_size, projection_window_size, redis_client)

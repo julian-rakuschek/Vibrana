@@ -64,6 +64,13 @@ def flask_upload(machine):
         return "Invalid input: maxSampleSize must be an integer.", 400
 
     # Get and validate the maxSampleSize
+    proj_window_size_str = flask.request.form.get("projectionWindowSize", "2000")
+    try:
+        projectionWindowSize = int(proj_window_size_str)
+    except ValueError:
+        return "Invalid input: projectionWindowSize must be an integer.", 400
+
+    # Get and validate the maxSampleSize
     cutoff_str = flask.request.form.get("cutoffRatio", "0")
     try:
         cutoff_ratio = float(cutoff_str)
@@ -79,9 +86,9 @@ def flask_upload(machine):
     elif save_parsed_str == "false":
         saveParsed = False
     else:
-        return "Invalid input: saveParsed must be a boolean (true/false, 1/0, yes/no).", 400
+        return "Invalid input: saveParsed must be a boolean (true/false).", 400
 
-    print(prefix, maxSampleSize, saveParsed, cutoff_ratio)
+    print(prefix, maxSampleSize, saveParsed, cutoff_ratio, projectionWindowSize)
 
     if 'file' not in flask.request.files:
         return "No file found in request", 400
@@ -98,7 +105,7 @@ def flask_upload(machine):
     filepath = os.path.join(data_folder, "raw", filename)
     with open(filepath, "wb") as f:
         f.write(file.read())
-    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, cutoff_ratio, r)
+    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, cutoff_ratio, projectionWindowSize, r)
     return "OK", 200
 
 

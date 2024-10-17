@@ -28,12 +28,12 @@ def save_preview_image(data, save_path):
     plt.close(fig)
 
 
-def compute_time_varying_amplitude(values, timestamps):
-    w = np.repeat(1, 1000)
-    SFT = ShortTimeFFT(w, hop=1, fs=derive_sample_rate(timestamps), mfft=1000, scale_to='psd')
+def compute_time_varying_amplitude(values, timestamps, window_size):
+    w = np.repeat(1, window_size)
+    SFT = ShortTimeFFT(w, hop=1, fs=derive_sample_rate(timestamps), mfft=window_size, scale_to='psd')
     Sx = SFT.stft(values)
     Sx = np.mean(abs(Sx), axis=0)
-    return signal_variance(Sx, window_size=1000)
+    return signal_variance(Sx, window_size=window_size)
 
 
 
@@ -95,7 +95,7 @@ def example2():
 def split_and_process_time_series(
         values: np.ndarray, timestamps: np.ndarray, events: np.ndarray,
         filename: str, prefix: str, machine: str,
-        max_sample_size: int, redis_client: Redis):
+        max_sample_size: int, projection_window_size: int, redis_client: Redis):
     status = {}
     r_key = f"vibrana:{machine}:{filename}"
     if redis_client:
@@ -135,14 +135,14 @@ def split_and_process_time_series(
             status["split"]["items"][name] = "projecting"
             redis_client.set(r_key, json.dumps(status))
 
-        windows = sliding_window_view(extracted, window_shape=2000)
+        windows = sliding_window_view(extracted, window_shape=projection_window_size)
         projected = PCA(n_components=2).fit_transform(windows)
         np.save(os.path.join(base_target_path, name, "projected.npy"), projected)
 
         if redis_client:
             status["split"]["items"][name] = "frequency"
             redis_client.set(r_key, json.dumps(status))
-        freq = compute_time_varying_amplitude(extracted, extracted_ts)
+        freq = compute_time_varying_amplitude(extracted, extracted_ts, projection_window_size)
         np.save(os.path.join(base_target_path, name, "freq.npy"), freq)
 
         if redis_client:
