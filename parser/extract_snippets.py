@@ -1,3 +1,5 @@
+import json
+import math
 import os
 import shutil
 from pathlib import Path
@@ -6,9 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
+from redis import Redis
 from sklearn.decomposition import PCA
 
-from util import find_nearest
+from parser.util import find_nearest
 
 
 def save_preview_image(data, save_path):
@@ -77,6 +80,64 @@ def example2():
         os.makedirs(base_target_path)
     process_experiment(abnormal_, os.path.join(base_target_path, "interesting-curve"), "abnormal-", override=True)
     process_experiment(normal_, os.path.join(base_target_path, "interesting-curve"), "normal-", override=False)
+
+
+def split_and_process_time_series(
+        values: np.ndarray, timestamps: np.ndarray, events: np.ndarray,
+        filename: str, prefix: str, machine: str,
+        max_sample_size: int, redis_client: Redis):
+    status = {}
+    r_key = f"vibrana:{machine}:{filename}"
+    if redis_client:
+        status = json.loads(redis_client.get(r_key))
+
+    base_target_path = os.path.join(Path(__file__).parents[1], "data", "split", machine)
+    Path(base_target_path).mkdir(parents=True, exist_ok=True)
+
+    event_indices = [find_nearest(timestamps, e) for e in events]
+    name_index = 0
+    existing_prefixes = [int(f.split("-")[-1]) for f in os.listdir(base_target_path) if f.startswith(prefix)]
+    if len(existing_prefixes) > 0:
+        name_index = max(existing_prefixes) + 1
+
+    total = math.ceil(len(values) / max_sample_size)
+    if redis_client:
+        status["split"]["status"] = f"processing (0 / {total})"
+        redis_client.set(r_key, json.dumps(status))
+
+    needle = 0
+    while needle < len(values):
+        name = prefix + "-" + str(name_index + needle // max_sample_size).zfill(4)
+
+        if redis_client:
+            status["split"]["items"][name] = "splitting"
+            redis_client.set(r_key, json.dumps(status))
+
+        extracted = values[needle:needle + max_sample_size]
+        os.mkdir(os.path.join(base_target_path, name))
+        np.save(os.path.join(base_target_path, name, "values.npy"), extracted)
+        window_events = [e - needle for e in event_indices if needle <= e <= needle + max_sample_size]
+        np.save(os.path.join(base_target_path, name, "events.npy"), window_events)
+        save_preview_image(extracted, os.path.join(base_target_path, name, "preview.png"))
+
+        if redis_client:
+            status["split"]["items"][name] = "projecting"
+            redis_client.set(r_key, json.dumps(status))
+
+        windows = sliding_window_view(extracted, window_shape=2000)
+        projected = PCA(n_components=2).fit_transform(windows)
+        np.save(os.path.join(base_target_path, name, "projected.npy"), projected)
+
+        # TODO
+        if redis_client:
+            status["split"]["items"][name] = "frequency"
+            redis_client.set(r_key, json.dumps(status))
+
+        if redis_client:
+            status["split"]["items"][name] = "done"
+            status["split"]["status"] = f"processing ({needle // max_sample_size} / {total})"
+            redis_client.set(r_key, json.dumps(status))
+        needle += max_sample_size
 
 
 if __name__ == '__main__':

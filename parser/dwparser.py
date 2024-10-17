@@ -13,9 +13,12 @@ from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 
-from DWDataReaderHeader import *
+from parser.DWDataReaderHeader import *
 from ctypes import *
 import _ctypes
+
+from parser.util import find_nearest
+
 
 # from https://dewesoft.com/download/developer-downloads
 # "Dewesoft Data Reader Library" -> DWDataReaderExample.py
@@ -32,11 +35,11 @@ def init_reader_lib():
         DWRaiseError("DWDataReader: DWAddReader() failed")
     return reader_lib
 
+
 @contextlib.contextmanager
-def dwt_reader(folder):
+def dwt_reader(file_path):
     reader = init_reader_lib()
     try:
-        file_path = os.path.join(Path(__file__).parents[1], "data", folder, f"{folder}.dxd")
         file_name = c_char_p(file_path.encode())
         file_info = DWFileInfo(0, 0, 0)
         if reader.DWOpenDataFile(file_name, c_void_p(addressof(file_info))) != DWStatus.DWSTAT_OK.value:
@@ -61,16 +64,19 @@ def print_measurement_info(reader):
     print("Start store time: %.2f" % measurement_info.start_store_time)
     print("Duration: %.2f" % measurement_info.duration)
 
+
 def export_metadata(reader, filename: str):
     file_name = c_char_p(filename.encode())
     if reader.DWExportHeader(file_name) != DWStatus.DWSTAT_OK.value:
         DWRaiseError("DWDataReader: DWExportHeader() failed")
+
 
 def get_total_channels(reader):
     num = reader.DWGetChannelListCount()
     if num == -1:
         DWRaiseError("DWDataReader: DWGetChannelListCount() failed")
     return num
+
 
 def get_channel_list(reader):
     num_channels = get_total_channels(reader)
@@ -79,11 +85,13 @@ def get_channel_list(reader):
         DWRaiseError("DWDataReader: DWGetChannelList() failed")
     return ch_list
 
+
 def print_channel_properties(channel):
     print("Index: %d" % channel.index)
     print("Name: %s" % channel.name.decode())
     print("Unit: %s" % channel.unit.decode())
     print("Description: %s" % channel.description.decode())
+
 
 def get_channel_factors(reader, channel):
     idx = c_int(channel.index)
@@ -93,12 +101,14 @@ def get_channel_factors(reader, channel):
         DWRaiseError("DWDataReader: DWGetChannelFactors() failed")
     return ch_scale.value, ch_offset.value
 
+
 def get_number_of_samples(reader, channel):
     idx = c_int(channel.index)
     sample_cnt = reader.DWGetScaledSamplesCount(idx)
     if sample_cnt < 0:
         DWRaiseError("DWDataReader: DWGetScaledSamplesCount() failed")
     return sample_cnt
+
 
 def get_data(reader, channel):
     idx = c_int(channel.index)
@@ -120,6 +130,7 @@ def get_data(reader, channel):
     timestamps = np.array(timestamps)
     return values, timestamps
 
+
 def get_events(reader):
     event_list_cnt = reader.DWGetEventListCount()
     EventArrayType = DWEvent * event_list_cnt
@@ -128,16 +139,20 @@ def get_events(reader):
         DWRaiseError("DWDataReader: DWGetEventList() failed")
     return [e.time_stamp for e in event_list if e.event_type == 20]
 
-def process_folder(folder, plot_projection=True):
-    def find_nearest(array, value):
-        idx = np.searchsorted(array, value, side="left")
-        if idx > 0 and (idx == len(array) or math.fabs(value - array[idx - 1]) < math.fabs(value - array[idx])):
-            return idx - 1
-        else:
-            return idx
 
+
+def process_file(filepath):
+    with dwt_reader(filepath) as reader:
+        channels = get_channel_list(reader)
+        values, timestamps = get_data(reader, channels[0])
+        events = get_events(reader)
+    return values, timestamps, events
+
+
+def process_folder(folder, plot_projection=True):
     print(f"Processing {folder}")
-    with dwt_reader(folder) as reader:
+    filepath = os.path.join(Path(__file__).parents[1], "data", folder, f"{folder}.dxd")
+    with dwt_reader(filepath) as reader:
         channels = get_channel_list(reader)
         values, timestamps = get_data(reader, channels[0])
         events = get_events(reader)

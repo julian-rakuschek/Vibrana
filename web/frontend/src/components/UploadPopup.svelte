@@ -5,6 +5,7 @@
     import axios from "axios";
     import type {ParseStatus} from "@lib/types";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
+    import {useQueryClient} from "@tanstack/svelte-query";
 
 
     function handleFilesSelect(e) {
@@ -25,6 +26,7 @@
     let parseStatus: ParseStatus | null = null;
     let statusUpdateInterval: ReturnType<typeof setInterval>;
     let uploadFinished = false;
+    let queryClient = useQueryClient()
 
     const updateParseStatus = async (filename: string) => {
         parseStatus = await ApiRoutes.getUploadStatus.fetch({params: {machineId: machine, filename: filename}})
@@ -47,14 +49,15 @@
                 'Content-Type': 'multipart/form-data'
             },
             onUploadProgress: progressEvent => progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }).then(() => {
+        }).then(async () => {
             updateParseStatus(selected_file?.name)
             prefix = ""
             progress = 100;
             selected_file = undefined;
             uploadFinished = true;
             clearInterval(statusUpdateInterval)
-        }).catch(err => console.log(err))
+            await queryClient.invalidateQueries()
+        }).catch(err => clearInterval(statusUpdateInterval))
     }
 </script>
 

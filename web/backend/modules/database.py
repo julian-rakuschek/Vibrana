@@ -10,10 +10,10 @@ from bson import ObjectId, json_util
 from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from werkzeug.utils import secure_filename
-import web.backend.helper.parser as parser
+import web.backend.helper.file_processor as parser
 
 db_app = flask.Blueprint("db", __name__)
-samples_folder = os.path.join(Path(__file__).parents[3], "data", "samples")
+samples_folder = os.path.join(Path(__file__).parents[3], "data", "split")
 data_folder = os.path.join(Path(__file__).parents[3], "data")
 r = redis.Redis(host="localhost", port=6379, db=1)
 
@@ -85,10 +85,11 @@ def flask_upload(machine):
         return "This file extension is not allowed", 400
     # filename = secure_filename(file.filename)
     filename = file.filename
-    filepath = os.path.join(data_folder, filename)
+    Path(os.path.join(data_folder, "raw")).mkdir(parents=True, exist_ok=True)
+    filepath = os.path.join(data_folder, "raw", filename)
     with open(filepath, "wb") as f:
         f.write(file.read())
-    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed)
+    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, r)
     return "OK", 200
 
 
