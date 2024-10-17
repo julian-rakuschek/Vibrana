@@ -40,7 +40,7 @@ def flask_add_machine():
     machine_name = json.loads(flask.request.data.decode()).get("machineName", None)
     if machine_name is None:
         return {"success": False}
-    os.mkdir(os.path.join(samples_folder, machine_name))
+    Path(os.path.join(samples_folder, machine_name)).mkdir(parents=True, exist_ok=True)
     return {"success": True}
 
 
