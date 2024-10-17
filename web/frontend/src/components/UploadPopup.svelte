@@ -21,6 +21,7 @@
     let prefix = ""
     let sampleSize = 100000
     let saveParsed = false;
+    let cutoffRatio = 0.1;
     let progress: number | null = null;
     let selected_file: FileWithPath | undefined;
     let parseStatus: ParseStatus | null = null;
@@ -43,6 +44,7 @@
         formData.append("file", selected_file);
         formData.append("prefix", prefix);
         formData.append("maxSampleSize", sampleSize.toString());
+        formData.append("cutoffRatio", cutoffRatio.toString());
         formData.append("saveParsed", saveParsed ? "true" : "false");
         axios.post(`/api/db/${machine}/upload`, formData, {
             headers: {
@@ -95,6 +97,12 @@
                         <input type="number" autocomplete="off" name="name" id="name" bind:value={sampleSize}
                                class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                placeholder="Sample Size">
+                    </div>
+                    <div class="relative w-full">
+                        <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Cutoff Ratio (Cut off x% of values from the start and end of the signal, input as a value between 0 and 0.5)</label>
+                        <input type="number" autocomplete="off" name="name" id="name" bind:value={cutoffRatio}
+                               class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                               placeholder="Cutoff Ratio">
                     </div>
                     <div class="relative w-full flex items-start">
                         <div class="flex h-6 items-center">

@@ -57,11 +57,20 @@ def flask_upload(machine):
         prefix = "signal"
 
     # Get and validate the maxSampleSize
-    max_sample_size_str = flask.request.form.get("maxSampleSize", "")
+    max_sample_size_str = flask.request.form.get("maxSampleSize", "100000")
     try:
         maxSampleSize = int(max_sample_size_str)
     except ValueError:
         return "Invalid input: maxSampleSize must be an integer.", 400
+
+    # Get and validate the maxSampleSize
+    cutoff_str = flask.request.form.get("cutoffRatio", "0")
+    try:
+        cutoff_ratio = float(cutoff_str)
+        if not 0 <= cutoff_ratio < 0.5:
+            raise ValueError
+    except ValueError:
+        return "Invalid input: cutoffRatio must be a float between 0 and 0.5.", 400
 
     # Get and validate the saveParsed
     save_parsed_str = flask.request.form.get("saveParsed", "").lower()
@@ -72,7 +81,7 @@ def flask_upload(machine):
     else:
         return "Invalid input: saveParsed must be a boolean (true/false, 1/0, yes/no).", 400
 
-    print(prefix, maxSampleSize, saveParsed)
+    print(prefix, maxSampleSize, saveParsed, cutoff_ratio)
 
     if 'file' not in flask.request.files:
         return "No file found in request", 400
@@ -89,7 +98,7 @@ def flask_upload(machine):
     filepath = os.path.join(data_folder, "raw", filename)
     with open(filepath, "wb") as f:
         f.write(file.read())
-    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, r)
+    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, cutoff_ratio, r)
     return "OK", 200
 
 
@@ -105,7 +114,7 @@ def flask_get_upload_status(machine, filename):
 @db_app.get("<machine>/samples")
 def flask_get_samples(machine):
     if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
+        return []
     return os.listdir(os.path.join(samples_folder, machine))
 
 

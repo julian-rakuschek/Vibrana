@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -15,7 +16,7 @@ parsed_folder = os.path.join(Path(__file__).parents[3], "data", "parsed")
 split_folder = os.path.join(Path(__file__).parents[3], "data", "split")
 
 
-def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, save_parsed: bool, redis_client: Redis):
+def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, save_parsed: bool, cutoff_ratio: float, redis_client: Redis):
     print(f"Parsing {filename}")
     r_key = f"vibrana:{machine}:{filename}"
     if redis_client:
@@ -26,6 +27,12 @@ def parse_file(machine: str, filename: str, prefix: str, max_sample_size: int, s
         redis_client.set(r_key, json.dumps(status))
 
     values, timestamps, events = process_file(os.path.join(raw_folder, filename))
+
+    if cutoff_ratio is not None and 0 < cutoff_ratio < 0.5:
+        cut_index = math.floor(len(values)*cutoff_ratio)
+        values = values[cut_index:len(values) - cut_index]
+        timestamps = timestamps[cut_index:len(values) - cut_index]
+
     if save_parsed:
         file_parsed_folder = os.path.join(parsed_folder, filename.replace(".dxd", ""))
         Path(file_parsed_folder).mkdir(parents=True, exist_ok=True)
