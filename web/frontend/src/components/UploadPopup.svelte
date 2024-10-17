@@ -1,5 +1,7 @@
 <script lang="ts">
-    import {Dialog, DialogOverlay, Transition, TransitionChild} from "@rgossiaux/svelte-headlessui";
+    import {
+        Dialog, DialogOverlay, Transition, TransitionChild, Disclosure, DisclosureButton, DisclosurePanel
+    } from "@rgossiaux/svelte-headlessui";
     import Dropzone from "svelte-file-dropzone";
     import {type FileWithPath} from "file-selector";
     import axios from "axios";
@@ -86,42 +88,50 @@
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-100"
             >
-                <div class="bg-white rounded-lg p-4 flex flex-col items-center gap-4 min-w-[300px]">
+                <div class="bg-white rounded-lg p-4 flex flex-col items-center gap-4 w-[700px]">
                     <p class="text-lg font-semibold">Upload Sample</p>
-                    <div class="relative w-full">
-                        <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Prefix</label>
-                        <input type="text" autocomplete="off" name="name" id="name" bind:value={prefix}
-                               class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                               placeholder="Prefix for Samples">
-                    </div>
-                    <div class="relative w-full">
-                        <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Maximum Sample Size</label>
-                        <input type="number" autocomplete="off" name="name" id="name" bind:value={sampleSize}
-                               class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                               placeholder="Sample Size">
-                    </div>
-                    <div class="relative w-full">
-                        <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Cutoff Ratio (Cut off x% of values from the start and end of the signal, input as a value between 0 and 0.5)</label>
-                        <input type="number" autocomplete="off" name="name" id="name" bind:value={cutoffRatio}
-                               class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                               placeholder="Cutoff Ratio">
-                    </div>
-                    <div class="relative w-full">
-                        <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Projection Window Size (Warning: Too large values may cause out of memory crashes)</label>
-                        <input type="number" autocomplete="off" name="name" id="name" bind:value={projectionWindowSize}
-                               class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                               placeholder="Projection Window Size">
-                    </div>
-                    <div class="relative w-full flex items-start">
-                        <div class="flex h-6 items-center">
-                            <input bind:value={saveParsed} id="save-parsed" aria-describedby="save-parsed-description" name="save-parsed" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
-                        </div>
-                        <div class="ml-3 text-sm leading-6">
-                            <label for="save-parsed" class="font-medium text-gray-900">Save full-length parsed signal additionally on disk</label>
-                            <p id="save-parsed-description" class="text-gray-500">If enabled, a complete numpy array of full input length will be saved on the disk. This is useful for experiments on the entire signal.</p>
-                        </div>
-                    </div>
-                    <Dropzone on:drop={handleFilesSelect} multiple={false}/>
+                    <Dropzone containerClasses="w-full" on:drop={handleFilesSelect} multiple={false}/>
+                    <Disclosure class="w-full">
+                        <DisclosureButton class="bg-indigo-700 text-white rounded-lg px-4 py-1 mb-5 w-full">Advanced Settings</DisclosureButton>
+
+                        <DisclosurePanel class="gap-4 flex flex-col">
+                            <div class="relative w-full">
+                                <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Prefix</label>
+                                <input type="text" autocomplete="off" name="name" id="name" bind:value={prefix}
+                                       class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                       placeholder="Prefix for Samples">
+                            </div>
+                            <div class="relative w-full">
+                                <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Maximum Sample Size</label>
+                                <input type="number" autocomplete="off" name="name" id="name" bind:value={sampleSize}
+                                       class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                       placeholder="Sample Size">
+                            </div>
+                            <div class="relative w-full">
+                                <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Cutoff Ratio (Cut off x% of values from the start and end of the signal, input as a value between 0 and
+                                    0.5)</label>
+                                <input type="number" autocomplete="off" name="name" id="name" bind:value={cutoffRatio}
+                                       class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                       placeholder="Cutoff Ratio">
+                            </div>
+                            <div class="relative w-full">
+                                <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Projection Window Size (Warning: Too large values may cause out of memory crashes)</label>
+                                <input type="number" autocomplete="off" name="name" id="name" bind:value={projectionWindowSize}
+                                       class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 placeholder:leading-6 focus:ring-1 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                       placeholder="Projection Window Size">
+                            </div>
+                            <div class="relative w-full flex items-start">
+                                <div class="flex h-6 items-center">
+                                    <input bind:value={saveParsed} id="save-parsed" aria-describedby="save-parsed-description" name="save-parsed" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                </div>
+                                <div class="ml-3 text-sm leading-6">
+                                    <label for="save-parsed" class="font-medium text-gray-900">Save full-length parsed signal additionally on disk</label>
+                                    <span id="save-parsed-description" class="text-gray-500 text-wrap">If enabled, a complete numpy array of full input length will be saved on the disk. This is useful for experiments on the entire signal.</span>
+                                </div>
+                            </div>
+                        </DisclosurePanel>
+                    </Disclosure>
+
                     {#if selected_file}
                         <p>{selected_file.name}</p>
                     {/if}
