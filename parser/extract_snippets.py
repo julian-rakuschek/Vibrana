@@ -28,9 +28,11 @@ def save_preview_image(data, save_path):
     plt.close(fig)
 
 
-def compute_time_varying_amplitude(values, timestamps, window_size):
+def compute_time_varying_amplitude(values, timestamps, window_size, sample_rate=None):
+    if sample_rate is None:
+        sample_rate = derive_sample_rate(timestamps)
     w = np.repeat(1, window_size)
-    SFT = ShortTimeFFT(w, hop=1, fs=derive_sample_rate(timestamps), mfft=window_size, scale_to='psd')
+    SFT = ShortTimeFFT(w, hop=1, fs=sample_rate, mfft=window_size, scale_to='psd')
     Sx = SFT.stft(values)
     Sx = np.mean(abs(Sx), axis=0)
     return signal_variance(Sx, window_size=window_size)
@@ -110,6 +112,7 @@ def split_and_process_time_series(
     if len(existing_prefixes) > 0:
         name_index = max(existing_prefixes) + 1
 
+    sample_rate = derive_sample_rate(timestamps)
     total = math.ceil(len(values) / max_sample_size)
     if redis_client:
         status["split"]["status"] = f"processing (0 / {total})"
@@ -142,12 +145,12 @@ def split_and_process_time_series(
         if redis_client:
             status["split"]["items"][name] = "frequency"
             redis_client.set(r_key, json.dumps(status))
-        freq = compute_time_varying_amplitude(extracted, extracted_ts, projection_window_size)
+        freq = compute_time_varying_amplitude(extracted, extracted_ts, projection_window_size, sample_rate)
         np.save(os.path.join(base_target_path, name, "freq.npy"), freq)
 
         if redis_client:
             status["split"]["items"][name] = "done"
-            status["split"]["status"] = f"processing ({needle // max_sample_size} / {total})"
+            status["split"]["status"] = f"processing ({(needle // max_sample_size) + 1} / {total})"
             redis_client.set(r_key, json.dumps(status))
         needle += max_sample_size
 

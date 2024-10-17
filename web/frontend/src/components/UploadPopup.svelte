@@ -92,9 +92,9 @@
                     <p class="text-lg font-semibold">Upload Sample</p>
                     <Dropzone containerClasses="w-full" on:drop={handleFilesSelect} multiple={false}/>
                     <Disclosure class="w-full">
-                        <DisclosureButton class="bg-indigo-700 text-white rounded-lg px-4 py-1 mb-5 w-full">Advanced Settings</DisclosureButton>
+                        <DisclosureButton class="bg-indigo-700 text-white rounded-lg px-4 py-1 w-full">Advanced Settings</DisclosureButton>
 
-                        <DisclosurePanel class="gap-4 flex flex-col">
+                        <DisclosurePanel class="gap-4 flex flex-col mt-5">
                             <div class="relative w-full">
                                 <label for="name" class="absolute -top-2 left-2 inline-block bg-white px-1 text-xs font-medium text-gray-900">Prefix</label>
                                 <input type="text" autocomplete="off" name="name" id="name" bind:value={prefix}
