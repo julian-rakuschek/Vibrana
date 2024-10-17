@@ -83,7 +83,8 @@ def flask_upload(machine):
         return "Filename must not be empty", 400
     if not allowed_file(file.filename):
         return "This file extension is not allowed", 400
-    filename = secure_filename(file.filename)
+    # filename = secure_filename(file.filename)
+    filename = file.filename
     filepath = os.path.join(data_folder, filename)
     with open(filepath, "wb") as f:
         f.write(file.read())
@@ -97,7 +98,7 @@ def flask_get_upload_status(machine, filename):
     res = r.get(r_key)
     if res is not None:
         return json.loads(res)
-    return "File not found in Redis", 404
+    return {}
 
 
 @db_app.get("<machine>/samples")

@@ -94,3 +94,13 @@ export type AnomalyMetric = {
     machineId: string,
     sampleId: string
 }
+
+export type ParseStatus = {
+    dwparse?: {
+        status: string
+    };
+    split?: {
+        status: string;
+        items: {[file: string]: string}
+    };
+}

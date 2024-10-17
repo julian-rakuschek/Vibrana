@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase} from "../types";
+import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase, ParseStatus} from "../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -24,6 +24,7 @@ export const dbRoutes = {
   addNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("POST", "/db/normals/:machineId/:sampleId"),
   removeNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("DELETE", "/db/normals/:machineId/:sampleId"),
   reset: new ApiRoute<undefined, {machineId: string}, undefined, DefaultAppResponse>("POST", "/db/reset/:machineId"),
+  getUploadStatus: new ApiRoute<undefined, {machineId: string; filename: string}, undefined, ParseStatus>("GET", "/db/:machineId/:filename/upload/status"),
 };
 
 export const analysisRoutes = {

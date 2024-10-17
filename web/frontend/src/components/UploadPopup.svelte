@@ -3,6 +3,8 @@
     import Dropzone from "svelte-file-dropzone";
     import {type FileWithPath} from "file-selector";
     import axios from "axios";
+    import type {ParseStatus} from "@lib/types";
+    import {ApiRoutes} from "@lib/api/ApiRoutes";
 
 
     function handleFilesSelect(e) {
@@ -20,10 +22,21 @@
     let saveParsed = false;
     let progress: number | null = null;
     let selected_file: FileWithPath | undefined;
+    let parseStatus: ParseStatus | null = null;
+    let statusUpdateInterval: ReturnType<typeof setInterval>;
+    let uploadFinished = false;
+
+    const updateParseStatus = async (filename: string) => {
+        parseStatus = await ApiRoutes.getUploadStatus.fetch({params: {machineId: machine, filename: filename}})
+    }
 
 
     const upload = () => {
-        if (!selected_file || sampleSize === null) return;
+        if (selected_file === undefined || sampleSize === null) return;
+        progress = 0;
+        parseStatus = null;
+        uploadFinished = false;
+        statusUpdateInterval = setInterval(() => updateParseStatus(selected_file?.name), 500)
         const formData = new FormData();
         formData.append("file", selected_file);
         formData.append("prefix", prefix);
@@ -35,9 +48,12 @@
             },
             onUploadProgress: progressEvent => progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
         }).then(() => {
+            updateParseStatus(selected_file?.name)
             prefix = ""
             progress = 100;
             selected_file = undefined;
+            uploadFinished = true;
+            clearInterval(statusUpdateInterval)
         }).catch(err => console.log(err))
     }
 </script>
@@ -96,7 +112,20 @@
                             <div class="bg-indigo-600 h-2.5 rounded-full" style={`width: ${progress}%`}></div>
                         </div>
                     {/if}
-                    {#if progress === 100}
+                    {#if parseStatus}
+                        <div class="bg-gray-100 rounded-lg p-4 w-2/3">
+                            {#if parseStatus.dwparse}
+                                <p>DWParse: {parseStatus.dwparse.status}</p>
+                            {/if}
+                            {#if parseStatus.split}
+                                <p>Splitting: {parseStatus.split.status}</p>
+                                {#each Object.entries(parseStatus.split.items) as [key, value]}
+                                    <p class={`${value === "done" ? "text-green-500" : "text-gray-800"}`}>{key}: {value}</p>
+                                {/each}
+                            {/if}
+                        </div>
+                    {/if}
+                    {#if uploadFinished}
                         <p class="text-center text-green-500">Upload finished!</p>
                     {/if}
                 </div>
