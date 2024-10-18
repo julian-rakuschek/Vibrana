@@ -1,0 +1,4 @@
+**/node_modules
+**/venv
+**/.svelte-kit
+**/build

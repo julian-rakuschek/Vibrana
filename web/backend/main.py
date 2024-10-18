@@ -4,8 +4,8 @@ from pathlib import Path
 import flask
 from flask_cors import CORS
 
-from modules.database import db_app
-from modules.analysis import analysis_app
+from web.backend.modules.database import db_app
+from web.backend.modules.analysis import analysis_app
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"

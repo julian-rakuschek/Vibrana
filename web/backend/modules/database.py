@@ -14,7 +14,7 @@ import web.backend.helper.file_processor as parser
 from web.backend.settings import samples_folder, data_folder, READ_ONLY
 
 db_app = flask.Blueprint("db", __name__)
-r = redis.Redis(host="localhost", port=6379, db=1)
+r = redis.Redis(host='vibrana_redis' if os.environ.get('DOCKER', "False") == 'True' else 'localhost', port=6379, db=1)
 
 ALLOWED_EXTENSIONS = {'dxd'}
 
@@ -25,7 +25,8 @@ def serialize_mongodb(output):
 
 
 def get_db() -> Database:
-    conn = pymongo.MongoClient("mongodb://localhost:27017/")
+    mongo_url = f"mongodb://{'vibrana_mongodb' if os.environ.get('DOCKER', "False") == 'True' else 'localhost'}:27017/"
+    conn = pymongo.MongoClient(mongo_url)
     db: Database = conn["Vibrana"]
     return db
 
@@ -37,6 +38,8 @@ def flask_get_ro_status():
 
 @db_app.get("machines")
 def flask_get_machines_list():
+    if not os.path.exists(samples_folder):
+        return []
     return os.listdir(samples_folder)
 
 

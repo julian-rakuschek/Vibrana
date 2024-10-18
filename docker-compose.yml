@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  mongodb_container:
+    container_name: vibrana_mongodb
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    expose:
+      - 27017
+    volumes:
+      - mongodb_volume:/data/db
+    networks:
+      - web
+
+  redis_container:
+    container_name: vibrana_redis
+    image: redis:latest
+    restart: always
+    ports:
+      - '6379:6379'
+    expose:
+      - 6379
+    volumes:
+      - cache:/data
+    networks:
+      - web
+
+  backend:
+    container_name: vibrana_app
+    build: ./
+    depends_on:
+      - redis_container
+      - mongodb_container
+    ports:
+      - "5000:5000"
+    expose:
+      - 5000
+    volumes:
+      - data:/app/data
+    environment:
+      - READ_ONLY=False
+      - DOCKER=True
+    networks:
+      - web
+
+
+volumes:
+  mongodb_volume:
+    driver: local
+  cache:
+    driver: local
+  data:
+    driver: local
+
+networks:
+  web:
+
