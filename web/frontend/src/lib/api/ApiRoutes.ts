@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase, ParseStatus} from "../types";
+import type {AnalysisPostData, Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase, ParseStatus} from "../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -10,6 +10,7 @@ import type {Annotation, AnomalyMetric, DefaultAppResponse, Label, LabelBase, Pa
 // (4) TResponse = Response object
 
 export const dbRoutes = {
+  getReadOnly: new ApiRoute<undefined, undefined, undefined, boolean>("GET", "/db/is_read_only"),
   getMachinesList: new ApiRoute<undefined, undefined, undefined, string[]>("GET", "/db/machines"),
   getMachineSamples: new ApiRoute<undefined, {machineId: string}, undefined, string[]>("GET", "/db/:machineId/samples"),
   addMachine: new ApiRoute<{machineName: string}, undefined, undefined, DefaultAppResponse>("POST", "/db/machines/add"),
@@ -20,7 +21,7 @@ export const dbRoutes = {
   getLabels: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, Annotation[]>("GET", "/db/labels/:machineId/:sampleId"),
   addLabel: new ApiRoute<LabelBase, {machineId: string; sampleId: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
-  deleteLabelByPos: new ApiRoute<undefined, {pos: string | number}, undefined, undefined>("DELETE", "/db/labels/byPosition/:pos"),
+  deleteLabelByPos: new ApiRoute<undefined, {machineId: string; sampleId: string; pos: string | number}, undefined, undefined>("DELETE", "/db/labels/:machineId/:sampleId/byPosition/:pos"),
   getNormals: new ApiRoute<undefined, { machineId: string }, undefined, string[]>("GET", "/db/normals/:machineId"),
   addNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("POST", "/db/normals/:machineId/:sampleId"),
   removeNormal: new ApiRoute<undefined, { machineId: string, sampleId: string }, undefined, DefaultAppResponse>("DELETE", "/db/normals/:machineId/:sampleId"),
@@ -28,15 +29,22 @@ export const dbRoutes = {
   getUploadStatus: new ApiRoute<undefined, {machineId: string; filename: string}, undefined, ParseStatus>("GET", "/db/:machineId/:filename/upload/status"),
 };
 
-export const analysisRoutes = {
+export const analysisRoutesDB = {
   getMDSEmbedding: new ApiRoute<undefined, {machineId: string; sampleId: string}, {window_size: number}, number[][]>("GET", "/analysis/:machineId/:sampleId/mdsEmbedding"),
   getSimilarities: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, number[]>("GET", "/analysis/:machineId/:sampleId/distanceProfile/quantized"),
   getNormalTube: new ApiRoute<undefined, {machineId: string; }, undefined, [number, number]>("GET", "/analysis/:machineId/normal_tube"),
-  getAnomalyRatio: new ApiRoute<undefined, {machineId: string; sampleId: string}, undefined, AnomalyMetric>("GET", "/analysis/:machineId/anomaly_metrics/:sampleId/"),
   getAnomalyRatios: new ApiRoute<undefined, {machineId: string;}, undefined, AnomalyMetric[]>("GET", "/analysis/:machineId/anomaly_metrics"),
+}
+
+// RO = Read Only, this means the user needs to supply data that would normally be stored in the database
+export const analysisRoutesRO = {
+  getSimilaritiesRO: new ApiRoute<AnalysisPostData, {machineId: string; sampleId: string}, undefined, number[]>("POST", "/analysis/:machineId/:sampleId/distanceProfile/quantized"),
+  getNormalTubeRO: new ApiRoute<AnalysisPostData, {machineId: string; }, undefined, [number, number]>("POST", "/analysis/:machineId/normal_tube"),
+  getAnomalyRatiosRO: new ApiRoute<AnalysisPostData, {machineId: string;}, undefined, AnomalyMetric[]>("POST", "/analysis/:machineId/anomaly_metrics"),
 }
 
 export const ApiRoutes = {
   ...dbRoutes,
-  ...analysisRoutes
+  ...analysisRoutesDB,
+  ...analysisRoutesRO
 };

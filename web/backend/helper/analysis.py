@@ -23,8 +23,7 @@ def compute_mds_embedding(sample_path, window_size):
     return xl_2
 
 
-def compute_distance_profile(db: Database, machineId, sample_path):
-    labels = list(db["labels"].find({"machine": machineId}))
+def compute_distance_profile(sample_path, labels):
     if not os.path.exists(os.path.join(sample_path, "values.npy")):
         return []
     values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
@@ -43,17 +42,14 @@ def compute_distance_profile(db: Database, machineId, sample_path):
     return np.min(np.array(distances), axis=0) if len(distances) > 0 else []
 
 
-def compute_normal_tube(db: Database, machineId):
-    labels = list(db["labels"].find({"machine": machineId}))
+def compute_normal_tube(machineId, labels, normals):
     if len(labels) == 0:
         return [0, 0]
 
-    normals = db["normals"].find_one({"machine": machineId})
     normals = [] if not normals else normals.get("samples")
-
     normal_min, normal_max = [], []
     for normal in normals:
-        distances = compute_distance_profile(db, machineId, os.path.join(samples_folder, machineId, normal))
+        distances = compute_distance_profile(os.path.join(samples_folder, machineId, normal), labels)
         if len(distances) == 0:
             continue
         normal_min.append(np.min(distances))
@@ -109,12 +105,11 @@ def compute_anomaly_ratio(distances, normal_tube):
     return below / len(distances)
 
 
-def compute_anomaly_metrics(db: Database, machineId, sampleId, normal_tube=None):
-    labels = list(db["labels"].find({"machine": machineId}))
+def compute_anomaly_metrics(machineId, sampleId, labels, normals, normal_tube=None):
     sample_path = os.path.join(samples_folder, machineId, sampleId)
-    distances = compute_distance_profile(db, machineId, sample_path)
+    distances = compute_distance_profile(sample_path, labels)
     if normal_tube is None:
-        normal_tube = compute_normal_tube(db, machineId)
+        normal_tube = compute_normal_tube(machineId, labels, normals)
     if len(labels) == 0:
         return None
     return {
@@ -126,8 +121,8 @@ def compute_anomaly_metrics(db: Database, machineId, sampleId, normal_tube=None)
     }
 
 
-def compute_quantized_distance_profile(db: Database, machineId, sampleId):
+def compute_quantized_distance_profile(machineId, sampleId, labels, normals):
     sample_path = os.path.join(samples_folder, machineId, sampleId)
-    distances = compute_distance_profile(db, machineId, sample_path)
-    normal_tube = compute_normal_tube(db, machineId)
+    distances = compute_distance_profile(sample_path, labels)
+    normal_tube = compute_normal_tube(machineId, labels, normals)
     return reduce_distances(distances, normal_tube, 1000, True)

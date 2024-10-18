@@ -11,13 +11,13 @@ from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from werkzeug.utils import secure_filename
 import web.backend.helper.file_processor as parser
+from web.backend.settings import samples_folder, data_folder, READ_ONLY
 
 db_app = flask.Blueprint("db", __name__)
-samples_folder = os.path.join(Path(__file__).parents[3], "data", "split")
-data_folder = os.path.join(Path(__file__).parents[3], "data")
 r = redis.Redis(host="localhost", port=6379, db=1)
 
 ALLOWED_EXTENSIONS = {'dxd'}
+
 
 def serialize_mongodb(output):
     temp = json.dumps(output, default=json_util.default)
@@ -30,6 +30,11 @@ def get_db() -> Database:
     return db
 
 
+@db_app.get("is_read_only")
+def flask_get_ro_status():
+    return flask.jsonify(READ_ONLY)
+
+
 @db_app.get("machines")
 def flask_get_machines_list():
     return os.listdir(samples_folder)
@@ -37,6 +42,8 @@ def flask_get_machines_list():
 
 @db_app.post("machines/add")
 def flask_add_machine():
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     machine_name = json.loads(flask.request.data.decode()).get("machineName", None)
     if machine_name is None:
         return {"success": False}
@@ -46,6 +53,9 @@ def flask_add_machine():
 
 @db_app.post("<machine>/upload")
 def flask_upload(machine):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
+
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -194,6 +204,8 @@ def flask_get_labels(machine, sampleId):
 
 @db_app.post("labels")
 def flask_add_label():
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     data = flask.request.get_json()
     db = get_db()["labels"]
     print(data)
@@ -223,14 +235,18 @@ def flask_add_label():
 
 @db_app.delete("labels/byId/<labelId>")
 def flask_delete_label(labelId):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     get_db()["labels"].delete_one({"_id": ObjectId(labelId)})
     return "OK", 200
 
 
-@db_app.delete("labels/byPosition/<pos>")
-def flask_delete_label_by_pos(pos):
+@db_app.delete("labels/<machine>/<sampleId>/byPosition/<pos>")
+def flask_delete_label_by_pos(machine, sampleId, pos):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     pos = int(pos)
-    get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}]})
+    get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}], "machine": machine, "sampleId": sampleId})
     return "OK", 200
 
 
@@ -244,6 +260,8 @@ def flask_get_normals(machine):
 
 @db_app.post("normals/<machine>/<sampleId>")
 def flask_add_normal(machine, sampleId):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()["normals"]
     machine_samples = db.find_one({"machine": machine})
     if not machine_samples:
@@ -255,6 +273,8 @@ def flask_add_normal(machine, sampleId):
 
 @db_app.delete("normals/<machine>/<sampleId>")
 def flask_delete_normal(machine, sampleId):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()["normals"]
     machine_samples = db.find_one({"machine": machine})
     if not machine_samples:
@@ -262,8 +282,11 @@ def flask_delete_normal(machine, sampleId):
     db.update_one({"machine": machine}, {"$pull": {"samples": sampleId}})
     return {"success": True}
 
+
 @db_app.post("reset/<machine>")
 def flask_reset(machine):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()
     db["labels"].delete_many({"machine": machine})
     db["normals"].delete_many({"machine": machine})

@@ -4,6 +4,7 @@
     import QueryWrapper from "@lib/api/QueryWrapper.svelte";
     import {Dialog, DialogOverlay, Transition, TransitionChild} from "@rgossiaux/svelte-headlessui";
     import {useQueryClient} from "@tanstack/svelte-query";
+    import {getContext} from "svelte";
 
     const machineListQuery = useQueryFetch(ApiRoutes.getMachinesList)
     const queryClient = useQueryClient();
@@ -17,6 +18,8 @@
         isOpen = false;
         machine_name = ""
     }
+
+    const {ro} = getContext("ro") as { ro: boolean }
 </script>
 
 <p class="text-center text-xl font-semibold">Available Machines</p>
@@ -31,9 +34,11 @@
                     <span class="font-semibold">{machine}</span>
                 </a>
             {/each}
-            <button on:click={() => isOpen = true} class="w-[300px] h-[40px] bg-indigo-500 cursor-default text-white shadow-md rounded-lg flex flex-row justify-around items-center transition hover:shadow-lg hover:bg-indigo-700">
-                Add Machine
-            </button>
+            {#if !ro}
+                <button on:click={() => isOpen = true} class="w-[300px] h-[40px] bg-indigo-500 cursor-default text-white shadow-md rounded-lg flex flex-row justify-around items-center transition hover:shadow-lg hover:bg-indigo-700">
+                    Add Machine
+                </button>
+            {/if}
         </div>
     {/if}
 </QueryWrapper>

@@ -104,3 +104,8 @@ export type ParseStatus = {
         items: {[file: string]: string}
     };
 }
+
+export type AnalysisPostData = {
+    normals: { machine: string, samples: string[] },
+    labels: Label[]
+}

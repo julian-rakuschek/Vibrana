@@ -3,5 +3,5 @@
   import LandingPage from '@components/LandingPage.svelte';
 </script>
 
-<Navbar />
-<LandingPage />
+<Navbar/>
+<LandingPage/>

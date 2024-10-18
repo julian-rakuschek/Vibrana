@@ -10,6 +10,7 @@
     import Toggle from "@components/atoms/Toggle.svelte";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
+    import {getContext} from "svelte";
 
     export let settings: SamplesSettingsType;
     export let machine: string;
@@ -31,6 +32,8 @@
         await ApiRoutes.reset.fetch({params: {machineId: machine}});
         await client.invalidateQueries()
     }
+
+    const {ro} = getContext("ro") as { ro: boolean }
 </script>
 
 <Menu class="flex flex-col justify-end items-end">
@@ -71,7 +74,9 @@
                 <label class="text-base font-semibold text-gray-900">Split by Ground Truth</label>
                 <Toggle bind:enabled={settings.split}/>
             </div>
-            <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset()}>Reset Labels</button>
+            {#if !ro}
+                <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset()}>Reset Labels</button>
+            {/if}
         </MenuItems>
     </Transition>
 </Menu>

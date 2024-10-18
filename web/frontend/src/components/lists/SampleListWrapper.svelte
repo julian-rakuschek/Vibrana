@@ -4,8 +4,9 @@
     import {useQueryFetch} from "@lib/api/ApiQueries";
     import SampleList from "@components/lists/SampleList.svelte";
     import { fly } from "svelte/transition"
-    import {onMount} from "svelte";
+    import {getContext, onMount} from "svelte";
     import {Jumper} from "svelte-loading-spinners";
+    import {sessionGetAll, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
 
     export let machineId: string;
 
@@ -22,11 +23,15 @@
         return sample_sorted
     }
 
-
+    const {ro} = getContext("ro") as { ro: boolean }
     const sampleListQuery = useQueryFetch(ApiRoutes.getMachineSamples, {params: {machineId}})
-    const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}})
-    const anomalyRatiosQuery = useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}})
-    const normalTubeQuery = useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}})
+    const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {machineId}}, undefined, undefined, ro)
+    const anomalyRatiosQuery = ro ?
+        useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {machineId}, data: sessionGetAll(machineId)}) :
+        useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {machineId}})
+    const normalTubeQuery = ro ?
+        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {machineId}, data: sessionGetAll(machineId)}) :
+        useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}})
     let anomaly_ratios: AnomalyMetric[] = []
 
     anomalyRatiosQuery.subscribe((value) => {

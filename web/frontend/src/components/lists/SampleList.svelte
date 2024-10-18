@@ -4,6 +4,8 @@
     import {goto} from "$app/navigation";
     import {useQueryClient} from "@tanstack/svelte-query";
     import type {AnomalyMetric} from "@lib/types";
+    import {getContext} from "svelte";
+    import {sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
 
     export let samples: string[];
     export let machineId: string;
@@ -20,13 +22,17 @@
         else return undefined;
     }
 
+    const {ro} = getContext("ro") as { ro: boolean }
+
     const handleClick = async (sampleId: string) => {
         if (selectModeActive && normals) {
-            if (normals.indexOf(sampleId) === -1) {
-                await ApiRoutes.addNormal.fetch({params: {machineId, sampleId}})
-            }
-            else {
-                await ApiRoutes.removeNormal.fetch({params: {machineId, sampleId}})
+            if (ro) sessionToggleNormal(machineId, sampleId)
+            else{
+                if (normals.indexOf(sampleId) === -1) {
+                    await ApiRoutes.addNormal.fetch({params: {machineId, sampleId}})
+                } else {
+                    await ApiRoutes.removeNormal.fetch({params: {machineId, sampleId}})
+                }
             }
             await client.invalidateQueries();
         }

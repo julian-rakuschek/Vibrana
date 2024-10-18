@@ -1,0 +1,54 @@
+import type {AnalysisPostData, Label, LabelBase} from "@lib/types";
+import { v4 as uuidv4 } from 'uuid';
+
+export const sessionGetNormals = (machine: string): string[] => {
+    const normals: { [machine: string]: string[] } = JSON.parse(sessionStorage.getItem("normals") ?? "{}")
+    return normals[machine] ?? []
+}
+
+export const sessionToggleNormal = (machine: string, sample: string) => {
+    const normals: { [machine: string]: string[] } = JSON.parse(sessionStorage.getItem("normals") ?? "{}")
+    let samples = normals[machine] ?? []
+    if (samples.indexOf(sample) !== -1) samples = samples.filter(s => s !== sample)
+    else samples.push(sample)
+    normals[machine] = samples
+    sessionStorage.setItem("normals", JSON.stringify(normals))
+}
+
+export const sessionGetLabels = (machine: string, sample?: string): Label[] => {
+    let labels: Label[] = JSON.parse(sessionStorage.getItem("labels") ?? "[]")
+    labels = labels.filter(l => l.machine === machine)
+    if (sample) {
+        labels = labels.filter(l => l.sampleId === sample)
+    }
+    return labels
+}
+
+export const sessionAddLabel = (label: LabelBase) => {
+    const label_id = uuidv4()
+    const labels: Label[] = JSON.parse(sessionStorage.getItem("labels") ?? "[]")
+    labels.push({...label, _id: {$oid: label_id}})
+    console.log(labels)
+    sessionStorage.setItem("labels", JSON.stringify(labels))
+}
+
+export const sessionDeleteLabelPyID = (labelId: string) => {
+    let labels: Label[] = JSON.parse(sessionStorage.getItem("labels") ?? "[]")
+    labels = labels.filter(l => l._id.$oid !== labelId)
+    sessionStorage.setItem("labels", JSON.stringify(labels))
+}
+
+export const sessionDeleteLabelPyPos = (machine: string, sample: string, pos: number) => {
+    let labels: Label[] = JSON.parse(sessionStorage.getItem("labels") ?? "[]")
+    labels = labels.filter(l => l.machine !== machine || l.sampleId !== sample || !(l.from <= pos && pos <= l.to))
+    sessionStorage.setItem("labels", JSON.stringify(labels))
+}
+
+export const sessionGetAll = (machine: string): AnalysisPostData => {
+    const samples = sessionGetNormals(machine)
+    const labels = sessionGetLabels(machine)
+    return {
+        normals: {machine, samples},
+        labels: labels
+    }
+}

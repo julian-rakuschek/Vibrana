@@ -4,16 +4,24 @@
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
     import ThreeCharts from "@components/charts/ThreeCharts.svelte";
     import {Icon, ArrowLeft} from "svelte-hero-icons";
+    import {getContext} from "svelte";
+    import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
 
     export let machineId: string;
     export let sampleId: string;
 
+    const {ro} = getContext("ro") as { ro: boolean }
+
     const timeSeriesQuery = useQueryFetch(ApiRoutes.getSampleValues, {params: {machineId, sampleId}})
     const projectedValuesQuery = useQueryFetch(ApiRoutes.getSampleProjected, {params: {machineId, sampleId}})
-    const normalTubeQuery = useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}})
-    const similaritiesQuery = useQueryFetch(ApiRoutes.getSimilarities, {params: {machineId, sampleId}})
+    const normalTubeQuery = ro ?
+        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {machineId}, data: sessionGetAll(machineId)}) :
+        useQueryFetch(ApiRoutes.getNormalTube, {params: {machineId}})
+    const similaritiesQuery = ro ?
+        useQueryFetch(ApiRoutes.getSimilaritiesRO, {params: {machineId, sampleId}, data: sessionGetAll(machineId)}) :
+        useQueryFetch(ApiRoutes.getSimilarities, {params: {machineId, sampleId}})
     const mdsEmbeddingQuery = useQueryFetch(ApiRoutes.getMDSEmbedding, {params: {machineId, sampleId}})
-    const labelsQuery = useQueryFetch(ApiRoutes.getLabels, {params: {machineId, sampleId}})
+    const labelsQuery = useQueryFetch(ApiRoutes.getLabels, {params: {machineId, sampleId}}, undefined, undefined, ro)
     const eventsQuery = useQueryFetch(ApiRoutes.getSampleEvents, {params: {machineId, sampleId}})
     const freqQuery = useQueryFetch(ApiRoutes.getSampleFreq, {params: {machineId, sampleId}})
 </script>

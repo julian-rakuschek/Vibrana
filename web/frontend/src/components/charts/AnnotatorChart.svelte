@@ -1,8 +1,8 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {type ProjectedPoint, type ThreeChartsSettingsType, type Point, WindowMode, type Label, type Annotation} from "@lib/types";
-    import {onMount} from "svelte";
+    import {type ProjectedPoint, type ThreeChartsSettingsType, type Point, WindowMode, type Label, type Annotation, type LabelBase} from "@lib/types";
+    import {getContext, onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
     import betterPointer from "@lib/helper/betterPointer";
     import {filterRangeIndexed, filterRangePercent, chartSettings, hoverRange, hoverPoint, selectedProjectedPoints} from "@lib/stores";
@@ -11,6 +11,7 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
     import WindowSizePopup from "@components/WindowSizePopup.svelte";
+    import {sessionAddLabel, sessionDeleteLabelPyPos} from "@lib/helper/sessionStorageHelper";
 
     export let machineId: string;
     export let sampleId: string;
@@ -31,6 +32,8 @@
     const max_value = Math.max(...timeSeries)
     const xScale = d3.scaleLinear().domain([0, timeSeries.length]).range([0, 1]);
     const yScale = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
+
+    const {ro} = getContext("ro") as { ro: boolean }
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
@@ -60,17 +63,13 @@
             Math.floor(Math.min(timeSeries.length - 1, x + $chartSettings.windowSize / 2))
         ]
         if (addAnnotation) {
-            await ApiRoutes.addLabel.fetch({
-                data: {
-                    from: selected[0],
-                    to: selected[1],
-                    sampleId: sampleId,
-                    machine: machineId
-                }
-            })
+            const labelToAdd: LabelBase = {from: selected[0], to: selected[1], sampleId: sampleId, machine: machineId}
+            if (ro) sessionAddLabel(labelToAdd)
+            else await ApiRoutes.addLabel.fetch({data: labelToAdd})
         }
         else {
-            await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x)}})
+            if (ro) sessionDeleteLabelPyPos(machineId, sampleId, Math.floor(x))
+            else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), machineId: machineId, sampleId: sampleId}})
         }
         await client.invalidateQueries({queryKey: [`/db/labels/${machineId}/${sampleId}`]});
         await client.invalidateQueries({queryKey: [`/analysis/${machineId}/${sampleId}/similarities`]});

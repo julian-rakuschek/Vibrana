@@ -5,12 +5,15 @@
     import {type SamplesSettingsType, SortMode} from "@lib/types";
     import SampleListSettings from "@components/SampleListSettings.svelte";
     import UploadPopup from "@components/UploadPopup.svelte";
+    import {getContext} from "svelte";
 
     let settings: SamplesSettingsType = {sort: SortMode.Score, split: false}
     let selectModeActive: boolean = false
     let uploadOpen = false;
 
     $: machine = $page.params.machine;
+
+    const {ro} = getContext("ro") as { ro: boolean }
 </script>
 
 <Navbar/>
@@ -19,7 +22,9 @@
         <div class="w-full flex flex-row flex-nowrap justify-between relative z-20 h-10">
             <div>
                 <span class="text-xl font-semibold">Samples</span>
-                <button on:click={() => uploadOpen = true} class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100" >Upload</button>
+                {#if !ro}
+                    <button on:click={() => uploadOpen = true} class="rounded-md bg-indigo-50 px-2.5 py-1.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-100">Upload</button>
+                {/if}
             </div>
 
             <button on:click={() => selectModeActive = !selectModeActive}
@@ -30,7 +35,7 @@
                 <SampleListSettings bind:settings machine={machine}/>
             </div>
         </div>
-        <SampleList machineId={machine} settings={settings} selectModeActive={selectModeActive} />
+        <SampleList machineId={machine} settings={settings} selectModeActive={selectModeActive}/>
     </div>
     <div class="h-full col-span-4 hidden">
         <div class="w-full flex flex-row flex-nowrap justify-between px-5">
@@ -39,4 +44,4 @@
     </div>
 </div>
 
-<UploadPopup bind:isOpen={uploadOpen} machine={machine} />
+<UploadPopup bind:isOpen={uploadOpen} machine={machine}/>
