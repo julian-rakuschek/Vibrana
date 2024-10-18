@@ -20,7 +20,7 @@
 </script>
 
 <QueryClientProvider client={queryClient}>
-    <div>
+    <div class="w-full">
         <slot/>
     </div>
 </QueryClientProvider>

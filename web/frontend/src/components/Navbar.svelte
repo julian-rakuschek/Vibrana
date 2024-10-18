@@ -36,7 +36,15 @@
                 <span class={`${darkMode ? 'text-white' : 'text-black'} font-bold text-2xl`}>Vibrana</span>
             </a>
         </div>
-        <div class="flex lg:hidden">
+
+        <div class="flex flex-row gap-5 lg:hidden">
+            <div class="flex lg:flex-1 lg:justify-end gap-x-4">
+                {#if ro}
+                    <div class="bg-[#304ffe] text-white rounded-lg px-4 py-2 text-sm">
+                        Read-Only Mode
+                    </div>
+                {/if}
+            </div>
             <button
                     type="button"
                     class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
@@ -55,7 +63,7 @@
         </div>
         <div class="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
             {#if ro}
-                <div class="bg-red-700 text-white rounded-lg px-4 py-2 text-sm">
+                <div class="bg-[#304ffe] text-white rounded-lg px-4 py-2 text-sm">
                     Read-Only Mode
                 </div>
             {/if}
@@ -91,8 +99,6 @@
                                 {menuLink.name}
                             </a>
                         {/each}
-                    </div>
-                    <div class="py-6">
                     </div>
                 </div>
             </div>
