@@ -15,7 +15,7 @@
     <p class="text-[#1c2934] text-6xl font-bold">Vibrana</p>
     <p class="text-[#1c2934] text-xl">A tool for exploring and annotating vibration signals through a different perspective</p>
     <div class="flex flex-row mt-10 gap-5">
-        <a class="rounded-md bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/intro">Getting Started</a>
+        <a class="rounded-md bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/intro">How to use Vibrana</a>
         <a class="rounded-md bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/machines">Explore Datasets</a>
         {#if ro}
             <a class="rounded-md bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/machines">Download Setup</a>
