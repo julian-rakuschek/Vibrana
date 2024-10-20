@@ -13,3 +13,8 @@ This tool was made possible by the Binder+Co Use Case within the PRESENT FFG pro
 
 </td></tr></table>
 
+## Setup
+
+Create a folder `data` and run `docker compose up -d`
+
+You should then be able to visit the website at http://0.0.0.0:5001/
