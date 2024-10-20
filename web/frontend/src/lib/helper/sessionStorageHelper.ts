@@ -28,7 +28,6 @@ export const sessionAddLabel = (label: LabelBase) => {
     const label_id = uuidv4()
     const labels: Label[] = JSON.parse(sessionStorage.getItem("labels") ?? "[]")
     labels.push({...label, _id: {$oid: label_id}})
-    console.log(labels)
     sessionStorage.setItem("labels", JSON.stringify(labels))
 }
 

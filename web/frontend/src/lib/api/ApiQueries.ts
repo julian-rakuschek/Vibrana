@@ -2,7 +2,7 @@ import {createQuery, type QueryKey, type CreateQueryOptions, type CreateQueryRes
 import type {ApiRoute} from "@lib/api/ApiRoute";
 import type {AppResponse} from "@lib/types";
 import {getResolvedUrl, type IRequestObject} from "@lib/api/QueryHelpers";
-import {sessionGetLabels, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
+import {sessionGetAll, sessionGetLabels, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
 
 export type MultiRequestPart<TRequestData, TRequestParams, TQueryParams, TResponse extends AppResponse<any>> =
     { apiRoute: ApiRoute<TRequestData, TRequestParams, TQueryParams, TResponse>; requestObject?: IRequestObject<TRequestData, TRequestParams, TQueryParams> };
@@ -14,6 +14,14 @@ function getQueryParams<TRequestData, TRequestParams, TQueryParams, TResponse ex
 
 
     async function queryFn(): Promise<TResponse> {
+        if (
+            (apiRoute.url === "/analysis/:machineId/:sampleId/distanceProfile/quantized" ||
+                apiRoute.url === "/analysis/:machineId/normal_tube" ||
+                apiRoute.url === "/analysis/:machineId/anomaly_metrics") && apiRoute.method === "POST"
+        ) {
+            // @ts-ignore
+            requestObject.data = sessionGetAll(requestObject.params.machineId)
+        }
         if (apiRoute.url === "/db/normals/:machineId" && ro) {
             // @ts-ignore
             return sessionGetNormals(requestObject.params.machineId)
