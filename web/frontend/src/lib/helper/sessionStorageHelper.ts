@@ -1,5 +1,5 @@
 import type {AnalysisPostData, Label, LabelBase} from "@lib/types";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 
 export const sessionGetNormals = (machine: string): string[] => {
     const normals: { [machine: string]: string[] } = JSON.parse(localStorage.getItem("normals") ?? "{}")
@@ -61,4 +61,13 @@ export const setItemSeen = (machine: string, sample: string) => {
     const viewHistory: string[] = JSON.parse(localStorage.getItem("viewHistory") ?? "[]")
     viewHistory.push(`${machine}-${sample}`)
     localStorage.setItem("viewHistory", JSON.stringify(viewHistory))
+}
+
+export const resetLabels = () => {
+    localStorage.setItem("normals", "{}")
+    localStorage.setItem("labels", "[]")
+}
+
+export const resetViewHistory = () => {
+    localStorage.setItem("viewHistory", "[]")
 }

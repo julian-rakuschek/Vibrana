@@ -11,6 +11,7 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
     import {getContext} from "svelte";
+    import {resetLabels, resetViewHistory} from "@lib/helper/sessionStorageHelper";
 
     export let settings: SamplesSettingsType;
     export let machine: string;
@@ -27,13 +28,22 @@
     ]
 
     const client = useQueryClient()
+    const {ro} = getContext("ro") as { ro: boolean }
 
-    const reset = async () => {
-        await ApiRoutes.reset.fetch({params: {machineId: machine}});
+    const reset_labels = async () => {
+        if (ro) {
+            resetLabels()
+        } else {
+            await ApiRoutes.reset.fetch({params: {machineId: machine}});
+        }
         await client.invalidateQueries()
     }
 
-    const {ro} = getContext("ro") as { ro: boolean }
+    const reset_views = async () => {
+        resetViewHistory()
+    }
+
+
 </script>
 
 <Menu class="flex flex-col justify-end items-end">
@@ -74,9 +84,8 @@
                 <label class="text-base font-semibold text-gray-900">Split by Ground Truth</label>
                 <Toggle bind:enabled={settings.split}/>
             </div>
-            {#if !ro}
-                <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset()}>Reset Labels</button>
-            {/if}
+            <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_labels()}>Reset Labels</button>
+            <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_views()}>Reset View History</button>
         </MenuItems>
     </Transition>
 </Menu>
