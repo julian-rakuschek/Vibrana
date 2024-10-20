@@ -9,7 +9,8 @@
 
     const menuLinks = [
         {name: "Introduction", link: "/intro"},
-        {name: "Machines", link: "/machines"}
+        {name: "Machines", link: "/machines"},
+        {name: "Authors", link: "/authors"}
     ];
 
     function toggleMobileMenu() {
