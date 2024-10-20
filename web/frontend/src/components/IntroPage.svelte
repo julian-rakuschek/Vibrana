@@ -166,5 +166,5 @@
     </div>
 
 
-    <div class="w-full h-[500px]"></div>
+    <div class="w-full h-[100px]"></div>
 </div>

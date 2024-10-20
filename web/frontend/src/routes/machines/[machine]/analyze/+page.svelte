@@ -7,7 +7,7 @@
     import UploadPopup from "@components/UploadPopup.svelte";
     import {getContext} from "svelte";
 
-    let settings: SamplesSettingsType = {sort: SortMode.Score, split: false}
+    let settings: SamplesSettingsType = {sort: SortMode.Name, split: false}
     let selectModeActive: boolean = false
     let uploadOpen = false;
 

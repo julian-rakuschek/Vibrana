@@ -22,7 +22,7 @@ services:
     expose:
       - 6379
     volumes:
-      - ./data:/data
+      - cache:/data
     networks:
       - web
 
@@ -37,10 +37,29 @@ services:
     expose:
       - 5000
     volumes:
-      - data:/app/data
+      - ./data:/app/data
     environment:
-      - READ_ONLY=False
+      - READ_ONLY=True
       - DOCKER=True
+    networks:
+      - web
+
+  nginx:
+    container_name: vibrana_nginx
+    image: nginx:mainline-alpine
+    restart: always
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vibrana-nginx.rule=Host(`vibrana.rakuschek.at`)"
+      - "traefik.http.routers.vibrana-nginx.entrypoints=web"
+      - "traefik.http.routers.vibrana-nginx.middlewares=redirect@file"
+      - "traefik.http.routers.vibrana-nginx-secured.rule=Host(`vibrana.rakuschek.at`)"
+      - "traefik.http.routers.vibrana-nginx-secured.entrypoints=web-secured"
+      - "traefik.http.routers.vibrana-nginx-secured.tls.certresolver=mytlschallenge"
     networks:
       - web
 

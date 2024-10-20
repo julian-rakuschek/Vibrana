@@ -31,7 +31,6 @@ RUN poetry add gunicorn
 
 COPY ./parser ./parser
 COPY ./web ./web
-COPY ./algorithms ./algorithms
 COPY --from=build /app ./web/frontend
 
 EXPOSE 5000
