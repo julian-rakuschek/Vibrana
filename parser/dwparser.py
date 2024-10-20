@@ -13,11 +13,11 @@ from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 
-from parser.DWDataReaderHeader import *
+from parser.lib.DWDataReaderHeader import *
 from ctypes import *
 import _ctypes
 
-from parser.util import find_nearest
+from parser.lib.util import find_nearest
 
 
 # from https://dewesoft.com/download/developer-downloads
@@ -25,9 +25,9 @@ from parser.util import find_nearest
 
 def init_reader_lib():
     if os.name == 'nt':
-        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/DWDataReaderLib64.dll')
+        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/lib/DWDataReaderLib64.dll')
     else:
-        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/DWDataReaderLib64.so')
+        reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/lib/DWDataReaderLib64.so')
     if reader_lib.DWInit() != DWStatus.DWSTAT_OK.value:
         DWRaiseError("DWDataReader: DWInit() failed")
     print("DWDataReader version: " + str(reader_lib.DWGetVersion()))

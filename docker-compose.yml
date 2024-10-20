@@ -22,7 +22,7 @@ services:
     expose:
       - 6379
     volumes:
-      - cache:/data
+      - ./data:/data
     networks:
       - web
 
@@ -49,8 +49,6 @@ volumes:
   mongodb_volume:
     driver: local
   cache:
-    driver: local
-  data:
     driver: local
 
 networks:

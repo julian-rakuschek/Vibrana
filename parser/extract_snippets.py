@@ -7,22 +7,40 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 import numpy as np
+from matplotlib import cm
 from numpy.lib.stride_tricks import sliding_window_view
 from redis import Redis
 from scipy.signal import ShortTimeFFT
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
-from parser.util import find_nearest, derive_sample_rate, signal_variance
+from parser.lib.util import find_nearest, derive_sample_rate, signal_variance
+
+
+def save_projection_preview_image(data, save_path):
+    scores = []
+    for point in data:
+        scores.append(np.linalg.norm(point))
+    scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
+
+    colors = cm.get_cmap('turbo')(scores_norm)
+    plt.clf()
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    fig.set_size_inches(10, 10)
+    ax.set_xlim([np.min(data[:, 0]), np.max(data[:, 0])])
+    ax.set_ylim([np.min(data[:, 1]), np.max(data[:, 1])])
+    ax.scatter(data[:, 0], data[:, 1], s=3, c=colors)
+    plt.axis('off')
+    plt.savefig(save_path, bbox_inches='tight')
+    plt.close(fig)
 
 
 def save_preview_image(data, save_path):
     plt.clf()
-    formatter = plticker.FuncFormatter(lambda x_val, tick_pos: f"{x_val}")
     fig, ax = plt.subplots(nrows=1, ncols=1)
     fig.set_size_inches(10, 3)
     ax.plot(np.arange(len(data)), data, color="black")
     ax.set_xlim([0, len(data)])
-    ax.xaxis.set_major_formatter(formatter)
     plt.axis('off')
     plt.savefig(save_path, bbox_inches='tight')
     plt.close(fig)
@@ -65,7 +83,7 @@ def split_and_process_time_series(
     needle = 0
     while needle < len(values):
         name = prefix + "-" + str(name_index + needle // max_sample_size).zfill(4)
-
+        print(name)
         if redis_client:
             status["split"]["items"][name] = "splitting"
             redis_client.set(r_key, json.dumps(status))
@@ -83,6 +101,7 @@ def split_and_process_time_series(
         np.save(os.path.join(base_target_path, name, "events.npy"), window_events)
         save_preview_image(extracted, os.path.join(base_target_path, name, "preview.png"))
 
+
         if redis_client:
             status["split"]["items"][name] = "projecting"
             redis_client.set(r_key, json.dumps(status))
@@ -90,6 +109,7 @@ def split_and_process_time_series(
         windows = sliding_window_view(extracted, window_shape=projection_window_size)
         projected = PCA(n_components=2).fit_transform(windows)
         np.save(os.path.join(base_target_path, name, "projected.npy"), projected)
+        save_projection_preview_image(projected, os.path.join(base_target_path, name, "preview_projected.png"))
 
         if redis_client:
             status["split"]["items"][name] = "frequency"

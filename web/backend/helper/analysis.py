@@ -9,7 +9,7 @@ from pymongo.database import Database
 from scipy.spatial import distance
 from tslearn.preprocessing import TimeSeriesResampler
 
-from algorithms.lmds import landmark_MDS
+from web.backend.helper.lmds import landmark_MDS
 from web.backend.settings import samples_folder
 
 

@@ -1,5 +1,5 @@
 import axios, { type Method } from "axios";
-import type { DefaultAppResponse } from "./types";
+import type { DefaultAppResponse } from "@lib/types";
 import { getRequestConfig, type IRequestObject } from "./QueryHelpers";
 
 const axiosClient = axios.create({
