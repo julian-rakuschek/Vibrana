@@ -14,7 +14,7 @@
 </script>
 
 
-<div class={`overflow-hidden group border-2 border-solid border-transparent ${selectModeActive ? "hover:border-green-600" : ""} relative flex flex-col justify-center items-center w-[400px] h-[170px] shadow-lg rounded-lg px-2 transition hover:shadow-xl`}>
+<div class={`group border-2 border-solid border-transparent ${selectModeActive ? "hover:border-green-600" : ""} relative flex flex-col justify-center items-center w-[400px] h-[170px] shadow-lg rounded-lg px-2 group transition hover:shadow-xl`}>
     {#if selectModeActive && selected }
         <div class="absolute top-1 left-1 hidden group-hover:block px-2 py-1">
             <Icon src="{CheckCircle}" class="w-5 h-5 text-green-600"/>
@@ -37,5 +37,9 @@
         {#if anomaly !== undefined}
             <AnomalyRatio anomalyRatio={anomaly.ratio}/>
         {/if}
+    </div>
+    <div class="bg-white p-5 rounded-2xl shadow-2xl h-[200px] w-[200px] absolute bottom-full left-1/2 transform -translate-x-1/2  hidden group-hover:block z-50">
+        <div class="bg-white w-20 h-20 absolute -bottom-10 left-1/2 transform -translate-x-1/2  rotate-45"></div>
+        <img src={`/api/db/${machineId}/samples/${sampleId}/projected_thumbnail`} class="relative" alt="thumbnail"/>
     </div>
 </div>

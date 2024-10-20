@@ -180,9 +180,18 @@ def flask_get_sample_thumb(machine, sampleId):
     if not os.path.exists(os.path.join(samples_folder, machine)):
         return "Machine not found", 404
     sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
+    if not os.path.exists(os.path.join(sample_path, "preview.png")):
+        return "Preview not available", 404
     return flask.send_file(os.path.join(sample_path, "preview.png"), mimetype='image/png')
+
+@db_app.get("<machine>/samples/<sampleId>/projected_thumbnail")
+def flask_get_sample_thumb_projected(machine, sampleId):
+    if not os.path.exists(os.path.join(samples_folder, machine)):
+        return "Machine not found", 404
+    sample_path = os.path.join(samples_folder, machine, sampleId)
+    if not os.path.exists(os.path.join(sample_path, "preview_projected.png")):
+        return "Preview not available", 404
+    return flask.send_file(os.path.join(sample_path, "preview_projected.png"), mimetype='image/png')
 
 
 @db_app.get("<machine>/samples/<sampleId>/events")
