@@ -16,14 +16,16 @@ app.register_blueprint(db_app, url_prefix="/api/db")
 app.register_blueprint(analysis_app, url_prefix="/api/analysis")
 
 @app.route("/")
-@app.route("/<path:path>")
-def flask_main(path=None):
+def index_route():
     dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
-    if path is not None and os.path.exists(os.path.join(dist_path, path)):
-        dist_path = os.path.join(dist_path, path)
-        return flask.send_file(dist_path)
-    return flask.send_from_directory(dist_path, "index.html")
+    return flask.send_from_directory(dist_path, 'index.html')
 
+@app.route("/<path:path>")
+def static_files(path):
+    dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
+    if "." not in path:
+        return flask.send_from_directory(dist_path, 'index.html')
+    return flask.send_from_directory(dist_path, path)
 
 if __name__ == '__main__':
     app.run(debug=True)
