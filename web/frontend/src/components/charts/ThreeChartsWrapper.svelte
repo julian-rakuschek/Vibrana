@@ -5,10 +5,12 @@
     import ThreeCharts from "@components/charts/ThreeCharts.svelte";
     import {Icon, ArrowLeft} from "svelte-hero-icons";
     import {getContext} from "svelte";
-    import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
+    import {sessionGetAll, setItemSeen} from "@lib/helper/sessionStorageHelper";
 
     export let machineId: string;
     export let sampleId: string;
+
+    setItemSeen(machineId, sampleId)
 
     const {ro} = getContext("ro") as { ro: boolean }
 

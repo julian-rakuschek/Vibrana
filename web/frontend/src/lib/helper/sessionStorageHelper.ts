@@ -51,3 +51,14 @@ export const sessionGetAll = (machine: string): AnalysisPostData => {
         labels: labels
     }
 }
+
+export const itemSeen = (machine: string, sample: string): boolean => {
+    const viewHistory: string[] = JSON.parse(sessionStorage.getItem("viewHistory") ?? "[]")
+    return viewHistory.indexOf(`${machine}-${sample}`) !== -1
+}
+
+export const setItemSeen = (machine: string, sample: string) => {
+    const viewHistory: string[] = JSON.parse(sessionStorage.getItem("viewHistory") ?? "[]")
+    viewHistory.push(`${machine}-${sample}`)
+    sessionStorage.setItem("viewHistory", JSON.stringify(viewHistory))
+}
