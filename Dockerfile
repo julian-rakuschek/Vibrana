@@ -33,5 +33,5 @@ COPY ./parser ./parser
 COPY ./web ./web
 COPY --from=build /app ./web/frontend
 
-EXPOSE 5000
-CMD ["poetry", "run", "gunicorn", "--timeout", "10000", "-w", "4", "-b", "0.0.0.0:5000", "web.backend.main:app"]
+EXPOSE 5001
+CMD ["poetry", "run", "gunicorn", "--timeout", "10000", "-w", "4", "-b", "0.0.0.0:5001", "web.backend.main:app"]

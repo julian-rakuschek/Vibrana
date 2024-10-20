@@ -3,7 +3,7 @@ import type { DefaultAppResponse } from "@lib/types";
 import { getRequestConfig, type IRequestObject } from "./QueryHelpers";
 
 const axiosClient = axios.create({
-  baseURL: "http://127.0.0.1:5000/api",
+  baseURL: "/api",
   withCredentials: true,
 });
 
