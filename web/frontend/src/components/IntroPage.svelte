@@ -1,5 +1,6 @@
 <script lang="ts">
     import {getContext} from "svelte";
+    import StyledDisclosure from "@components/atoms/StyledDisclosure.svelte";
 
     const {ro} = getContext("ro") as { ro: boolean }
 
@@ -114,6 +115,22 @@
         Other datasets may result in different point clouds, but the path tracing tool is still a valid exploration
         tool.
     </div>
+
+    <p>
+        As soon as valid anomalies have been discovered, they can be saved as labels using chart 2.
+        The labels are used in the next step to classify the signals (normal vs anomalous) using similarity search.
+        That is, the saved anomaly is slided across all signals and in each timestep, the similarity is computed using the euclidean distance.
+        Therefore, a high similarity of the signal to the label or a low distance from the euclidean distance (beware of the duality) indicates that the pattern occurred again.
+    </p>
+    <p class="mt-1">
+        However, for this to be interpretable, we need a notion of what a normal signal looks like.
+        This is achieved by selecting a signal without anomalies in the overview (see the following video).
+        As soon as a normal sample and labels are available, the anomaly score can be computed for each signal.
+    </p>
+
+    <StyledDisclosure header_text="Video: Selecting Normals" >
+        Hi mum
+    </StyledDisclosure>
 
     <div class="w-full h-[500px]"></div>
 </div>

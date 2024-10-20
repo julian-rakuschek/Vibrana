@@ -9,7 +9,7 @@
     export let width = 300
     export let height = 10
 
-    const normalizeDistances = () => {
+    const normalizeDistances = (distances, normalTube) => {
         const tolerance = 2
         const meanNormal = (normalTube[0] + normalTube[1]) / 2
         const tubeRadius = Math.abs(normalTube[0] - normalTube[1]) / 2
@@ -17,8 +17,8 @@
         const maxDistanceFromMean = tubeRadius * tolerance
         return distancesToMeanNormal.map(s => s / maxDistanceFromMean).map(s => s > 1 ? 1 : s).map(s => 1 - s)
     }
-    let distancesNormalized: number[] = normalizeDistances();
-    console.log(distancesNormalized)
+    let distancesNormalized: number[];
+    $: distancesNormalized = normalizeDistances(distances, normalTube);
 
     const xScale = d3
         .scaleLinear()
@@ -33,9 +33,7 @@
     const rect_width = width / distances.length;
     const rect_height = height;
 
-    onMount(() => {
 
-    });
 </script>
 
 <svg width={width} height={height}>

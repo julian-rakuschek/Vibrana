@@ -82,6 +82,7 @@ def reduce_distances(distances, normal_tube, n_segments, keep_original_length=Fa
     if n_segments >= len(distances):
         return distances
     window_size = len(distances) // n_segments
+    remainder = len(distances) % n_segments
     distances_reduced = []
     for i in range(n_segments):
         subset = distances[i * window_size: (i + 1) * window_size]
@@ -95,6 +96,12 @@ def reduce_distances(distances, normal_tube, n_segments, keep_original_length=Fa
                 distances_reduced.extend(list(np.repeat(np.mean(subset), window_size)))
             else:
                 distances_reduced.append(float(np.mean(subset)))
+    if keep_original_length:
+        subset = distances[-remainder:]
+        if np.any(subset < normal_tube[0]):
+            distances_reduced.extend(list(np.repeat(np.min(subset), remainder)))
+        else:
+            distances_reduced.extend(list(np.repeat(np.mean(subset), remainder)))
     return distances_reduced
 
 
