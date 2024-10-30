@@ -23,14 +23,14 @@ def compute_mds_embedding(sample_path, window_size):
     return xl_2
 
 
-def compute_distance_profile(sample_path, labels):
-    if not os.path.exists(os.path.join(sample_path, "values.npy")):
+def compute_distance_profile(chunk_path, labels):
+    if not os.path.exists(os.path.join(chunk_path, "values.npy")):
         return []
-    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
+    values: np.ndarray = np.load(os.path.join(chunk_path, "values.npy"))
     distances = []
     extracted_label_values = []
     for label in labels:
-        label_path = os.path.join(chunks_folder, label["dataset"], label["chunks"], "values.npy")
+        label_path = os.path.join(chunks_folder, label["dataset"], label["subset"], label["chunk"], "values.npy")
         if not os.path.exists(label_path):
             continue
         label_values: np.ndarray = np.load(label_path)
@@ -114,8 +114,8 @@ def compute_anomaly_ratio(distances, normal_tube):
 
 
 def compute_anomaly_metrics(dataset, subset, chunk, labels, normals, normal_tube=None):
-    sample_path = os.path.join(chunks_folder, dataset, subset)
-    distances = compute_distance_profile(sample_path, labels)
+    subset_path = os.path.join(chunks_folder, dataset, subset, chunk)
+    distances = compute_distance_profile(subset_path, labels)
     if normal_tube is None:
         normal_tube = compute_normal_tube(dataset, subset, labels, normals)
     if len(labels) == 0:

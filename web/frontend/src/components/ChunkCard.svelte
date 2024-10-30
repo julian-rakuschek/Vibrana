@@ -6,8 +6,9 @@
     import {itemSeen} from "@lib/helper/sessionStorageHelper";
     import AnomalyCount from "@components/AnomalyCount.svelte";
 
-    export let machineId: string;
-    export let sampleId: string;
+    export let dataset: string;
+    export let subset: string;
+    export let chunk: string;
     export let anomaly: AnomalyMetric | undefined;
     export let normalTube: [number, number]
     export let selected: boolean;
@@ -28,24 +29,20 @@
             Anomaly-Free
         </div>
     {/if}
-    <img src={`/api/db/${machineId}/samples/${sampleId}/thumbnail`} alt="thumbnail"/>
+    <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail"/>
     {#if anomaly !== undefined}
         <div class="w-full h-[10px] flex justify-center">
             <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={380} height={10}/>
         </div>
     {/if}
     <div class="flex flex-row justify-center items-center w-full gap-3 mb-3 mt-3">
-        <span class="leading-none">{sampleId}</span>
+        <span class="leading-none">{chunk}</span>
         {#if anomaly !== undefined}
             <AnomalyRatio anomalyRatio={anomaly.ratio}/>
             <AnomalyCount anomalyCount={anomaly.count}/>
         {/if}
-        {#if itemSeen(machineId, sampleId)}
+        {#if itemSeen(dataset, subset)}
             <span class="bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Already Inspected</span>
         {/if}
-    </div>
-    <div class="bg-white p-5 rounded-2xl shadow-2xl h-[200px] w-[200px] absolute bottom-full left-1/2 transform -translate-x-1/2  hidden group-hover:block z-50">
-        <div class="bg-white w-20 h-20 absolute -bottom-10 left-1/2 transform -translate-x-1/2  rotate-45"></div>
-        <img src={`/api/db/${machineId}/samples/${sampleId}/projected_thumbnail`} class="relative" alt="thumbnail"/>
     </div>
 </div>

@@ -24,8 +24,9 @@
 
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
-    export let sampleId: string;
-    export let machineId: string;
+    export let dataset: string;
+    export let subset: string;
+    export let chunk: string;
 
     const queryClient = useQueryClient();
 
@@ -248,8 +249,7 @@
                 data: {
                     from: interval.from,
                     to: interval.to,
-                    sampleId: sampleId,
-                    machine: machineId
+                    dataset, subset, chunk
                 }
             })
         }

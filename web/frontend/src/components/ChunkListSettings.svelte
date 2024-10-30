@@ -1,20 +1,15 @@
 <script lang="ts">
-    import {type SamplesSettingsType, SortMode} from "@lib/types";
-    import {
-        Menu,
-        MenuButton,
-        MenuItems,
-        MenuItem, Transition,
-    } from "@rgossiaux/svelte-headlessui";
+    import {type ChunkListSettingsType, SortMode} from "@lib/types";
+    import {Menu, MenuButton, MenuItems, Transition,} from "@rgossiaux/svelte-headlessui";
     import {Icon, Wrench} from "svelte-hero-icons";
-    import Toggle from "@components/atoms/Toggle.svelte";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
     import {getContext} from "svelte";
     import {resetLabels, resetViewHistory} from "@lib/helper/sessionStorageHelper";
 
-    export let settings: SamplesSettingsType;
-    export let machine: string;
+    export let settings: ChunkListSettingsType;
+    export let dataset: string;
+    export let subset: string;
 
     const radioSelections = [
         {
@@ -34,7 +29,7 @@
         if (ro) {
             resetLabels()
         } else {
-            await ApiRoutes.reset.fetch({params: {machineId: machine}});
+            await ApiRoutes.reset.fetch({params: {dataset, subset}});
         }
         await client.invalidateQueries()
     }
@@ -80,10 +75,6 @@
                     </fieldset>
                 </div>
             {/each}
-            <div class="flex flex-col">
-                <label class="text-base font-semibold text-gray-900">Split by Ground Truth</label>
-                <Toggle bind:enabled={settings.split}/>
-            </div>
             <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_labels()}>Reset Labels</button>
             <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_views()}>Reset View History</button>
         </MenuItems>

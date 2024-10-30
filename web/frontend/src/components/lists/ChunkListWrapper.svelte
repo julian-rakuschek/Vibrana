@@ -2,11 +2,11 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {type AnomalyMetric, type ChunkListSettingsType, SortMode} from "@lib/types";
     import {useQueryFetch} from "@lib/api/ApiQueries";
-    import chunkList from "@components/lists/chunkList.svelte";
+    import ChunkList from "@components/lists/ChunkList.svelte";
     import {fly} from "svelte/transition"
-    import {getContext, onMount} from "svelte";
+    import {getContext} from "svelte";
     import {Jumper} from "svelte-loading-spinners";
-    import {sessionGetAll, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
+    import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
 
     export let dataset: string;
     export let subset: string;
@@ -49,7 +49,8 @@
 {/if}
 
 {#if $anomalyRatiosQuery.isPending || $anomalyRatiosQuery.isRefetching || $anomalyRatiosQuery.isLoading}
-    <div transition:fly={{ x: -30, duration: 300 }} class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md flex flex-row justify-center items-center gap-3 z-50">
+    <div transition:fly={{ x: -30, duration: 300 }}
+         class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md flex flex-row justify-center items-center gap-3 z-50">
         <span>Fetching anomaly scores</span>
         <Jumper color="white" size="30"/>
     </div>
@@ -57,8 +58,10 @@
 
 {#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess}
     <div class="flex flex-row flex-wrap gap-6 py-4 justify-center">
-        {#each $chunkListQuery.data as chunk}
-            <p>{chunk}</p>
-        {/each}
+        <ChunkList
+                chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
+                normals={$normalsQuery.data}
+                anomaly_ratios={anomaly_ratios} selectModeActive={selectModeActive} normalTube={$normalTubeQuery.data}
+        />
     </div>
 {/if}

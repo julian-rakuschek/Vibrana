@@ -1,7 +1,7 @@
 <script lang="ts">
     import NavigatorChart from "./NavigatorChart.svelte";
     import {onMount} from "svelte";
-    import {type Annotation, type Label, type ProjectedPoint, ProjectionMode} from "@lib/types";
+    import {type Annotation, type ProjectedPoint, ProjectionMode} from "@lib/types";
     // import AnnotatorChart from "./AnnotatorChart.svelte";
     // import ScatterPlot from "./ScatterPlot.svelte";
     import {chartSettings, defaultChartSettings, filterRangeIndexed, filterRangePercent, hoverPoint, hoverRange, selectedProjectedPoints} from "@lib/stores";
@@ -11,8 +11,9 @@
     import ScatterPlot from "@components/charts/ScatterPlot.svelte";
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
 
-    export let machineId: string;
-    export let sampleId: string;
+    export let dataset: string;
+    export let subset: string;
+    export let chunk: string;
     export let timeSeries: number[] = [];
     export let projected: number[][] = [];
     export let normalTube: [number, number] = [0, 0];
@@ -62,11 +63,11 @@
     <ChartSettings/>
 </div>
 <NavigatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events}/>
-<AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} machineId={machineId} sampleId={sampleId} />
+<AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} dataset={dataset} subset={subset} chunk={chunk} />
 {#if $chartSettings.projection === ProjectionMode.Paths}
-    <ScatterPlot  machineId={machineId} sampleId={sampleId} timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
+    <ScatterPlot  dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
 {:else}
-    <ScatterPlot  machineId={machineId} sampleId={sampleId} timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
+    <ScatterPlot  dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
 {/if}
 <div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
     <ColorLegend colorMode={$chartSettings.color} />

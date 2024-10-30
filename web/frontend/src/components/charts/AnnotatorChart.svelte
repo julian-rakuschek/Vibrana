@@ -13,8 +13,9 @@
     import WindowSizePopup from "@components/WindowSizePopup.svelte";
     import {sessionAddLabel, sessionDeleteLabelPyPos} from "@lib/helper/sessionStorageHelper";
 
-    export let machineId: string;
-    export let sampleId: string;
+    export let dataset: string;
+    export let subset: string;
+    export let chunk: string;
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
     export let labels: Annotation[];
@@ -63,16 +64,16 @@
             Math.floor(Math.min(timeSeries.length - 1, x + $chartSettings.windowSize / 2))
         ]
         if (addAnnotation) {
-            const labelToAdd: LabelBase = {from: selected[0], to: selected[1], sampleId: sampleId, machine: machineId}
+            const labelToAdd: LabelBase = {from: selected[0], to: selected[1], dataset, subset, chunk}
             if (ro) sessionAddLabel(labelToAdd)
             else await ApiRoutes.addLabel.fetch({data: labelToAdd})
         }
         else {
-            if (ro) sessionDeleteLabelPyPos(machineId, sampleId, Math.floor(x))
-            else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), machineId: machineId, sampleId: sampleId}})
+            if (ro) sessionDeleteLabelPyPos(dataset, chunk, Math.floor(x))
+            else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), dataset, subset}})
         }
-        await client.invalidateQueries({queryKey: [`/db/labels/${machineId}/${sampleId}`]});
-        await client.invalidateQueries({queryKey: [`/analysis/${machineId}/${sampleId}/similarities`]});
+        await client.invalidateQueries({queryKey: [`/db/${dataset}/${subset}/${chunk}/labels`]});
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/${chunk}/similarities`]});
         render();
     });
 
