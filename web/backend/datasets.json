@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Binder",
+    "folder": "binder",
+    "description": "Vibration of debris impacts from a sorting machine.",
+    "tasks": [
+      "Classification",
+      "Anomaly Detection"
+    ],
+    "subsets": [
+      {
+        "name": "Metall platte, FEST Montiert, 5-10 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
+        "folder": "1"
+      }
+    ]
+  },
+  {
+    "name": "Hydro Power Plant",
+    "folder": "hydro",
+    "description": "Vibrations measured on the inside of a power plant.",
+    "tasks": [
+      "Change Detection"
+    ],
+    "subsets": [
+      {
+        "name": "Anomaly X",
+        "folder": "hydro-1-x"
+      },
+      {
+        "name": "Anomaly Y",
+        "folder": "hydro-1-y"
+      },
+      {
+        "name": "Anomaly Z",
+        "folder": "hydro-1-z"
+      }
+    ]
+  },
+  {
+    "name": "Engine Multiple Runs",
+    "folder": "motor",
+    "description": "Vibrations acquired from an engine. The dataset highlights the difference if noise is applied.",
+    "tasks": [
+      "Classification",
+      "Anomaly Detection"
+    ],
+    "subsets": [
+      {
+        "name": "Engines with and without inner bearing damage",
+        "folder": "inner-damage"
+      },
+      {
+        "name": "Engines with and without inner bearing damage (added noise)",
+        "folder": "inner-damage-noise"
+      }
+    ]
+  },
+  {
+    "name": "Engine Run To Failure",
+    "folder": "nasa-bearings",
+    "description": "Vibrations acquired the bearing of an engine in a run-to-failure setting.",
+    "tasks": [
+      "Change Detection"
+    ],
+    "subsets": [
+      {
+        "name": "Test 2",
+        "folder": "test2"
+      }
+    ]
+  },
+  {
+    "name": "Gravitational Waves",
+    "folder": "grav",
+    "description": "Synthetic dataset highlighting hidden patterns in noise.",
+    "tasks": [
+      "Noise vs. Pattern"
+    ],
+    "subsets": [
+      {
+        "name": "Gravitational Waves Index 3",
+        "folder": "grav-3"
+      }
+    ]
+  }
+]

@@ -28,8 +28,8 @@
     let addAnnotation = true;
     let windowSizeSelectionOpen = false;
 
-    const min_value = Math.min(...timeSeries)
-    const max_value = Math.max(...timeSeries)
+    const min_value = timeSeries.toSorted((a, b) => a - b)[0]
+    const max_value = timeSeries.toSorted((a, b) => a - b)[timeSeries.length - 1]
     const xScale = d3.scaleLinear().domain([0, timeSeries.length]).range([0, 1]);
     const yScale = d3.scaleLinear().domain([min_value, max_value]).range([0, 1]);
 

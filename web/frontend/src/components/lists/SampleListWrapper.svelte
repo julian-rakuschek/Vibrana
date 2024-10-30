@@ -66,7 +66,7 @@
                                 selectModeActive={selectModeActive}/>
                 </div>
                 <div class="flex flex-col gap-4">
-                    <SampleList samples={sort_samples($sampleListQuery.data, anomaly_ratios).filter(s => s.startsWith("abnormal"))}
+                    <SampleList samples={sort_samples($sampleListQuery.data, anomaly_ratios).filter(s => s.startsWith("abnormal") || s.startsWith("anomalous"))}
                                 machineId={machineId} normals={$normalsQuery.data} anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
                                 selectModeActive={selectModeActive}/>
                 </div>

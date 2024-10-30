@@ -41,10 +41,11 @@
     const fillColors = ["navy", "lightgreen", "red"]
 
 
-    const min_x_value = Math.min(...projected.map(d => d.coords[0]))
-    const max_x_value = Math.max(...projected.map(d => d.coords[0]))
-    const min_y_value = Math.min(...projected.map(d => d.coords[1]))
-    const max_y_value = Math.max(...projected.map(d => d.coords[1]))
+    const min_x_value = projected.map(d => d.coords[0]).toSorted((a, b) => a - b)[0]
+    const max_x_value = projected.map(d => d.coords[0]).toSorted((a, b) => a - b)[projected.length - 1]
+    const min_y_value = projected.map(d => d.coords[1]).toSorted((a, b) => a - b)[0]
+    const max_y_value = projected.map(d => d.coords[1]).toSorted((a, b) => a - b)[projected.length - 1]
+
     let quadtree = compute_quadtree(projected, $filterRangeIndexed)
     let renderData = moveMiddleToEnd(projected, $filterRangeIndexed)
     const rtree = new ProjectedTimeSeriesRBush()

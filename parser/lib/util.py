@@ -14,6 +14,8 @@ def find_nearest(array, value):
 
 
 def derive_sample_rate(timestamps):
+    if len(timestamps) == 0:
+        return 20_000
     time_intervals = np.diff(timestamps)
     average_interval = np.mean(time_intervals)
     sample_rate = 1 / average_interval

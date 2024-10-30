@@ -64,10 +64,10 @@ export function largestTriangleThreeBuckets(data: number[], threshold: number) {
     /**
      * Implementation of the Largest Triangle Three Buckets algorithm.
      *
-     * This implementation is based on the original implementation by Sveinn Steinarsson
+     * This implementation is based on the original-5-10 implementation by Sveinn Steinarsson
      * in https://github.com/sveinn-steinarsson/flot-downsample/blob/master/jquery.flot.downsample.js
      *
-     * The original implementation is MIT licensed.
+     * The original-5-10 implementation is MIT licensed.
      */
     const data_length = data.length;
     if (threshold >= data_length || threshold === 0) {

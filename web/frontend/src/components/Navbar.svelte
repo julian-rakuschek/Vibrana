@@ -9,7 +9,7 @@
 
     const menuLinks = [
         {name: "Introduction", link: "/intro"},
-        {name: "Machines", link: "/machines"},
+        {name: "Datasets", link: "/datasets"},
         {name: "Authors", link: "/authors"}
     ];
 

@@ -8,7 +8,7 @@ export const colorsProjection = writable<Color[]>([]);
 
 export const computeRadiiNormalized = (projectedPoints: number[][]): number[] => {
     const radii = projectedPoints.map(p => Math.sqrt(Math.pow(p[0], 2) + Math.pow(p[1], 2)));
-    const max_rad = Math.max(...radii);
+    const max_rad = radii.toSorted((a, b) => a - b)[radii.length - 1]
     return radii.map(r => r / max_rad);
 }
 

@@ -4,7 +4,7 @@ import { rebind } from '@d3fc/d3fc-rebind';
 import * as d3 from "d3";
 
 // extended from https://github.com/d3fc/d3fc/blob/master/packages/d3fc-pointer/src/pointer.js
-// the original d3fc implementation was missing a click event handler
+// the original-5-10 d3fc implementation was missing a click event handler
 export default function betterPointer(): unknown {
     const pointEvent = dispatch('point', 'click');
 

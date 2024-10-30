@@ -4,6 +4,7 @@
     import type {AnomalyMetric} from "@lib/types";
     import DistanceIndicator from "@components/DistanceIndicator.svelte";
     import {itemSeen} from "@lib/helper/sessionStorageHelper";
+    import AnomalyCount from "@components/AnomalyCount.svelte";
 
     export let machineId: string;
     export let sampleId: string;
@@ -37,6 +38,7 @@
         <span class="leading-none">{sampleId}</span>
         {#if anomaly !== undefined}
             <AnomalyRatio anomalyRatio={anomaly.ratio}/>
+            <AnomalyCount anomalyCount={anomaly.count}/>
         {/if}
         {#if itemSeen(machineId, sampleId)}
             <span class="bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Already Inspected</span>

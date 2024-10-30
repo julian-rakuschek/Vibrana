@@ -3,20 +3,16 @@ import os.path
 from pathlib import Path
 
 import flask
-import redis
 import numpy as np
 import pymongo
 from bson import ObjectId, json_util
 from pymongo.database import Database
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from werkzeug.utils import secure_filename
-import web.backend.helper.file_processor as parser
-from web.backend.settings import samples_folder, data_folder, READ_ONLY
+
+from web.backend.helper.wrapper import validate_subset, validate_chunk_path
+from web.backend.settings import chunks_folder, READ_ONLY
 
 db_app = flask.Blueprint("db", __name__)
-r = redis.Redis(host='vibrana_redis' if os.environ.get('DOCKER', "False") == 'True' else 'localhost', port=6379, db=1)
-
-ALLOWED_EXTENSIONS = {'dxd'}
 
 
 def serialize_mongodb(output):
@@ -36,181 +32,83 @@ def flask_get_ro_status():
     return flask.jsonify(READ_ONLY)
 
 
-@db_app.get("machines")
-def flask_get_machines_list():
-    if not os.path.exists(samples_folder):
+@db_app.get("datasets")
+def flask_get_datasets_list():
+    with open(str(os.path.join(Path(__file__).parents[1], "datasets.json")), "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@db_app.get("<dataset>/<subset>/chunks")
+@validate_subset
+def flask_get_chunks(dataset, subset, subset_path):
+    if not os.path.exists(subset_path):
         return []
-    return os.listdir(samples_folder)
+    return os.listdir(subset_path)
 
 
-@db_app.post("machines/add")
-def flask_add_machine():
-    if READ_ONLY:
-        return "The system is in read-only mode, changes are not allowed", 401
-    machine_name = json.loads(flask.request.data.decode()).get("machineName", None)
-    if machine_name is None:
-        return {"success": False}
-    Path(os.path.join(samples_folder, machine_name)).mkdir(parents=True, exist_ok=True)
-    return {"success": True}
-
-
-@db_app.post("<machine>/upload")
-def flask_upload(machine):
-    if READ_ONLY:
-        return "The system is in read-only mode, changes are not allowed", 401
-
-    def allowed_file(filename):
-        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-    # Get and validate the prefix
-    prefix = flask.request.form["prefix"]
-    if not isinstance(prefix, str):
-        return "Invalid input: prefix must be a string.", 400
-    if prefix == "":
-        prefix = "signal"
-
-    # Get and validate the maxSampleSize
-    max_sample_size_str = flask.request.form.get("maxSampleSize", "100000")
-    try:
-        maxSampleSize = int(max_sample_size_str)
-    except ValueError:
-        return "Invalid input: maxSampleSize must be an integer.", 400
-
-    # Get and validate the maxSampleSize
-    proj_window_size_str = flask.request.form.get("projectionWindowSize", "2000")
-    try:
-        projectionWindowSize = int(proj_window_size_str)
-    except ValueError:
-        return "Invalid input: projectionWindowSize must be an integer.", 400
-
-    # Get and validate the maxSampleSize
-    cutoff_str = flask.request.form.get("cutoffRatio", "0")
-    try:
-        cutoff_ratio = float(cutoff_str)
-        if not 0 <= cutoff_ratio < 0.5:
-            raise ValueError
-    except ValueError:
-        return "Invalid input: cutoffRatio must be a float between 0 and 0.5.", 400
-
-    # Get and validate the saveParsed
-    save_parsed_str = flask.request.form.get("saveParsed", "").lower()
-    if save_parsed_str == "true":
-        saveParsed = True
-    elif save_parsed_str == "false":
-        saveParsed = False
-    else:
-        return "Invalid input: saveParsed must be a boolean (true/false).", 400
-
-    print(prefix, maxSampleSize, saveParsed, cutoff_ratio, projectionWindowSize)
-
-    if 'file' not in flask.request.files:
-        return "No file found in request", 400
-    file = flask.request.files['file']
-    if not file:
-        return "File upload failed", 400
-    if file.filename == "":
-        return "Filename must not be empty", 400
-    if not allowed_file(file.filename):
-        return "This file extension is not allowed", 400
-    # filename = secure_filename(file.filename)
-    filename = file.filename
-    Path(os.path.join(data_folder, "raw")).mkdir(parents=True, exist_ok=True)
-    filepath = os.path.join(data_folder, "raw", filename)
-    with open(filepath, "wb") as f:
-        f.write(file.read())
-    parser.parse_file(machine, filename, prefix, maxSampleSize, saveParsed, cutoff_ratio, projectionWindowSize, r)
-    return "OK", 200
-
-
-@db_app.get("<machine>/<filename>/upload/status")
-def flask_get_upload_status(machine, filename):
-    r_key = f"vibrana:{machine}:{filename}"
-    res = r.get(r_key)
-    if res is not None:
-        return json.loads(res)
-    return {}
-
-
-@db_app.get("<machine>/samples")
-def flask_get_samples(machine):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return []
-    return os.listdir(os.path.join(samples_folder, machine))
-
-
-@db_app.get("<machine>/samples/<sampleId>/values")
-def flask_get_values(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    values: np.ndarray = np.load(os.path.join(sample_path, "values.npy"))
+@db_app.get("<dataset>/<subset>/<chunk>/values")
+@validate_chunk_path
+def flask_get_values(dataset, subset, chunk, chunk_path):
+    values: np.ndarray = np.load(os.path.join(chunk_path, "values.npy"))
     return values.tolist()
 
 
-@db_app.get("<machine>/samples/<sampleId>/projected")
-def flask_get_projection(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    values: np.ndarray = np.load(os.path.join(sample_path, "projected.npy"))
+@db_app.get("<dataset>/<subset>/<chunk>/projected")
+@validate_chunk_path
+def flask_get_projection(dataset, subset, chunk, chunk_path):
+    values: np.ndarray = np.load(os.path.join(chunk_path, "projected.npy"))
     values = MinMaxScaler().fit_transform(values)
     values = StandardScaler(with_std=False).fit_transform(values)
     return values.tolist()
 
 
-@db_app.get("<machine>/samples/<sampleId>/freq")
-def flask_get_freq(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    values: np.ndarray = np.load(os.path.join(sample_path, "freq.npy"))
+@db_app.get("<dataset>/<subset>/<chunk>/freq")
+@validate_chunk_path
+def flask_get_freq(dataset, subset, chunk, chunk_path):
+    if not os.path.exists(os.path.join(chunk_path, "freq.npy")):
+        return []
+    values: np.ndarray = np.load(os.path.join(chunk_path, "freq.npy"))
     values = np.array(values).reshape(-1, 1)
     values = MinMaxScaler().fit_transform(values)
     return values.flatten().tolist()
 
 
-@db_app.get("<machine>/samples/<sampleId>/thumbnail")
-def flask_get_sample_thumb(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(os.path.join(sample_path, "preview.png")):
+@db_app.get("<dataset>/<subset>/<chunk>/thumbnail")
+@validate_chunk_path
+def flask_get_sample_thumb(dataset, subset, chunk, chunk_path):
+    if not os.path.exists(os.path.join(chunk_path, "preview.png")):
         return "Preview not available", 404
-    return flask.send_file(os.path.join(sample_path, "preview.png"), mimetype='image/png')
-
-@db_app.get("<machine>/samples/<sampleId>/projected_thumbnail")
-def flask_get_sample_thumb_projected(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(os.path.join(sample_path, "preview_projected.png")):
-        return "Preview not available", 404
-    return flask.send_file(os.path.join(sample_path, "preview_projected.png"), mimetype='image/png')
+    return flask.send_file(os.path.join(chunk_path, "preview.png"), mimetype='image/png')
 
 
-@db_app.get("<machine>/samples/<sampleId>/events")
-def flask_get_sample_events(machine, sampleId):
-    if not os.path.exists(os.path.join(samples_folder, machine)):
-        return "Machine not found", 404
-    sample_path = os.path.join(samples_folder, machine, sampleId)
-    if not os.path.exists(sample_path):
-        return "Sample not found", 404
-    if not os.path.exists(os.path.join(sample_path, "events.npy")):
-        print(os.path.join(sample_path, "events.npy"), "does not exist")
+@db_app.get("<dataset>/<subset>/<chunk>/projected_thumbnail")
+@validate_chunk_path
+def flask_get_sample_thumb_projected(dataset, subset, chunk, chunk_path):
+    if not os.path.exists(os.path.join(chunk_path, "preview_projected.png")):
+        return "Projected Thumbnail not available", 404
+    return flask.send_file(os.path.join(chunk_path, "preview_projected.png"), mimetype='image/png')
+
+
+@db_app.get("<dataset>/<subset>/<chunk>/spectrogram")
+@validate_chunk_path
+def flask_get_sample_thumb_spectro(dataset, subset, chunk, chunk_path):
+    if not os.path.exists(os.path.join(chunk_path, "spectro.png")):
+        return "Spectrogram not available", 404
+    return flask.send_file(os.path.join(chunk_path, "spectro.png"), mimetype='image/png')
+
+
+@db_app.get("<dataset>/<subset>/<chunk>/events")
+@validate_chunk_path
+def flask_get_sample_events(dataset, subset, chunk, chunk_path):
+    if not os.path.exists(os.path.join(chunk_path, "events.npy")):
         return []
-    values: np.ndarray = np.load(os.path.join(sample_path, "events.npy"))
+    values: np.ndarray = np.load(os.path.join(chunk_path, "events.npy"))
     return values.tolist()
 
 
-@db_app.get("labels/<machine>/<sampleId>")
-def flask_get_labels(machine, sampleId):
-    res = list(get_db()["labels"].find({"machine": machine, "sampleId": sampleId}))
+@db_app.get("<dataset>/<subset>/<chunk>/labels")
+def flask_get_labels(dataset, subset, chunk):
+    res = list(get_db()["labels"].find({"dataset": dataset, "subset": subset, "chunk": chunk}))
     return serialize_mongodb(res)
 
 
@@ -220,10 +118,10 @@ def flask_add_label():
         return "The system is in read-only mode, changes are not allowed", 401
     data = flask.request.get_json()
     db = get_db()["labels"]
-    print(data)
     res = list(db.find({
-        "machine": data["machine"],
-        "sampleId": data["sampleId"],
+        "dataset": data["dataset"],
+        "subset": data["subset"],
+        "chunk": data["chunk"],
         "$or": [
             {"$and": [
                 {"from": {"$gt": data["from"]}},
@@ -240,7 +138,6 @@ def flask_add_label():
 
     data["from"] = min([*res, data], key=lambda x: x['from'])["from"]
     data["to"] = max([*res, data], key=lambda x: x['to'])["to"]
-    print(data)
     db.insert_one(data)
     return "OK", 200
 
@@ -253,53 +150,53 @@ def flask_delete_label(labelId):
     return "OK", 200
 
 
-@db_app.delete("labels/<machine>/<sampleId>/byPosition/<pos>")
-def flask_delete_label_by_pos(machine, sampleId, pos):
+@db_app.delete("<dataset>/<subset>/<chunk>/labels/<pos>")
+def flask_delete_label_by_pos(dataset, subset, chunk, pos):
     if READ_ONLY:
         return "The system is in read-only mode, changes are not allowed", 401
     pos = int(pos)
-    get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}], "machine": machine, "sampleId": sampleId})
+    get_db()["labels"].delete_many({"$and": [{"from": {"$lt": pos}}, {"to": {"$gt": pos}}], "dataset": dataset, "subset": subset, "chunk": chunk})
     return "OK", 200
 
 
-@db_app.get("normals/<machine>")
-def flask_get_normals(machine):
-    machine_samples = get_db()["normals"].find_one({"machine": machine})
-    if not machine_samples:
+@db_app.get("<dataset>/<subset>/normals")
+def flask_get_normals(dataset, subset):
+    dataset_chunks = get_db()["normals"].find_one({"dataset": dataset, "subset": subset})
+    if not dataset_chunks:
         return []
-    return machine_samples.get("samples", [])
+    return dataset_chunks.get("chunks", [])
 
 
-@db_app.post("normals/<machine>/<sampleId>")
-def flask_add_normal(machine, sampleId):
+@db_app.post("<dataset>/<subset>/<chunk>/normals")
+def flask_add_normal(dataset, subset, chunk):
     if READ_ONLY:
         return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()["normals"]
-    machine_samples = db.find_one({"machine": machine})
-    if not machine_samples:
-        db.insert_one({"machine": machine, "samples": [sampleId]})
+    dataset_chunks = db.find_one({"dataset": dataset, "subset": subset})
+    if not dataset_chunks:
+        db.insert_one({"dataset": dataset, "subset": subset, "chunks": [chunk]})
         return {"success": True}
-    db.update_one({"machine": machine}, {"$addToSet": {"samples": sampleId}})
+    db.update_one({"dataset": dataset, "subset": subset}, {"$addToSet": {"chunks": chunk}})
     return {"success": True}
 
 
-@db_app.delete("normals/<machine>/<sampleId>")
-def flask_delete_normal(machine, sampleId):
+@db_app.delete("<dataset>/<subset>/<chunk>/normals")
+def flask_delete_normal(dataset, subset, chunk):
     if READ_ONLY:
         return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()["normals"]
-    machine_samples = db.find_one({"machine": machine})
-    if not machine_samples:
+    dataset_chunks = db.find_one({"dataset": dataset, "subset": subset})
+    if not dataset_chunks:
         return {"success": True}
-    db.update_one({"machine": machine}, {"$pull": {"samples": sampleId}})
+    db.update_one({"dataset": dataset, "subset": subset}, {"$pull": {"chunks": chunk}})
     return {"success": True}
 
 
-@db_app.post("reset/<machine>")
-def flask_reset(machine):
+@db_app.post("<dataset>/<subset>/reset")
+def flask_reset(dataset, subset):
     if READ_ONLY:
         return "The system is in read-only mode, changes are not allowed", 401
     db = get_db()
-    db["labels"].delete_many({"machine": machine})
-    db["normals"].delete_many({"machine": machine})
+    db["labels"].delete_many({"dataset": dataset, "subset": subset})
+    db["normals"].delete_many({"dataset": dataset, "subset": subset})
     return {"success": True}

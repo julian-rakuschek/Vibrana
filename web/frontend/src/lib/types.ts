@@ -7,6 +7,15 @@ export type Diff<T, U> = T extends U ? never : T;
 export type Successful<T> = Diff<T, { success: false }>;
 export type Failed<T> = Diff<T, { success: true }>;
 
+
+export type Dataset = {
+    name: string;
+    folder: string;
+    description: string;
+    tasks: string[];
+    subsets: { name: string; folder: string }[]
+}
+
 export type ObjectId = {
   $oid: string;
 };
@@ -46,7 +55,7 @@ export type ThreeChartsSettingsType = {
     projection: ProjectionMode;
 }
 
-export type SamplesSettingsType = {
+export type ChunkListSettingsType = {
     sort: SortMode;
     split: boolean;
 }
@@ -58,8 +67,9 @@ export type Annotation = {
 }
 
 export type LabelBase = Annotation & {
-    machine: string;
-    sampleId: string;
+    dataset: string;
+    subset: string;
+    chunk: string;
 }
 
 export type Label = LabelBase & {
@@ -91,8 +101,9 @@ export type AnomalyMetric = {
     ratio: number,
     count: number,
     distances_reduced: number[],
-    machineId: string,
-    sampleId: string
+    dataset: string,
+    subset: string
+    chunk: string
 }
 
 export type ParseStatus = {
@@ -106,6 +117,6 @@ export type ParseStatus = {
 }
 
 export type AnalysisPostData = {
-    normals: { machine: string, samples: string[] },
+    normals: { dataset: string, subset: string, chunks: string[] },
     labels: Label[]
 }

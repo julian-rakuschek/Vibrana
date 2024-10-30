@@ -1,13 +1,14 @@
 import json
 import math
 import os
+import re
 import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 import numpy as np
-from matplotlib import cm
+from matplotlib import colormaps
 from numpy.lib.stride_tricks import sliding_window_view
 from redis import Redis
 from scipy.signal import ShortTimeFFT
@@ -23,7 +24,7 @@ def save_projection_preview_image(data, save_path):
         scores.append(np.linalg.norm(point))
     scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
 
-    colors = cm.get_cmap('turbo')(scores_norm)
+    colors = colormaps.get_cmap('turbo')(scores_norm)
     plt.clf()
     fig, ax = plt.subplots(nrows=1, ncols=1)
     fig.set_size_inches(10, 10)
@@ -46,9 +47,20 @@ def save_preview_image(data, save_path):
     plt.close(fig)
 
 
-def compute_time_varying_amplitude(values, timestamps, window_size, sample_rate=None):
-    if sample_rate is None:
-        sample_rate = derive_sample_rate(timestamps)
+def save_spectrogram_preview(data, save_path, sample_rate=20_000, window_size=2_000):
+    w = np.repeat(1, window_size)
+    SFT = ShortTimeFFT(w, hop=1, fs=sample_rate, mfft=None, scale_to="magnitude")
+    Sx = SFT.spectrogram(data)
+    Sx[Sx > np.percentile(Sx, 95)] = np.percentile(Sx, 95)
+    plt.clf()
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    fig.set_size_inches(10, 3)
+    ax.imshow(Sx, origin='lower', aspect='auto', extent=SFT.extent(len(data)), cmap='viridis')
+    ax.get_xaxis().set_visible(False)
+    plt.savefig(save_path, bbox_inches='tight', dpi=200)
+
+
+def compute_time_varying_amplitude(values, window_size, sample_rate=20_000):
     w = np.repeat(1, window_size)
     SFT = ShortTimeFFT(w, hop=1, fs=sample_rate, mfft=window_size, scale_to='psd')
     Sx = SFT.stft(values)
@@ -58,14 +70,14 @@ def compute_time_varying_amplitude(values, timestamps, window_size, sample_rate=
 
 def split_and_process_time_series(
         values: np.ndarray, timestamps: np.ndarray, events: np.ndarray,
-        filename: str, prefix: str, machine: str,
-        max_sample_size: int, projection_window_size: int, redis_client: Redis):
+        filename: str, prefix: str, dataset: str, subset: str,
+        max_sample_size: int, projection_window_size: int, redis_client: Redis, limit: int = None):
     status = {}
-    r_key = f"vibrana:{machine}:{filename}"
+    r_key = f"vibrana:{dataset}:{subset}:{filename}"
     if redis_client:
         status = json.loads(redis_client.get(r_key))
 
-    base_target_path = os.path.join(Path(__file__).parents[1], "data", "split", machine)
+    base_target_path = os.path.join(Path(__file__).parents[1], "data", "chunks", dataset, subset)
     Path(base_target_path).mkdir(parents=True, exist_ok=True)
 
     event_indices = [find_nearest(timestamps, e) for e in events]
@@ -77,33 +89,36 @@ def split_and_process_time_series(
     sample_rate = derive_sample_rate(timestamps)
     total = math.ceil(len(values) / max_sample_size)
     if redis_client:
-        status["split"]["status"] = f"processing (0 / {total})"
+        status["chunks"]["status"] = f"processing (0 / {total})"
         redis_client.set(r_key, json.dumps(status))
 
     needle = 0
+    count = 0
     while needle < len(values):
         name = prefix + "-" + str(name_index + needle // max_sample_size).zfill(4)
         print(name)
         if redis_client:
-            status["split"]["items"][name] = "splitting"
+            status["chunks"]["items"][name] = "splitting"
             redis_client.set(r_key, json.dumps(status))
 
         extracted = values[needle:needle + max_sample_size]
         extracted_ts = timestamps[needle:needle + max_sample_size]
+        if len(extracted) <= projection_window_size:
+            break
         os.mkdir(os.path.join(base_target_path, name))
         np.save(os.path.join(base_target_path, name, "values.npy"), extracted)
         np.save(os.path.join(base_target_path, name, "timestamps.npy"), extracted_ts)
 
         with open(os.path.join(base_target_path, name, "meta.json"), "w") as f:
-            f.write(json.dumps({"original_file": filename, "machine": machine, "position": needle}))
+            f.write(json.dumps({"original_file": filename, "machine": dataset, "position": needle}))
 
         window_events = [e - needle for e in event_indices if needle <= e <= needle + max_sample_size]
         np.save(os.path.join(base_target_path, name, "events.npy"), window_events)
         save_preview_image(extracted, os.path.join(base_target_path, name, "preview.png"))
-
+        save_spectrogram_preview(extracted, os.path.join(base_target_path, name, "spectro.png"), window_size=projection_window_size, sample_rate=sample_rate)
 
         if redis_client:
-            status["split"]["items"][name] = "projecting"
+            status["chunks"]["items"][name] = "projecting"
             redis_client.set(r_key, json.dumps(status))
 
         windows = sliding_window_view(extracted, window_shape=projection_window_size)
@@ -112,15 +127,55 @@ def split_and_process_time_series(
         save_projection_preview_image(projected, os.path.join(base_target_path, name, "preview_projected.png"))
 
         if redis_client:
-            status["split"]["items"][name] = "frequency"
+            status["chunks"]["items"][name] = "frequency"
             redis_client.set(r_key, json.dumps(status))
-        freq = compute_time_varying_amplitude(extracted, extracted_ts, projection_window_size, sample_rate)
+        freq = compute_time_varying_amplitude(extracted, projection_window_size, sample_rate)
         np.save(os.path.join(base_target_path, name, "freq.npy"), freq)
 
         if redis_client:
-            status["split"]["items"][name] = "done"
-            status["split"]["status"] = f"processing ({(needle // max_sample_size) + 1} / {total})"
+            status["chunks"]["items"][name] = "done"
+            status["chunks"]["status"] = f"processing ({(needle // max_sample_size) + 1} / {total})"
             redis_client.set(r_key, json.dumps(status))
         needle += max_sample_size
+        count += 1
+        if limit is not None and count > limit:
+            break
 
 
+def process_subset(dataset: str, subset: str):
+    dataset_path = os.path.join(Path(__file__).parents[1], "data", "parsed", dataset)
+    chunk_path = os.path.join(Path(__file__).parents[1], "data", "chunks", dataset, subset)
+
+    if os.path.exists(chunk_path):
+        shutil.rmtree(chunk_path)
+    Path(chunk_path).mkdir(parents=True, exist_ok=True)
+
+    for root, dirs, files in os.walk(os.path.join(dataset_path, subset)):
+        for file in files:
+            if not file.startswith("values") or not file.endswith(".npy"):
+                continue
+            values = np.load(os.path.join(root, file))
+            timestamps = []
+            if os.path.exists(os.path.join(root, "timestamps.npy")):
+                timestamps = np.load(os.path.join(root, "timestamps.npy"))
+            events = []
+            if os.path.exists(os.path.join(root, "event_timestamps.npy")):
+                events = np.load(os.path.join(root, "event_timestamps.npy"))
+            print(os.path.join(root, file))
+            prefix = re.sub(r"values-?|.npy", r"", file)
+            if prefix == "":
+                prefix = "signal"
+            if dataset == "binder":
+                prefix = "anomalous" if "gemischt" in root.lower() else "normal"
+            split_and_process_time_series(values, timestamps, events, os.path.basename(root) + "/" + file, prefix, dataset, subset, 100_000, 2_000, None, 10)
+
+
+def process_dataset(dataset: str):
+    dataset_path = os.path.join(Path(__file__).parents[1], "data", "parsed", dataset)
+    for subset in os.listdir(dataset_path):
+        process_subset(dataset, subset)
+
+
+if __name__ == '__main__':
+    # process_dataset("hydro")
+    process_dataset("binder")

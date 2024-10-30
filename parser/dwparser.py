@@ -30,7 +30,7 @@ def init_reader_lib():
         reader_lib = cdll.LoadLibrary(f'{Path(__file__).parents[0]}/lib/DWDataReaderLib64.so')
     if reader_lib.DWInit() != DWStatus.DWSTAT_OK.value:
         DWRaiseError("DWDataReader: DWInit() failed")
-    print("DWDataReader version: " + str(reader_lib.DWGetVersion()))
+    # print("DWDataReader version: " + str(reader_lib.DWGetVersion()))
     if reader_lib.DWAddReader() != DWStatus.DWSTAT_OK.value:
         DWRaiseError("DWDataReader: DWAddReader() failed")
     return reader_lib
