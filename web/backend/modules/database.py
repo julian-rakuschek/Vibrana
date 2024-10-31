@@ -111,6 +111,16 @@ def flask_get_labels(dataset, subset, chunk):
     res = list(get_db()["labels"].find({"dataset": dataset, "subset": subset, "chunk": chunk}))
     return serialize_mongodb(res)
 
+@db_app.get("<dataset>/<subset>/labels/count")
+def flask_get_labels_count(dataset, subset):
+    pipeline = [
+        {"$match": {"dataset": dataset, "subset": subset}},
+        {"$group": {"_id": "$chunk", "count": {"$sum": 1}}}
+    ]
+    res = list(get_db()["labels"].aggregate(pipeline))
+    return serialize_mongodb(res)
+
+
 
 @db_app.post("labels")
 def flask_add_label():
@@ -176,19 +186,11 @@ def flask_add_normal(dataset, subset, chunk):
     if not dataset_chunks:
         db.insert_one({"dataset": dataset, "subset": subset, "chunks": [chunk]})
         return {"success": True}
-    db.update_one({"dataset": dataset, "subset": subset}, {"$addToSet": {"chunks": chunk}})
-    return {"success": True}
-
-
-@db_app.delete("<dataset>/<subset>/<chunk>/normals")
-def flask_delete_normal(dataset, subset, chunk):
-    if READ_ONLY:
-        return "The system is in read-only mode, changes are not allowed", 401
-    db = get_db()["normals"]
-    dataset_chunks = db.find_one({"dataset": dataset, "subset": subset})
-    if not dataset_chunks:
-        return {"success": True}
-    db.update_one({"dataset": dataset, "subset": subset}, {"$pull": {"chunks": chunk}})
+    existing_chunks = dataset_chunks.get("chunks", [])
+    if chunk in existing_chunks:
+        db.update_one({"dataset": dataset, "subset": subset}, {"$pull": {"chunks": chunk}})
+    else:
+        db.update_one({"dataset": dataset, "subset": subset}, {"$addToSet": {"chunks": chunk}})
     return {"success": True}
 
 
@@ -199,4 +201,13 @@ def flask_reset(dataset, subset):
     db = get_db()
     db["labels"].delete_many({"dataset": dataset, "subset": subset})
     db["normals"].delete_many({"dataset": dataset, "subset": subset})
+    return {"success": True}
+
+
+@db_app.post("<dataset>/<subset>/<chunk>/reset")
+def flask_reset_chunk(dataset, subset, chunk):
+    if READ_ONLY:
+        return "The system is in read-only mode, changes are not allowed", 401
+    db = get_db()
+    db["labels"].delete_many({"dataset": dataset, "subset": subset, "chunk": chunk})
     return {"success": True}

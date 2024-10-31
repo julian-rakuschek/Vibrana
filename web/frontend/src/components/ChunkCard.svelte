@@ -3,46 +3,74 @@
     import AnomalyRatio from "@components/AnomalyRatio.svelte";
     import type {AnomalyMetric} from "@lib/types";
     import DistanceIndicator from "@components/DistanceIndicator.svelte";
-    import {itemSeen} from "@lib/helper/sessionStorageHelper";
+    import {itemSeen, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import AnomalyCount from "@components/AnomalyCount.svelte";
+    import {ApiRoutes} from "@lib/api/ApiRoutes";
+    import {getContext} from "svelte";
+    import {useQueryClient} from "@tanstack/svelte-query";
 
+    export let isNormal: boolean;
     export let dataset: string;
     export let subset: string;
     export let chunk: string;
     export let anomaly: AnomalyMetric | undefined;
-    export let normalTube: [number, number]
-    export let selected: boolean;
-    export let selectModeActive: boolean;
+    export let normalTube: [number, number];
+    export let labelCount: number;
+
+    const {ro} = getContext("ro") as { ro: boolean }
+    const client = useQueryClient()
+
+    const toggleNormal = async () => {
+        if (ro) sessionToggleNormal(dataset, subset)
+        else await ApiRoutes.toggleNormal.fetch({params: {dataset, subset, chunk}})
+        await client.invalidateQueries();
+    }
+
+    const resetChunk = async () => {
+        await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
+        await client.invalidateQueries();
+    }
 
 </script>
 
 
-<div class={`group border-2 border-solid border-transparent ${selectModeActive ? "hover:border-green-600" : ""} relative flex flex-col justify-center items-center w-[400px] h-[170px] shadow-lg rounded-lg px-2 group transition hover:shadow-xl`}>
-    {#if selectModeActive && selected }
-        <div class="absolute top-1 left-1 hidden group-hover:block px-2 py-1">
-            <Icon src="{CheckCircle}" class="w-5 h-5 text-green-600"/>
+<a class={`w-full flex flex-row border-4 border-indigo-700 shadow-xl rounded-xl h-52 place-items-center p-4 gap-4 relative my-8 transition hover:shadow-2xl hover:border-indigo-900`} href={`/datasets/${dataset}/${subset}/${chunk}`}>
+    <div class="grow h-full flex flex-col justify-between border-r-2 px-2 border-indigo-700">
+        <div>
+            <div class="font-semibold grid grid-cols-2">
+                <span>{chunk}</span>
+                {#if isNormal }
+                    <div class="flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
+                        <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
+                        Anomaly-Free
+                    </div>
+                {/if}
+            </div>
+            <p>Labels: {labelCount}</p>
+            <p>Anomalies: {anomaly?.count ?? 0}</p>
         </div>
-    {/if}
-    {#if selected }
-        <div class="absolute top-1 left-1 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
-            <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
-            Anomaly-Free
+        <div class="flex flex-col gap-2">
+            <button on:click|preventDefault|stopPropagation={() => toggleNormal()} class="rounded-lg px-2 py-1 bg-indigo-50 text-indigo-600 text-sm transition hover:bg-indigo-500 hover:text-white">
+                {isNormal ? "Remove anomaly-free status" : "Mark as anomaly-free"}
+            </button>
+            <button on:click|preventDefault|stopPropagation={() => resetChunk()} class="rounded-lg px-2 py-1 bg-indigo-50 text-indigo-600 text-sm transition hover:bg-red-500 hover:text-white">Reset labels</button>
         </div>
-    {/if}
-    <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail"/>
-    {#if anomaly !== undefined}
-        <div class="w-full h-[10px] flex justify-center">
-            <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={380} height={10}/>
-        </div>
-    {/if}
-    <div class="flex flex-row justify-center items-center w-full gap-3 mb-3 mt-3">
-        <span class="leading-none">{chunk}</span>
+    </div>
+    <div class="grow h-full">
+        <p class="text-center">Time Series / Signal</p>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" class="object-scale-down h-[80%] w-full"/>
         {#if anomaly !== undefined}
-            <AnomalyRatio anomalyRatio={anomaly.ratio}/>
-            <AnomalyCount anomalyCount={anomaly.count}/>
-        {/if}
-        {#if itemSeen(dataset, subset)}
-            <span class="bg-indigo-100 text-indigo-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded">Already Inspected</span>
+            <div class="w-full h-[10px] flex justify-center">
+                <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={380} height={10}/>
+            </div>
         {/if}
     </div>
-</div>
+    <div class="grow h-full">
+        <p class="text-center">Frequencies over Time (Spectrogram)</p>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/spectrogram`} alt="thumbnail" class="object-scale-down h-[90%] w-full"/>
+    </div>
+    <div class="grow h-full">
+        <p class="text-center">Time Delay Embedding</p>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class="object-scale-down h-[90%] w-full"/>
+    </div>
+</a>

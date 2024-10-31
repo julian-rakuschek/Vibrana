@@ -13,7 +13,6 @@
 
     export let settings: ChunkListSettingsType;
 
-    export let selectModeActive: boolean;
 
 
     const sort_chunks = (chunks: string[], anomaly_ratios: AnomalyMetric[]): string[] => {
@@ -27,6 +26,7 @@
     const {ro} = getContext("ro") as { ro: boolean }
     const chunkListQuery = useQueryFetch(ApiRoutes.getChunks, {params: {dataset, subset}})
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {dataset, subset}}, undefined, undefined, ro)
+    const labelCountQuery = useQueryFetch(ApiRoutes.getLabelCounts, {params: {dataset, subset}}, undefined, undefined, ro)
     const anomalyRatiosQuery = ro ?
         useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {dataset, subset}, data: sessionGetAll(dataset)}) :
         useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {dataset, subset}})
@@ -44,7 +44,7 @@
 
 </script>
 
-{#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending}
+{#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending || $labelCountQuery.isPending}
     <p>Loading ...</p>
 {/if}
 
@@ -56,12 +56,10 @@
     </div>
 {/if}
 
-{#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess}
-    <div class="flex flex-row flex-wrap gap-6 py-4 justify-center">
-        <ChunkList
-                chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
-                normals={$normalsQuery.data}
-                anomaly_ratios={anomaly_ratios} selectModeActive={selectModeActive} normalTube={$normalTubeQuery.data}
-        />
-    </div>
+{#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess && $labelCountQuery.isSuccess}
+    <ChunkList
+            chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
+            normals={$normalsQuery.data}
+            anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}
+    />
 {/if}

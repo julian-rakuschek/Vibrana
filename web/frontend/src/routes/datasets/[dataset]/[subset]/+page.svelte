@@ -16,13 +16,8 @@
 <div class="h-full col-span-full px-10 ">
     <div class="w-full flex flex-row flex-nowrap justify-between relative z-20 h-10">
         <div>
-            <span class="text-xl font-semibold">Samples</span>
+            <span class="text-xl font-semibold">Chunks</span>
         </div>
-
-        <button on:click={() => selectModeActive = !selectModeActive}
-                class={`${selectModeActive ? "bg-green-600 text-white" : "bg-white text-green-600"}  border-green-600 border-2 border-solid rounded-lg px-3 py-1 mr-20 flex flex-row flex-nowrap items-center gap-2 cursor-default transition`}>
-            {!selectModeActive ? "Select Anomaly-Free Samples" : "Exit Selection Mode"}
-        </button>
         <div class="absolute top-0 right-0">
             <SampleListSettings bind:settings dataset={dataset} subset={subset}/>
         </div>

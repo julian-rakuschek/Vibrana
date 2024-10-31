@@ -120,3 +120,8 @@ export type AnalysisPostData = {
     normals: { dataset: string, subset: string, chunks: string[] },
     labels: Label[]
 }
+
+export type LabelCount = {
+    _id: string;
+    count: number;
+}

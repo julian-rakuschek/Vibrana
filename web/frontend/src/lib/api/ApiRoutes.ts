@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppResponse, Label, LabelBase, ParseStatus} from "../types";
+import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppResponse, Label, LabelBase, LabelCount, ParseStatus} from "../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -18,13 +18,14 @@ export const dbRoutes = {
   getChunkEvents: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/events"),
   getChunkFreq: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/freq"),
   getLabels: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, Annotation[]>("GET", "/db/:dataset/:subset/:chunk/labels"),
+  getLabelCounts: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, LabelCount[]>("GET", "/db/:dataset/:subset/labels/count"),
   addLabel: new ApiRoute<LabelBase, {dataset: string; subset: string; chunk: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
   deleteLabelByPos: new ApiRoute<undefined, {dataset: string; subset: string; pos: string | number}, undefined, undefined>("DELETE", "/db/:dataset/:subset/:chunk/labels/:pos"),
   getNormals: new ApiRoute<undefined, { dataset: string; subset: string }, undefined, string[]>("GET", "/db/:dataset/:subset/normals"),
-  addNormal: new ApiRoute<undefined, { dataset: string; subset: string; chunk: string }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/normals"),
-  removeNormal: new ApiRoute<undefined, { dataset: string; subset: string; chunk: string }, undefined, DefaultAppResponse>("DELETE", "/db/:dataset/:subset/:chunk/normals"),
+  toggleNormal: new ApiRoute<undefined, { dataset: string; subset: string; chunk: string }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/normals"),
   reset: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/reset"),
+  resetChunk: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/reset"),
 };
 
 export const analysisRoutesDB = {
