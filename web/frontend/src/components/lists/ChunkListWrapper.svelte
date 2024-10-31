@@ -8,6 +8,7 @@
     import {Jumper} from "svelte-loading-spinners";
     import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
     import ChunkMatrix from "@components/lists/ChunkMatrix.svelte";
+    import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
 
     export let dataset: string;
     export let subset: string;
@@ -46,7 +47,9 @@
 </script>
 
 {#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending || $labelCountQuery.isPending}
-    <p>Loading ...</p>
+    <div class="w-full h-full">
+        <CenteredLoadingSpinner/>
+    </div>
 {/if}
 
 {#if $anomalyRatiosQuery.isPending || $anomalyRatiosQuery.isRefetching || $anomalyRatiosQuery.isLoading}

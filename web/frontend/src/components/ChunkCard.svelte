@@ -33,8 +33,10 @@
 
 </script>
 
-<a class={`w-full flex flex-row border-4 border-indigo-700 shadow-xl rounded-xl h-52 place-items-center p-4 gap-4 relative my-8 transition hover:shadow-2xl hover:border-indigo-900`} href={`/datasets/${dataset}/${subset}/${chunk}`}>
-    <div class="grow h-full flex flex-col justify-between border-r-2 px-2 border-indigo-700">
+
+
+<a class={`w-full grid grid-cols-4 border-4 border-indigo-700 shadow-xl rounded-xl h-52 p-4 gap-4 relative my-8 transition hover:shadow-2xl hover:border-indigo-900`} href={`/datasets/${dataset}/${subset}/${chunk}`}>
+    <div class="grow w-full h-full flex flex-col justify-between border-r-2 px-2 border-indigo-700">
         <div>
             <div class="font-semibold grid grid-cols-2">
                 <span>{chunk}</span>
@@ -55,21 +57,21 @@
             <button on:click|preventDefault|stopPropagation={() => resetChunk()} class="rounded-lg px-2 py-1 bg-indigo-50 text-indigo-600 text-sm transition hover:bg-red-500 hover:text-white">Reset labels</button>
         </div>
     </div>
-    <div class="grow h-full">
+    <div class="flex flex-col h-full w-full">
         <p class="text-center">Time Series / Signal</p>
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" class="object-scale-down h-[80%] w-full"/>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" class="object-contain w-full"/>
         {#if anomaly !== undefined}
             <div class="w-full h-[10px] flex justify-center">
                 <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={380} height={10}/>
             </div>
         {/if}
     </div>
-    <div class="grow h-full">
+    <div class="flex flex-col h-full w-full">
         <p class="text-center">Frequencies over Time (Spectrogram)</p>
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/spectrogram`} alt="thumbnail" class="object-scale-down h-[90%] w-full"/>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/spectrogram`} alt="thumbnail" class="object-contain w-full"/>
     </div>
-    <div class="grow h-full">
+    <div class="flex flex-col h-full w-full">
         <p class="text-center">Time Delay Embedding</p>
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class="object-scale-down h-[90%] w-full"/>
+        <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class="object-contain h-36 w-full"/>
     </div>
 </a>

@@ -16,14 +16,14 @@
 
 <Navbar/>
 <div class="h-full col-span-full px-10 ">
-    <div class="w-full flex flex-row flex-nowrap justify-between relative z-20 h-10">
-        <div class="flex flex-row gap-3 items-center">
+    <div class="w-full grid grid-cols-3 justify-between relative z-20 h-10">
+        <div class="flex flex-row gap-3 items-center place-self-start">
             <a class="bg-white rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl z-10" href={`/datasets`}>
                 <Icon src="{ArrowLeft}" class="w-5 h-5"/>
             </a>
             <span class="text-xl font-semibold">Chunks</span>
         </div>
-        <div class="flex flex-row gap-3">
+        <div class="flex flex-row w-full justify-center gap-3 place-self-start">
            <button class={`${displayMode === "vertical" ? "bg-indigo-600 text-white" : "bg-white text-black"} rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl z-10`} on:click={() => displayMode = "vertical"}>
                 <Icon src="{ArrowsUpDown}" class="w-5 h-5"/>
             </button>
@@ -31,7 +31,7 @@
                 <Icon src="{ArrowsRightLeft}" class="w-5 h-5"/>
             </button>
         </div>
-        <div>
+        <div class="place-self-end h-full">
             <SampleListSettings bind:settings dataset={dataset} subset={subset}/>
         </div>
     </div>
