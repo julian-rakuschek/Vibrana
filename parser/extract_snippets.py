@@ -167,7 +167,7 @@ def process_subset(dataset: str, subset: str):
                 prefix = "signal"
             if dataset == "binder":
                 prefix = "anomalous" if "gemischt" in root.lower() else "normal"
-            split_and_process_time_series(values, timestamps, events, os.path.basename(root) + "/" + file, prefix, dataset, subset, 100_000, 2_000, None, 10)
+            split_and_process_time_series(values, timestamps, events, os.path.basename(root) + "/" + file, prefix, dataset, subset, 100_000, 2_000, None, None)
 
 
 def process_dataset(dataset: str):
@@ -177,5 +177,5 @@ def process_dataset(dataset: str):
 
 
 if __name__ == '__main__':
-    # process_dataset("hydro")
-    process_dataset("binder")
+    process_dataset("hydro")
+    # process_dataset("binder")

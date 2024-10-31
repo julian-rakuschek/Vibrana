@@ -7,12 +7,13 @@
     import {getContext} from "svelte";
     import {Jumper} from "svelte-loading-spinners";
     import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
+    import ChunkMatrix from "@components/lists/ChunkMatrix.svelte";
 
     export let dataset: string;
     export let subset: string;
 
     export let settings: ChunkListSettingsType;
-
+    export let displayMode: string = "vertical"
 
 
     const sort_chunks = (chunks: string[], anomaly_ratios: AnomalyMetric[]): string[] => {
@@ -57,9 +58,16 @@
 {/if}
 
 {#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess && $labelCountQuery.isSuccess}
-    <ChunkList
-            chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
-            normals={$normalsQuery.data}
-            anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}
-    />
+    {#if displayMode === "vertical"}
+        <ChunkList
+                chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
+                normals={$normalsQuery.data}
+                anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}
+        />
+    {:else}
+        <ChunkMatrix chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
+                     normals={$normalsQuery.data}
+                     anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}/>
+    {/if}
+
 {/if}

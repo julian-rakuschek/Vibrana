@@ -1,6 +1,6 @@
 import {writable} from 'svelte/store';
 import {type Color, ColorMode, type ThreeChartsSettingsType} from "@lib/types";
-import {interpolateRdYlBu, interpolateTurbo, interpolateViridis} from "d3";
+import {interpolateRdYlBu, interpolateTurbo, interpolateViridis, min} from "d3";
 import {padArray} from "@lib/helper/util";
 
 export const colorsTimeSeries = writable<Color[]>([]);
@@ -8,8 +8,9 @@ export const colorsProjection = writable<Color[]>([]);
 
 export const computeRadiiNormalized = (projectedPoints: number[][]): number[] => {
     const radii = projectedPoints.map(p => Math.sqrt(Math.pow(p[0], 2) + Math.pow(p[1], 2)));
+    const min_rad = radii.toSorted((a, b) => a - b)[0]
     const max_rad = radii.toSorted((a, b) => a - b)[radii.length - 1]
-    return radii.map(r => r / max_rad);
+    return radii.map(r => (r - min_rad) / (max_rad - min_rad));
 }
 
 const computeDistancesNormalized = (distances: number[], normal_tube: [number, number]): number[] => {

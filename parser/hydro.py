@@ -1,4 +1,5 @@
 import os.path
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -49,8 +50,10 @@ def save_preview_image(Ch1, Ch2, Ch3, save_path):
 
 
 def parse_hydro(file, folder_prefix):
-    values = extract_slice(file, 69_500_000, 71_500_000)
+    values = extract_slice(file, 69_500_000, 72_500_000)
     file_parsed_folder = os.path.join(Path(__file__).parents[1], "data", "parsed", "hydro", folder_prefix)
+    if os.path.exists(file_parsed_folder):
+        shutil.rmtree(file_parsed_folder)
     Path(file_parsed_folder).mkdir(parents=True, exist_ok=True)
     np.save(os.path.join(file_parsed_folder, f"values-{folder_prefix}-x.npy"), values[0])
     np.save(os.path.join(file_parsed_folder, f"values-{folder_prefix}-y.npy"), values[1])

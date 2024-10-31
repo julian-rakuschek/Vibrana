@@ -33,7 +33,6 @@
 
 </script>
 
-
 <a class={`w-full flex flex-row border-4 border-indigo-700 shadow-xl rounded-xl h-52 place-items-center p-4 gap-4 relative my-8 transition hover:shadow-2xl hover:border-indigo-900`} href={`/datasets/${dataset}/${subset}/${chunk}`}>
     <div class="grow h-full flex flex-col justify-between border-r-2 px-2 border-indigo-700">
         <div>
