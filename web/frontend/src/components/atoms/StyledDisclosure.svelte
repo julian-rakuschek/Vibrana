@@ -12,7 +12,7 @@
         <Icon src="{ChevronDown}" solid class="w-7 h-7 text-white transition" style={open ? "transform: rotate(180deg);" : ""}/>
     </DisclosureButton>
 
-    <DisclosurePanel class="gap-4 flex flex-col border-indigo-700 border-2 p-4 rounded-b-lg ">
+    <DisclosurePanel class="gap-4 flex flex-col border-indigo-700 border-4 p-4 rounded-b-lg ">
          <slot />
     </DisclosurePanel>
 </Disclosure>

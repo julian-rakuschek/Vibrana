@@ -4,6 +4,7 @@
     import {type ChunkListSettingsType, SortMode} from "@lib/types";
     import SampleListSettings from "@components/ChunkListSettings.svelte";
     import ChunkListWrapper from "@components/lists/ChunkListWrapper.svelte";
+    import {ArrowLeft, Icon} from "svelte-hero-icons";
 
     let settings: ChunkListSettingsType = {sort: SortMode.Name, split: false}
     let selectModeActive: boolean = false
@@ -15,7 +16,10 @@
 <Navbar/>
 <div class="h-full col-span-full px-10 ">
     <div class="w-full flex flex-row flex-nowrap justify-between relative z-20 h-10">
-        <div>
+        <div class="flex flex-row gap-3 items-center">
+            <a class="bg-white rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl z-10" href={`/datasets`}>
+    <Icon src="{ArrowLeft}" class="w-5 h-5" />
+</a>
             <span class="text-xl font-semibold">Chunks</span>
         </div>
         <div class="absolute top-0 right-0">
