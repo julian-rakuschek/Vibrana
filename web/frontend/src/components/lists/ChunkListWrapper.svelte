@@ -47,7 +47,7 @@
 </script>
 
 {#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending || $labelCountQuery.isPending}
-    <div class="w-full h-full">
+    <div class="w-full h-full pt-20">
         <CenteredLoadingSpinner/>
     </div>
 {/if}

@@ -78,8 +78,16 @@
     ],
     "subsets": [
       {
-        "name": "Gravitational Waves Index 3",
-        "folder": "grav-3"
+        "name": "Gravitational Waves SNR 0.1",
+        "folder": "grav-01"
+      },
+      {
+        "name": "Gravitational Waves SNR 0.15",
+        "folder": "grav-015"
+      },
+      {
+        "name": "Gravitational Waves SNR 0.2",
+        "folder": "grav-02"
       }
     ]
   }

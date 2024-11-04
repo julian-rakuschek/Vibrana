@@ -32,7 +32,7 @@ def save_projection_preview_image(data, save_path):
     ax.set_ylim([np.min(data[:, 1]), np.max(data[:, 1])])
     ax.scatter(data[:, 0], data[:, 1], s=3, c=colors)
     plt.axis('off')
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=200, transparent=True)
     plt.close(fig)
 
 
@@ -43,7 +43,7 @@ def save_preview_image(data, save_path):
     ax.plot(np.arange(len(data)), data, color="black")
     ax.set_xlim([0, len(data)])
     plt.axis('off')
-    plt.savefig(save_path, bbox_inches='tight')
+    plt.savefig(save_path, bbox_inches='tight', dpi=200, transparent=True)
     plt.close(fig)
 
 
@@ -57,7 +57,8 @@ def save_spectrogram_preview(data, save_path, sample_rate=20_000, window_size=2_
     fig.set_size_inches(10, 3)
     ax.imshow(Sx, origin='lower', aspect='auto', extent=SFT.extent(len(data)), cmap='viridis')
     ax.get_xaxis().set_visible(False)
-    plt.savefig(save_path, bbox_inches='tight', dpi=200)
+    plt.savefig(save_path, bbox_inches='tight', dpi=200, transparent=True)
+    plt.close(fig)
 
 
 def compute_time_varying_amplitude(values, window_size, sample_rate=20_000):
@@ -177,5 +178,6 @@ def process_dataset(dataset: str):
 
 
 if __name__ == '__main__':
-    process_dataset("hydro")
+    # process_dataset("hydro")
+    process_dataset("grav")
     # process_dataset("binder")
