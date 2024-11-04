@@ -14,3 +14,6 @@ export const chartSettings = writable<ThreeChartsSettingsType>(defaultChartSetti
 export const hoverPoint = writable<ProjectedPoint | undefined>(undefined)
 export const hoverRange = writable<number[] | undefined>(undefined)
 export const selectedProjectedPoints = writable<ProjectedPoint[]>([])
+
+
+export const displayMode = writable<string>("vertical")

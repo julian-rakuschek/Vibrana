@@ -75,8 +75,8 @@
                     </fieldset>
                 </div>
             {/each}
-            <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_labels()}>Reset Labels</button>
-            <button class="text-sm text-red-500 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_views()}>Reset View History</button>
+            <button class="text-sm text-red-500 px-3 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_labels()}>Reset Labels</button>
+            <button class="text-sm text-red-500 px-3 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white" on:click={() => reset_views()}>Reset View History</button>
         </MenuItems>
     </Transition>
 </Menu>
