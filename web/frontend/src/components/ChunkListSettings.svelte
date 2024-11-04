@@ -5,7 +5,7 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
     import {getContext} from "svelte";
-    import {resetLabels, resetViewHistory} from "@lib/helper/sessionStorageHelper";
+    import {sessionResetLabels, resetViewHistory} from "@lib/helper/sessionStorageHelper";
 
     export let settings: ChunkListSettingsType;
     export let dataset: string;
@@ -27,7 +27,7 @@
 
     const reset_labels = async () => {
         if (ro) {
-            resetLabels()
+            sessionResetLabels()
         } else {
             await ApiRoutes.reset.fetch({params: {dataset, subset}});
         }

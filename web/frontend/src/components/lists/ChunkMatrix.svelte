@@ -4,7 +4,7 @@
     import Toggle from "@components/atoms/Toggle.svelte";
     import {getContext} from "svelte";
     import {useQueryClient} from "@tanstack/svelte-query";
-    import {sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
+    import {sessionResetChunk, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {CheckCircle, Icon, ArrowTopRightOnSquare} from "svelte-hero-icons";
 
@@ -34,7 +34,8 @@
     }
 
     const resetChunk = async (chunk: string) => {
-        await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
+        if (ro) sessionResetChunk(dataset, subset, chunk)
+        else await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
         await client.invalidateQueries();
     }
 

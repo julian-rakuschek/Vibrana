@@ -3,7 +3,7 @@
     import AnomalyRatio from "@components/AnomalyRatio.svelte";
     import type {AnomalyMetric} from "@lib/types";
     import DistanceIndicator from "@components/DistanceIndicator.svelte";
-    import {itemSeen, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
+    import {itemSeen, sessionResetChunk, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import AnomalyCount from "@components/AnomalyCount.svelte";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {getContext} from "svelte";
@@ -28,7 +28,8 @@
     }
 
     const resetChunk = async () => {
-        await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
+        if (ro) sessionResetChunk(dataset, subset, chunk)
+        else await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
         await client.invalidateQueries();
     }
 

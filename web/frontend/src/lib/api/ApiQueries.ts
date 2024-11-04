@@ -2,7 +2,7 @@ import {createQuery, type QueryKey, type CreateQueryOptions, type CreateQueryRes
 import type {ApiRoute} from "@lib/api/ApiRoute";
 import type {AppResponse} from "@lib/types";
 import {getResolvedUrl, type IRequestObject} from "@lib/api/QueryHelpers";
-import {sessionGetAll, sessionGetLabels, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
+import {sessionGetAll, sessionGetLabelCount, sessionGetLabels, sessionGetNormals} from "@lib/helper/sessionStorageHelper";
 
 export type MultiRequestPart<TRequestData, TRequestParams, TQueryParams, TResponse extends AppResponse<any>> =
     { apiRoute: ApiRoute<TRequestData, TRequestParams, TQueryParams, TResponse>; requestObject?: IRequestObject<TRequestData, TRequestParams, TQueryParams> };
@@ -29,6 +29,10 @@ function getQueryParams<TRequestData, TRequestParams, TQueryParams, TResponse ex
         if (apiRoute.url === "/db/:dataset/:subset/:chunk/labels" && ro) {
             // @ts-ignore
             return sessionGetLabels(requestObject.params.dataset, requestObject.params.subset, requestObject.params.chunk)
+        }
+        if (apiRoute.url === "/db/:dataset/:subset/labels/count" && ro) {
+            // @ts-ignore
+            return sessionGetLabelCount(requestObject.params.dataset, requestObject.params.subset)
         }
         return apiRoute.fetch(requestObject);
     }

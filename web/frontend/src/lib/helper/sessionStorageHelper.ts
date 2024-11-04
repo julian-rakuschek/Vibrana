@@ -1,13 +1,15 @@
-import type {AnalysisPostData, Label, LabelBase, SessionNormals} from "@lib/types";
+import type {AnalysisPostData, Label, LabelBase, LabelCount, SessionNormals} from "@lib/types";
 import {v4 as uuidv4} from 'uuid';
 
 export const sessionGetNormals = (dataset: string, subset: string): string[] => {
     const normals: SessionNormals = JSON.parse(localStorage.getItem("normals") ?? "{}")
+    if (!normals[dataset]) return []
     return normals[dataset][subset] ?? []
 }
 
 export const sessionToggleNormal = (dataset: string, subset: string, chunk: string) => {
     const normals: SessionNormals = JSON.parse(localStorage.getItem("normals") ?? "{}")
+    if (!normals[dataset]) normals[dataset] = {}
     let chunks = normals[dataset][subset] ?? []
     if (chunks.indexOf(chunk) !== -1) chunks = chunks.filter(c => c !== chunk)
     else chunks.push(chunk)
@@ -23,6 +25,18 @@ export const sessionGetLabels = (dataset: string, subset: string, chunk?: string
         labels = labels.filter(l => l.chunk === chunk)
     }
     return labels
+}
+
+export const sessionGetLabelCount = (dataset: string, subset: string): LabelCount[] => {
+    let labels: Label[] = JSON.parse(localStorage.getItem("labels") ?? "[]")
+    labels = labels.filter(l => l.dataset === dataset)
+    labels = labels.filter(l => l.subset === subset)
+    const label_count: { [chunk: string]: number } = {}
+    for (const label of labels) {
+        if (!label_count[label.chunk]) label_count[label.chunk] = 0
+        label_count[label.chunk]++;
+    }
+    return Object.keys(label_count).map(c => ({_id: c, count: label_count[c]}))
 }
 
 export const sessionAddLabel = (label: LabelBase) => {
@@ -64,9 +78,15 @@ export const setItemSeen = (dataset: string, subset: string, chunk: string) => {
     localStorage.setItem("viewHistory", JSON.stringify(viewHistory))
 }
 
-export const resetLabels = () => {
+export const sessionResetLabels = () => {
     localStorage.setItem("normals", "{}")
     localStorage.setItem("labels", "[]")
+}
+
+export const sessionResetChunk = (dataset: string, subset: string, chunk: string) => {
+    let labels: Label[] = JSON.parse(localStorage.getItem("labels") ?? "[]")
+    labels = labels.filter(l => l.dataset !== dataset || l.subset !== subset  || l.chunk !== chunk)
+    localStorage.setItem("labels", JSON.stringify(labels))
 }
 
 export const resetViewHistory = () => {
