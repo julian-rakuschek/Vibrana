@@ -21,7 +21,7 @@
     const client = useQueryClient()
 
     const toggleNormal = async () => {
-        if (ro) sessionToggleNormal(dataset, subset)
+        if (ro) sessionToggleNormal(dataset, subset, chunk)
         else await ApiRoutes.toggleNormal.fetch({params: {dataset, subset, chunk}})
         await client.invalidateQueries();
     }

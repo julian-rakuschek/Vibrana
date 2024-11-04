@@ -69,7 +69,7 @@
             else await ApiRoutes.addLabel.fetch({data: labelToAdd})
         }
         else {
-            if (ro) sessionDeleteLabelPyPos(dataset, chunk, Math.floor(x))
+            if (ro) sessionDeleteLabelPyPos(dataset, subset, chunk, Math.floor(x))
             else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), dataset, subset}})
         }
         await client.invalidateQueries({queryKey: [`/db/${dataset}/${subset}/${chunk}/labels`]});

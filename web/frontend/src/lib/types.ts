@@ -125,3 +125,9 @@ export type LabelCount = {
     _id: string;
     count: number;
 }
+
+export type SessionNormals = {
+    [dataset: string]: {
+        [subset: string]: string[]
+    }
+}

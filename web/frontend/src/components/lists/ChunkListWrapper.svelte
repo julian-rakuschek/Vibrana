@@ -30,10 +30,10 @@
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {dataset, subset}}, undefined, undefined, ro)
     const labelCountQuery = useQueryFetch(ApiRoutes.getLabelCounts, {params: {dataset, subset}}, undefined, undefined, ro)
     const anomalyRatiosQuery = ro ?
-        useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {dataset, subset}, data: sessionGetAll(dataset)}) :
+        useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {dataset, subset}, data: sessionGetAll(dataset, subset)}) :
         useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {dataset, subset}})
     const normalTubeQuery = ro ?
-        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {dataset, subset}, data: sessionGetAll(dataset)}) :
+        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {dataset, subset}, data: sessionGetAll(dataset, subset)}) :
         useQueryFetch(ApiRoutes.getNormalTube, {params: {dataset, subset}})
     let anomaly_ratios: AnomalyMetric[] = []
 

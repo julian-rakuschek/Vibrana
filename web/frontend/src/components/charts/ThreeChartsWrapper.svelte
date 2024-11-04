@@ -11,17 +11,17 @@
     export let subset: string;
     export let chunk: string;
 
-    setItemSeen(dataset, chunk)
+    setItemSeen(dataset, subset, chunk)
 
     const {ro} = getContext("ro") as { ro: boolean }
 
     const timeSeriesQuery = useQueryFetch(ApiRoutes.getChunkValues, {params: {dataset, subset, chunk}})
     const projectedValuesQuery = useQueryFetch(ApiRoutes.getChunkProjected, {params: {dataset, subset, chunk}})
     const normalTubeQuery = ro ?
-        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {dataset, subset}, data: sessionGetAll(dataset)}) :
+        useQueryFetch(ApiRoutes.getNormalTubeRO, {params: {dataset, subset}, data: sessionGetAll(dataset, subset)}) :
         useQueryFetch(ApiRoutes.getNormalTube, {params: {dataset, subset}})
     const similaritiesQuery = ro ?
-        useQueryFetch(ApiRoutes.getSimilaritiesRO, {params: {dataset, subset, chunk}, data: sessionGetAll(dataset)}) :
+        useQueryFetch(ApiRoutes.getSimilaritiesRO, {params: {dataset, subset, chunk}, data: sessionGetAll(dataset, subset)}) :
         useQueryFetch(ApiRoutes.getSimilarities, {params: {dataset, subset, chunk}})
     const mdsEmbeddingQuery = useQueryFetch(ApiRoutes.getMDSEmbedding, {params: {dataset, subset, chunk}})
     const labelsQuery = useQueryFetch(ApiRoutes.getLabels, {params: {dataset, subset, chunk}}, undefined, undefined, ro)

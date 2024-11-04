@@ -1,25 +1,26 @@
-import type {AnalysisPostData, Label, LabelBase} from "@lib/types";
+import type {AnalysisPostData, Label, LabelBase, SessionNormals} from "@lib/types";
 import {v4 as uuidv4} from 'uuid';
 
-export const sessionGetNormals = (machine: string): string[] => {
-    const normals: { [machine: string]: string[] } = JSON.parse(localStorage.getItem("normals") ?? "{}")
-    return normals[machine] ?? []
+export const sessionGetNormals = (dataset: string, subset: string): string[] => {
+    const normals: SessionNormals = JSON.parse(localStorage.getItem("normals") ?? "{}")
+    return normals[dataset][subset] ?? []
 }
 
-export const sessionToggleNormal = (machine: string, sample: string) => {
-    const normals: { [machine: string]: string[] } = JSON.parse(localStorage.getItem("normals") ?? "{}")
-    let samples = normals[machine] ?? []
-    if (samples.indexOf(sample) !== -1) samples = samples.filter(s => s !== sample)
-    else samples.push(sample)
-    normals[machine] = samples
+export const sessionToggleNormal = (dataset: string, subset: string, chunk: string) => {
+    const normals: SessionNormals = JSON.parse(localStorage.getItem("normals") ?? "{}")
+    let chunks = normals[dataset][subset] ?? []
+    if (chunks.indexOf(chunk) !== -1) chunks = chunks.filter(c => c !== chunk)
+    else chunks.push(chunk)
+    normals[dataset][subset] = chunks
     localStorage.setItem("normals", JSON.stringify(normals))
 }
 
-export const sessionGetLabels = (machine: string, sample?: string): Label[] => {
+export const sessionGetLabels = (dataset: string, subset: string, chunk?: string): Label[] => {
     let labels: Label[] = JSON.parse(localStorage.getItem("labels") ?? "[]")
-    labels = labels.filter(l => l.machine === machine)
-    if (sample) {
-        labels = labels.filter(l => l.sampleId === sample)
+    labels = labels.filter(l => l.dataset === dataset)
+    labels = labels.filter(l => l.subset === subset)
+    if (chunk) {
+        labels = labels.filter(l => l.chunk === chunk)
     }
     return labels
 }
@@ -37,29 +38,29 @@ export const sessionDeleteLabelPyID = (labelId: string) => {
     localStorage.setItem("labels", JSON.stringify(labels))
 }
 
-export const sessionDeleteLabelPyPos = (machine: string, sample: string, pos: number) => {
+export const sessionDeleteLabelPyPos = (dataset: string, subset: string, chunk: string, pos: number) => {
     let labels: Label[] = JSON.parse(localStorage.getItem("labels") ?? "[]")
-    labels = labels.filter(l => l.machine !== machine || l.sampleId !== sample || !(l.from <= pos && pos <= l.to))
+    labels = labels.filter(l => l.dataset !== dataset || l.subset !== subset  || l.chunk !== chunk || !(l.from <= pos && pos <= l.to))
     localStorage.setItem("labels", JSON.stringify(labels))
 }
 
-export const sessionGetAll = (machine: string): AnalysisPostData => {
-    const samples = sessionGetNormals(machine)
-    const labels = sessionGetLabels(machine)
+export const sessionGetAll = (dataset: string, subset: string): AnalysisPostData => {
+    const chunks = sessionGetNormals(dataset, subset)
+    const labels = sessionGetLabels(dataset, subset)
     return {
-        normals: {machine, samples},
+        normals: {dataset, subset, chunks},
         labels: labels
     }
 }
 
-export const itemSeen = (machine: string, sample: string): boolean => {
+export const itemSeen = (dataset: string, subset: string, chunk: string): boolean => {
     const viewHistory: string[] = JSON.parse(localStorage.getItem("viewHistory") ?? "[]")
-    return viewHistory.indexOf(`${machine}-${sample}`) !== -1
+    return viewHistory.indexOf(`${dataset}-${subset}-${chunk}`) !== -1
 }
 
-export const setItemSeen = (machine: string, sample: string) => {
+export const setItemSeen = (dataset: string, subset: string, chunk: string) => {
     const viewHistory: string[] = JSON.parse(localStorage.getItem("viewHistory") ?? "[]")
-    viewHistory.push(`${machine}-${sample}`)
+    viewHistory.push(`${dataset}-${subset}-${chunk}`)
     localStorage.setItem("viewHistory", JSON.stringify(viewHistory))
 }
 

@@ -15,20 +15,20 @@ function getQueryParams<TRequestData, TRequestParams, TQueryParams, TResponse ex
 
     async function queryFn(): Promise<TResponse> {
         if (
-            (apiRoute.url === "/analysis/:machineId/:sampleId/distanceProfile/quantized" ||
-                apiRoute.url === "/analysis/:machineId/normal_tube" ||
-                apiRoute.url === "/analysis/:machineId/anomaly_metrics") && apiRoute.method === "POST"
+            (apiRoute.url === "/analysis/:dataset/:subset/:chunk/distanceProfile/quantized" ||
+                apiRoute.url === "/analysis/:dataset/:subset/normal_tube" ||
+                apiRoute.url === "/analysis/:dataset/:subset/anomaly_metrics") && apiRoute.method === "POST"
         ) {
             // @ts-ignore
-            requestObject.data = sessionGetAll(requestObject.params.machineId)
+            requestObject.data = sessionGetAll(requestObject.params.dataset, requestObject.params.subset)
         }
-        if (apiRoute.url === "/db/normals/:machineId" && ro) {
+        if (apiRoute.url === "/db/:dataset/:subset/normals" && ro) {
             // @ts-ignore
-            return sessionGetNormals(requestObject.params.machineId)
+            return sessionGetNormals(requestObject.params.dataset, requestObject.params.subset)
         }
-        if (apiRoute.url === "/db/labels/:machineId/:sampleId" && ro) {
+        if (apiRoute.url === "/db/:dataset/:subset/:chunk/labels" && ro) {
             // @ts-ignore
-            return sessionGetLabels(requestObject.params.machineId, requestObject.params.sampleId)
+            return sessionGetLabels(requestObject.params.dataset, requestObject.params.subset, requestObject.params.chunk)
         }
         return apiRoute.fetch(requestObject);
     }
