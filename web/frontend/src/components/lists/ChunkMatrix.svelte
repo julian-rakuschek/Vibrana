@@ -53,7 +53,7 @@
                         Anomaly-Free
                     </div>
                 {/if}
-                <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class="rounded-full object-scale-down h-40 bg-white"/>
+                <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
             </button>
         {/each}
     </div>

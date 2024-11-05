@@ -50,7 +50,7 @@ def save_preview_image(Ch1, Ch2, Ch3, save_path):
 
 
 def parse_hydro(file, folder_prefix):
-    values = extract_slice(file, 69_500_000, 72_500_000)
+    values = extract_slice(file, 68_500_000, 72_500_000)
     file_parsed_folder = os.path.join(Path(__file__).parents[1], "data", "parsed", "hydro", folder_prefix)
     if os.path.exists(file_parsed_folder):
         shutil.rmtree(file_parsed_folder)

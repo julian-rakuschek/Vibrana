@@ -178,6 +178,8 @@ def process_dataset(dataset: str):
 
 
 if __name__ == '__main__':
+    # process_dataset("motor")
+    # process_dataset("nasa-bearings")
     # process_dataset("hydro")
-    process_dataset("grav")
-    # process_dataset("binder")
+    # process_dataset("grav")
+    process_dataset("binder")

@@ -162,7 +162,6 @@
     <div class="bg-red-100 text-red-500 rounded-lg p-3"><b>Note:</b>
         The classification does not work for every dataset.
         If the patterns in the normal / anomalous classes are too similar, the classification fails.
-        This can be determined by using the matrix profile (see paper).
     </div>
 
 

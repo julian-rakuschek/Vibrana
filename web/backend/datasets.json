@@ -1,37 +1,22 @@
 [
   {
-    "name": "Binder",
-    "folder": "binder",
-    "description": "Vibration of debris impacts from a sorting machine.",
-    "tasks": [
-      "Classification",
-      "Anomaly Detection"
-    ],
-    "subsets": [
-      {
-        "name": "Metall platte, FEST Montiert, 5-10 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
-        "folder": "1"
-      }
-    ]
-  },
-  {
     "name": "Hydro Power Plant",
     "folder": "hydro",
-    "description": "Vibrations measured on the inside of a power plant.",
+    "description": "Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.",
     "tasks": [
       "Change Detection"
     ],
     "subsets": [
       {
-        "name": "Anomaly X",
+        "name": "Vibrations in X-Direction",
         "folder": "hydro-1-x"
       },
       {
-        "name": "Anomaly Y",
+        "name": "Vibrations in Y-Direction",
         "folder": "hydro-1-y"
       },
       {
-        "name": "Anomaly Z",
+        "name": "Vibrations in Z-Direction",
         "folder": "hydro-1-z"
       }
     ]
@@ -39,7 +24,7 @@
   {
     "name": "Engine Multiple Runs",
     "folder": "motor",
-    "description": "Vibrations acquired from an engine. The dataset highlights the difference if noise is applied.",
+    "description": "Vibrations acquired from an engine, showing multiple runs (with and without damage). The subsets highlight the difference if noise is applied.",
     "tasks": [
       "Classification",
       "Anomaly Detection"
@@ -58,7 +43,7 @@
   {
     "name": "Engine Run To Failure",
     "folder": "nasa-bearings",
-    "description": "Vibrations acquired the bearing of an engine in a run-to-failure setting.",
+    "description": "Vibrations acquired from the bearing of an engine in a run-to-failure setting.",
     "tasks": [
       "Change Detection"
     ],
@@ -70,7 +55,7 @@
     ]
   },
   {
-    "name": "Gravitational Waves",
+    "name": "Hidden Gravitational Waves",
     "folder": "grav",
     "description": "Synthetic dataset highlighting hidden patterns in noise.",
     "tasks": [
@@ -88,6 +73,33 @@
       {
         "name": "Gravitational Waves SNR 0.2",
         "folder": "grav-02"
+      }
+    ]
+  },
+  {
+    "name": "Sorting Machine Debris Impact",
+    "folder": "binder",
+    "description": "This dataset features measurements acquired from a sorting machine that sorts cobbles by their size. To achieve this, a sieve is utilized, that naturally wears out, causing larger cobbles to fall through. The goal is to measure the impact of cobbles on a metal plate beneath the sieve. The dataset shows vibrations of the metal plate, with and without anomalies.",
+    "tasks": [
+      "Classification",
+      "Anomaly Detection"
+    ],
+    "subsets": [
+      {
+        "name": "Metall platte, FEST Montiert, 5-10 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
+        "folder": "1"
+      },
+      {
+        "name": "Metall platte, FEST Montiert, 10-16 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
+        "folder": "13"
+      },
+      {
+        "name": "Metall platte, FEDER Montiert,  5-10 Korngröse, 25 cm fall, sensor fest xx t pro stunde",
+        "folder": "16"
+      },
+      {
+        "name": "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1 t pro h",
+        "folder": "29"
       }
     ]
   }

@@ -24,6 +24,9 @@
 
     <div class="bg-indigo-700 w-[350px] rounded-xl text-white p-4">
         <div class="flex flex-row">
+            <div class="w-20 h-20 bg-white rounded-full overflow-hidden pt-1 flex justify-center">
+                <img src="authors/adrian.jpg" class="h-full w-f" />
+            </div>
             <div class="grow">
                 <p class="text-center text-xl font-semibold">Adrian Boesze</p>
                 <p class="text-center">[E-Mail TBD]</p>
