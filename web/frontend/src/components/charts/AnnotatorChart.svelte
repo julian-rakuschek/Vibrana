@@ -70,11 +70,13 @@
         }
         else {
             if (ro) sessionDeleteLabelPyPos(dataset, subset, chunk, Math.floor(x))
-            else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), dataset, subset}})
+            else await ApiRoutes.deleteLabelByPos.fetch({params: {pos: Math.floor(x), dataset, subset, chunk}})
         }
         await client.invalidateQueries({queryKey: [`/db/${dataset}/${subset}/${chunk}/labels`]});
-        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/${chunk}/similarities`]});
-        render();
+        await render()
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/${chunk}/distanceProfile/quantized`]});
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/normal_tube`]});
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/anomaly_metrics`]});
     });
 
     const timeseriesLine = fc

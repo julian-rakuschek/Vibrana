@@ -21,7 +21,7 @@ export const dbRoutes = {
   getLabelCounts: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, LabelCount[]>("GET", "/db/:dataset/:subset/labels/count"),
   addLabel: new ApiRoute<LabelBase, {dataset: string; subset: string; chunk: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
-  deleteLabelByPos: new ApiRoute<undefined, {dataset: string; subset: string; pos: string | number}, undefined, undefined>("DELETE", "/db/:dataset/:subset/:chunk/labels/:pos"),
+  deleteLabelByPos: new ApiRoute<undefined, {dataset: string; subset: string; pos: string | number; chunk: string}, undefined, undefined>("DELETE", "/db/:dataset/:subset/:chunk/labels/:pos"),
   getNormals: new ApiRoute<undefined, { dataset: string; subset: string }, undefined, string[]>("GET", "/db/:dataset/:subset/normals"),
   toggleNormal: new ApiRoute<undefined, { dataset: string; subset: string; chunk: string }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/normals"),
   reset: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/reset"),

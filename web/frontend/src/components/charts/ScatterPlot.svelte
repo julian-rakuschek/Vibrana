@@ -47,6 +47,8 @@
     const min_y_value = projected.map(d => d.coords[1]).toSorted((a, b) => a - b)[0]
     const max_y_value = projected.map(d => d.coords[1]).toSorted((a, b) => a - b)[projected.length - 1]
 
+    const client = useQueryClient();
+
     let quadtree = compute_quadtree(projected, $filterRangeIndexed)
     let renderData = moveMiddleToEnd(projected, $filterRangeIndexed)
     const rtree = new ProjectedTimeSeriesRBush()
@@ -243,7 +245,7 @@
     }
 
     const saveBrushes = async () => {
-        const intervals = selectedToColoredIntervals($selectedProjectedPoints, $colorsProjection, timeSeries.length - projected.length)
+        const intervals = selectedToColoredIntervals($selectedProjectedPoints, $colorsProjection, $chartSettings.windowSize)
         for (const interval of intervals) {
             await ApiRoutes.addLabel.fetch({
                 data: {
@@ -253,7 +255,11 @@
                 }
             })
         }
-        await queryClient.invalidateQueries();
+        await client.invalidateQueries({queryKey: [`/db/${dataset}/${subset}/${chunk}/labels`]});
+        await render()
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/${chunk}/distanceProfile/quantized`]});
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/normal_tube`]});
+        await client.invalidateQueries({queryKey: [`/analysis/${dataset}/${subset}/anomaly_metrics`]});
     }
 
 
