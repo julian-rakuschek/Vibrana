@@ -12,19 +12,19 @@ services:
       - mongodb_volume:/data/db
     networks:
       - web
+      - vibrana
 
   redis_container:
     container_name: vibrana_redis
     image: redis:latest
     restart: always
-    ports:
-      - '6379:6379'
     expose:
       - 6379
     volumes:
       - cache:/data
     networks:
       - web
+      - vibrana
 
   backend:
     container_name: vibrana_app
@@ -32,17 +32,16 @@ services:
     depends_on:
       - redis_container
       - mongodb_container
-    ports:
-      - "5001:5001"
     expose:
-      - 5001
+      - 5000
     volumes:
       - ./data:/app/data
     environment:
-      - READ_ONLY=False
+      - READ_ONLY=True
       - DOCKER=True
     networks:
       - web
+      - vibrana
 
   nginx:
     container_name: vibrana_nginx
@@ -62,6 +61,7 @@ services:
       - "traefik.http.routers.vibrana-nginx-secured.tls.certresolver=mytlschallenge"
     networks:
       - web
+      - vibrana
 
 
 volumes:
@@ -71,5 +71,6 @@ volumes:
     driver: local
 
 networks:
+  vibrana:
   web:
     external: true
