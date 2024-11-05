@@ -4,8 +4,6 @@ services:
   mongodb_container:
     container_name: vibrana_mongodb
     image: mongo:latest
-    ports:
-      - 27017:27017
     expose:
       - 27017
     volumes:
