@@ -119,3 +119,8 @@ def flask_get_anomaly_ratios(dataset, subset, subset_path):
         anomaly_sample_metrics.append(metrics)
     anomaly_sample_metrics.sort(key=lambda x: x["ratio"], reverse=True)
     return anomaly_sample_metrics
+
+@analysis_app.get("<dataset>/<subset>/cluster")
+@validate_subset
+def flask_get_clustering(dataset, subset, subset_path):
+    return compute_clusters(dataset, subset)

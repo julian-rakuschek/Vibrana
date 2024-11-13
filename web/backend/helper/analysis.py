@@ -1,14 +1,17 @@
 import os.path
 import os.path
 import random
+from pprint import pprint
 
 import numpy as np
 import stumpy
+from matplotlib import pyplot as plt
 from numpy.lib.stride_tricks import sliding_window_view
 from pymongo.database import Database
 from scipy.spatial import distance
+from sklearn.cluster import KMeans
 from tslearn.preprocessing import TimeSeriesResampler
-
+import scipy.cluster.hierarchy as hierarchy
 from web.backend.helper.lmds import landmark_MDS
 from web.backend.settings import chunks_folder
 
@@ -133,3 +136,36 @@ def compute_quantized_distance_profile(dataset, subset, chunk, labels, normals):
     distances = compute_distance_profile(chunk_path, labels)
     normal_tube = compute_normal_tube(dataset, subset, labels, normals)
     return reduce_distances(distances, normal_tube, 1000, True)
+
+
+def compute_clusters(dataset, subset):
+    def convert_tree(node, labels):
+        if node.left is None and node.right is None:
+            return {"id": labels[node.id]}
+        left = convert_tree(node.left, labels)
+        right = convert_tree(node.right, labels)
+        return {"id": node.id, "dist": node.dist, "left": left, "right": right}
+
+    subset_path = str(os.path.join(chunks_folder, dataset, subset))
+    histograms = []
+    chunks = []
+    all_radii = []
+    max_radius = 0
+    for file in os.listdir(subset_path):
+        chunks.append(file)
+        projected = np.load(os.path.join(subset_path, file, "projected.npy"))
+        radii = np.linalg.norm(projected, axis=1)
+        all_radii.append(radii)
+        max_radius = max(max_radius, np.max(radii))
+    for radii in all_radii:
+        counts, bins = np.histogram(radii, bins=50, range=(0, max_radius), density=True)
+        histograms.append(counts)
+    histograms = np.array(histograms)
+    clustering = hierarchy.linkage(histograms, method='complete', metric="jensenshannon")
+    linkage_tree = hierarchy.to_tree(clustering)
+    json_tree = convert_tree(linkage_tree, chunks)
+    return json_tree
+
+
+if __name__ == '__main__':
+    compute_clusters("nasa-bearings", "test2")

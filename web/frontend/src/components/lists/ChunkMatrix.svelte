@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type {AnomalyMetric, LabelCount} from "@lib/types";
+    import type {AnomalyMetric, Dendrogram, LabelCount} from "@lib/types";
     import DistanceIndicator from "@components/DistanceIndicator.svelte";
     import Toggle from "@components/atoms/Toggle.svelte";
     import {getContext} from "svelte";
@@ -7,6 +7,8 @@
     import {sessionResetChunk, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {CheckCircle, Icon, ArrowTopRightOnSquare} from "svelte-hero-icons";
+    import {getClusters, getDValues} from "@lib/helper/dendrogram";
+    import {simpleTable, clusteringActive, numberClusters, displayMode} from '@lib/stores';
 
     export let dataset: string;
     export let subset: string;
@@ -15,6 +17,10 @@
     export let anomaly_ratios: AnomalyMetric[];
     export let normalTube: [number, number];
     export let labelCounts: LabelCount[];
+    export let clustering: Dendrogram;
+
+    const d_vals = getDValues(clustering).sort().reverse();
+    const clusters = getClusters(clustering, d_vals[1])
 
     let selected_chunk: string | undefined = undefined;
     let selected_chunk_normal: boolean;
@@ -44,19 +50,42 @@
 </script>
 
 <div class="grid grid-cols-3 place-items-start">
-    <div class="flex flex-row flex-wrap mt-5 col-span-2">
-        {#each chunks as chunk}
-            <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`} on:click={() => selected_chunk = chunk}>
-                {#if normals.indexOf(chunk ?? "") !== -1 }
-                    <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
-                        <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
-                        Anomaly-Free
-                    </div>
-                {/if}
-                <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
-            </button>
+    {#if !$clusteringActive}
+        <div class="flex flex-row flex-wrap mt-5 col-span-2">
+            {#each chunks as chunk}
+                <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
+                        on:click={() => selected_chunk = chunk}>
+                    {#if normals.indexOf(chunk ?? "") !== -1 }
+                        <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
+                            <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
+                            Anomaly-Free
+                        </div>
+                    {/if}
+                    <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
+                         class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
+                </button>
+            {/each}
+        </div>
+    {/if}
+    {#if $clusteringActive}
+        {#each clusters as cluster}
+            <div class="flex flex-row flex-wrap mt-5 col-span-2 border-b-amber-600 border-solid border-2">
+            {#each cluster as chunk}
+                <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
+                        on:click={() => selected_chunk = chunk}>
+                    {#if normals.indexOf(chunk ?? "") !== -1 }
+                        <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
+                            <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
+                            Anomaly-Free
+                        </div>
+                    {/if}
+                    <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
+                         class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
+                </button>
+            {/each}
+        </div>
         {/each}
-    </div>
+    {/if}
     {#if selected_chunk}
         <div class="flex flex-col items-center bg-indigo-50 rounded-3xl p-4 gap-4 mt-4 mb-4">
             <a
@@ -73,32 +102,41 @@
                     <div>Labels</div>
                     <div class="place-self-center">{labelCounts.find(item => item._id === selected_chunk)?.count ?? 0}</div>
                     <div>Anomaly Free</div>
-                    <div class="place-self-center"><Toggle bind:enabled={selected_chunk_normal} onToggle={() => toggleNormal(selected_chunk)}/></div>
+                    <div class="place-self-center">
+                        <Toggle bind:enabled={selected_chunk_normal} onToggle={() => toggleNormal(selected_chunk)}/>
+                    </div>
                     <div class="col-span-2">
-                        <button on:click={() => resetChunk(selected_chunk)} class="w-full rounded-lg px-2 bg-indigo-100 text-indigo-600 text-sm transition hover:bg-red-500 hover:text-white">Reset labels</button>
+                        <button on:click={() => resetChunk(selected_chunk)}
+                                class="w-full rounded-lg px-2 bg-indigo-100 text-indigo-600 text-sm transition hover:bg-red-500 hover:text-white">
+                            Reset labels
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="border-t-[1px] border-solid border-indigo-500 w-full">
                 <p class="text-center text-indigo-600 font-semibold">Time Series / Signal</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/thumbnail`} alt="thumbnail" class=" object-scale-down w-full"/>
+                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/thumbnail`} alt="thumbnail"
+                     class=" object-scale-down w-full"/>
             </div>
             {#if get_anomaly(selected_chunk, anomaly_ratios) !== undefined}
                 <div class="border-t-[1px] border-solid border-indigo-500 w-full">
                     <p class="text-center text-indigo-600 font-semibold">Distance Indicator</p>
                     <div class="w-full h-[10px] flex justify-center">
-                        <DistanceIndicator distances={get_anomaly(selected_chunk, anomaly_ratios).distances_reduced} normalTube={normalTube} width={380} height={10}/>
+                        <DistanceIndicator distances={get_anomaly(selected_chunk, anomaly_ratios).distances_reduced}
+                                           normalTube={normalTube} width={380} height={10}/>
                     </div>
                 </div>
             {/if}
             <div class="border-t-[1px] border-solid border-indigo-500 w-full">
                 <p class="text-center text-indigo-600 font-semibold">Spectrogram</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/spectrogram`} alt="thumbnail" class=" object-scale-down w-full"/>
+                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/spectrogram`} alt="thumbnail"
+                     class=" object-scale-down w-full"/>
             </div>
             <div class="border-t-[1px] border-solid border-indigo-500 w-full flex flex-col items-center">
                 <p class="text-center text-indigo-600 font-semibold">Time Delay Embedding</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/projected_thumbnail`} alt="thumbnail" class="object-scale-down w-2/3"/>
+                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/projected_thumbnail`} alt="thumbnail"
+                     class="object-scale-down w-2/3"/>
             </div>
         </div>
     {/if}

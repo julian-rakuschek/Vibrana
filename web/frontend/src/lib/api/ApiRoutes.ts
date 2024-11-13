@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppResponse, Label, LabelBase, LabelCount, ParseStatus} from "../types";
+import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppResponse, Dendrogram, Label, LabelBase, LabelCount, ParseStatus} from "../types";
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -33,6 +33,7 @@ export const analysisRoutesDB = {
   getSimilarities: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/analysis/:dataset/:subset/:chunk/distanceProfile/quantized"),
   getNormalTube: new ApiRoute<undefined, {dataset: string; subset: string }, undefined, [number, number]>("GET", "/analysis/:dataset/:subset/normal_tube"),
   getAnomalyRatios: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, AnomalyMetric[]>("GET", "/analysis/:dataset/:subset/anomaly_metrics"),
+  getCluster: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, Dendrogram>("GET", "/analysis/:dataset/:subset/cluster"),
 }
 
 // RO = Read Only, this means the user needs to supply data that would normally be stored in the database

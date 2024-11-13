@@ -131,3 +131,10 @@ export type SessionNormals = {
         [subset: string]: string[]
     }
 }
+
+export type Dendrogram = {
+  id: string;
+  dist?: number;
+  left?: Dendrogram;
+  right?: Dendrogram;
+};

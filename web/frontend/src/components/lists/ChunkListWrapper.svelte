@@ -29,6 +29,7 @@
     const chunkListQuery = useQueryFetch(ApiRoutes.getChunks, {params: {dataset, subset}})
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {dataset, subset}}, undefined, undefined, ro)
     const labelCountQuery = useQueryFetch(ApiRoutes.getLabelCounts, {params: {dataset, subset}}, undefined, undefined, ro)
+    const clusteringQuery = useQueryFetch(ApiRoutes.getCluster, {params: {dataset, subset}}, undefined, undefined, ro)
     const anomalyRatiosQuery = ro ?
         useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {dataset, subset}, data: sessionGetAll(dataset, subset)}) :
         useQueryFetch(ApiRoutes.getAnomalyRatios, {params: {dataset, subset}})
@@ -46,13 +47,13 @@
 
 </script>
 
-{#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending || $labelCountQuery.isPending}
+{#if $chunkListQuery.isPending || $normalsQuery.isPending || $normalTubeQuery.isPending || $labelCountQuery.isPending || $clusteringQuery.isPending}
     <div class="w-full h-full pt-20">
         <CenteredLoadingSpinner/>
     </div>
 {/if}
 
-{#if $anomalyRatiosQuery.isPending || $anomalyRatiosQuery.isRefetching || $anomalyRatiosQuery.isLoading}
+{#if $anomalyRatiosQuery.isPending || $anomalyRatiosQuery.isRefetching || $anomalyRatiosQuery.isLoading || $clusteringQuery.isLoading}
     <div transition:fly={{ x: -30, duration: 300 }}
          class="fixed bottom-10 left-10 text-center px-4 py-2 bg-indigo-700 text-white rounded-md flex flex-row justify-center items-center gap-3 z-50">
         <span>Fetching anomaly scores</span>
@@ -60,7 +61,7 @@
     </div>
 {/if}
 
-{#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess && $labelCountQuery.isSuccess}
+{#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess && $labelCountQuery.isSuccess && $clusteringQuery.isSuccess}
     {#if displayMode === "vertical"}
         <ChunkList
                 chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
@@ -69,7 +70,7 @@
         />
     {:else}
         <ChunkMatrix chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
-                     normals={$normalsQuery.data}
+                     normals={$normalsQuery.data} clustering={$clusteringQuery.data}
                      anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}/>
     {/if}
 

@@ -19,3 +19,5 @@ export const selectedProjectedPoints = writable<ProjectedPoint[]>([])
 export const displayMode = writable<string>("vertical")
 
 export const simpleTable = writable<boolean>(false)
+export const clusteringActive = writable<boolean>(false)
+export const numberClusters = writable<number>(2)
