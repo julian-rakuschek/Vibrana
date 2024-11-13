@@ -27,7 +27,7 @@
 </script>
 
 <Navbar/>
-<div class="h-full col-span-full px-10 ">
+<div class="grow px-10 flex flex-col overflow-y-scroll pb-10">
     <div class="w-full grid grid-cols-3 justify-between relative z-20 h-10">
         <div class="flex flex-row gap-3 items-center place-self-start">
             <a class="bg-white rounded-full shadow-lg p-3 flex justify-center items-center transition hover:shadow-xl z-10" href={`/datasets`}>
@@ -52,5 +52,7 @@
             <SampleListSettings bind:settings dataset={dataset} subset={subset}/>
         </div>
     </div>
-    <ChunkListWrapper dataset={dataset} subset={subset} settings={settings} displayMode={$displayMode}/>
+    <div class="grow overflow-y-scroll pt-5">
+        <ChunkListWrapper dataset={dataset} subset={subset} settings={settings} displayMode={$displayMode}/>
+    </div>
 </div>

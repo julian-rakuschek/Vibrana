@@ -9,6 +9,7 @@
     import {getContext} from "svelte";
     import {useQueryClient} from "@tanstack/svelte-query";
     import Toggle from "@components/atoms/Toggle.svelte";
+    import ImageWithLightbox from '@components/atoms/ImageWithLightbox.svelte';
 
     export let isNormal: boolean;
     export let dataset: string;
@@ -49,7 +50,7 @@
     <td class="whitespace-nowrap text-sm text-center text-gray-500">{anomaly?.count ?? 0}</td>
     <td class="whitespace-nowrap text-sm text-center text-gray-500">{labelCount}</td>
     <td class="whitespace-nowrap text-sm text-left text-gray-500">
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" class="object-contain h-[100px]"/>
+        <ImageWithLightbox src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" classNames="object-contain h-[100px]"/>
         {#if anomaly !== undefined}
             <div class="w-full h-[10px]">
                 <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={320} height={10}/>
@@ -57,10 +58,10 @@
         {/if}
     </td>
     <td class="whitespace-nowrap text-sm text-left text-gray-500">
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/spectrogram`} alt="thumbnail" class="object-contain h-[100px]"/>
+        <ImageWithLightbox src={`/api/db/${dataset}/${subset}/${chunk}/spectrogram`} alt="thumbnail" classNames="object-contain h-[100px]"/>
     </td>
     <td class="whitespace-nowrap text-sm text-left text-gray-500">
-        <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" class="object-contain h-[100px]"/>
+        <ImageWithLightbox src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail" classNames="object-contain h-[100px]"/>
     </td>
     <td class="relative whitespace-nowrap text-center text-sm font-medium sm:pr-3">
         {#if itemSeen(dataset, subset, chunk)}

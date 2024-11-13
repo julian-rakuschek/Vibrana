@@ -22,7 +22,7 @@
             case ColorMode.Radius:
                 return "Distance of each point to the center of the point cloud.";
             case ColorMode.Distance:
-                return "Computed distance profile value based on the assigned labels.";
+                return "The similarity of your marked labels with positions in the signal.";
             case ColorMode.Frequency:
                 return "Mean amplitude of the SFFT over time."
             default:

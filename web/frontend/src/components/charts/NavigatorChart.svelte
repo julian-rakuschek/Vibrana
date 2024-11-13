@@ -81,7 +81,7 @@
     const navigatorChart = fc
         .chartCartesian(xScale, yScale)
         .webglPlotArea(fc.seriesWebglMulti().series([timeseriesLine]).mapping(d => d.data))
-        .svgPlotArea(fc.seriesSvgMulti().series([brushNavigator, brushedSelectionAnnotations, eventMarker, savedAnnotations]).mapping((data, index, series) => {
+        .svgPlotArea(fc.seriesSvgMulti().series([savedAnnotations, brushNavigator, brushedSelectionAnnotations, eventMarker]).mapping((data, index, series) => {
             switch (series[index]) {
                 case brushNavigator:
                     return $filterRangePercent;

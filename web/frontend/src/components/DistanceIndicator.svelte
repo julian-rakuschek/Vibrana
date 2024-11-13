@@ -9,12 +9,13 @@
     export let width = 300
     export let height = 10
 
-    const normalizeDistances = (distances, normalTube) => {
+    const normalizeDistances = (distances: number[], normalTube: [number, number]) => {
         const tolerance = 2
         const meanNormal = (normalTube[0] + normalTube[1]) / 2
         const tubeRadius = Math.abs(normalTube[0] - normalTube[1]) / 2
         const distancesToMeanNormal = distances.map(d => Math.abs(d - meanNormal))
         const maxDistanceFromMean = tubeRadius * tolerance
+        if (maxDistanceFromMean === 0 || isNaN(maxDistanceFromMean)) return distancesToMeanNormal.map(() => 1)
         return distancesToMeanNormal.map(s => s / maxDistanceFromMean).map(s => s > 1 ? 1 : s).map(s => 1 - s)
     }
     let distancesNormalized: number[];

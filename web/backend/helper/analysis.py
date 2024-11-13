@@ -38,10 +38,10 @@ def compute_distance_profile(chunk_path, labels):
     for label in extracted_label_values:
         if len(label) > len(values):
             continue
-        d = stumpy.mass(label, values, normalize=True)
+        d = stumpy.mass(label.astype(np.float64), values.astype(np.float64), normalize=True)
         d = TimeSeriesResampler(sz=len(values)).fit_transform(d.reshape(1, -1))[0, :, 0]
         distances.append(d)
-    return np.min(np.array(distances), axis=0) if len(distances) > 0 else []
+    return np.min(np.array(distances), axis=0) if len(distances) > 0 else np.repeat(0, len(values))
 
 
 def compute_normal_tube(dataset, subset, labels, normals):
@@ -118,15 +118,13 @@ def compute_anomaly_metrics(dataset, subset, chunk, labels, normals, normal_tube
     distances = compute_distance_profile(subset_path, labels)
     if normal_tube is None:
         normal_tube = compute_normal_tube(dataset, subset, labels, normals)
-    if len(labels) == 0:
-        return None
     return {
         "dataset": dataset,
         "subset": subset,
         "chunk": chunk,
         "distances_reduced": reduce_distances(distances, normal_tube, 200),
-        "ratio": compute_anomaly_ratio(distances, normal_tube),
-        "count": count_anomaly_intervals(distances, normal_tube)
+        "ratio": compute_anomaly_ratio(distances, normal_tube) if len(labels) > 0 else 0,
+        "count": count_anomaly_intervals(distances, normal_tube) if len(labels) > 0 else 0
     }
 
 

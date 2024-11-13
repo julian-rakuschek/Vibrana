@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+    @apply w-full;
+    @apply h-full;
+}
+
 .defaultIconSize {
     @apply h-7;
     @apply w-7;

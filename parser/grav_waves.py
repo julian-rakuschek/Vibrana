@@ -11,7 +11,6 @@ from matplotlib import cm
 
 
 def make_gravitational_waves(
-    path_to_data: Path,
     n_signals: int = 30,
     downsample_factor: int = 2,
     snr: float = 0.075,
@@ -20,15 +19,16 @@ def make_gravitational_waves(
     if seed:
         np.random.seed(seed=seed)
 
-    def padrand(V, n, kr):
-        cut = np.random.randint(n)
+    def padrand(V, Npad, coeff):
+        cut = np.random.randint(Npad)
         rand1 = np.random.randn(cut)
-        rand2 = np.random.randn(n - cut)
-        out = np.concatenate((rand1 * kr, V, rand2 * kr))
-        return out
+        rand2 = np.random.randn(Npad - cut)
+        out = np.concatenate((rand1 * coeff, V, rand2 * coeff))
+        return out, cut
 
-    Npad = 500  # number of padding points on either side of the vector
-    gw = np.load(path_to_data)
+    Npad = 4_000  # number of padding points on either side of the vector
+    file_path = os.path.join(Path(__file__).parents[1], "data", "raw", "grav", "gravitational_wave_signals.npy")
+    gw = np.load(file_path)
     Norig = len(gw["data"][0])
     Ndat = len(gw["signal_present"])
     N = int(Norig / downsample_factor)
@@ -42,21 +42,21 @@ def make_gravitational_waves(
     for j in range(n_signals):
         signal = gw["data"][j % Ndat][range(0, Norig, downsample_factor)]
         noise = coeff * np.random.randn(N)
-        rawsig_a = padrand(signal + noise, Npad, coeff)
-        rawsig_p = padrand(noise, Npad, coeff)
+        rawsig_a, cut = padrand(signal + noise, Npad, coeff)
+        print(cut)
+        rawsig_p, _ = padrand(noise, Npad, coeff)
         noisy_signals_anomalous.append(rawsig_a.copy())
         noisy_signals_plain.append(rawsig_p.copy())
-        gw_signals.append(signal)
+        gw_signals.append(np.concatenate((np.repeat(0, cut), signal, np.repeat(0, Npad - cut))))
 
     return noisy_signals_plain, noisy_signals_anomalous, gw_signals
 
 
 def gen_dataset(n=20, snr=0.15):
-    file_path = os.path.join(Path(__file__).parents[1], "data", "raw", "grav", "gravitational_wave_signals.npy")
     base_target_path = os.path.join(Path(__file__).parents[1], "data", "parsed", "grav", f"grav-{str(snr).replace('.', '')}")
     Path(base_target_path).mkdir(parents=True, exist_ok=True)
     for i in range(n):
-        noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(Path(file_path), n_signals=30, snr=snr)
+        noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(n_signals=30, snr=snr)
 
         # This Multiplication with 100_000_000_000 is necessary since the values are so small
         # that MinMaxScaler is not working due to numerical imprecision.
