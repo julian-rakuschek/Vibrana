@@ -9,6 +9,8 @@
     import {CheckCircle, Icon, ArrowTopRightOnSquare} from "svelte-hero-icons";
     import {getClusters, getDValues} from "@lib/helper/dendrogram";
     import {simpleTable, clusteringActive, numberClusters, displayMode} from '@lib/stores';
+    import StyledDisclosure from "@components/atoms/StyledDisclosure.svelte";
+    import * as d3 from "d3";
 
     export let dataset: string;
     export let subset: string;
@@ -20,7 +22,8 @@
     export let clustering: Dendrogram;
 
     const d_vals = getDValues(clustering).sort().reverse();
-    const clusters = getClusters(clustering, d_vals[1])
+    const clusters = getClusters(clustering, d_vals[$numberClusters - 1])
+    const cluster_colors = d3.scaleSequential(d3.interpolateViridis);
 
     let selected_chunk: string | undefined = undefined;
     let selected_chunk_normal: boolean;
@@ -49,12 +52,13 @@
     $: selected_chunk_normal = normals.indexOf(selected_chunk ?? "") !== -1
 </script>
 
-<div class="grid grid-cols-3 place-items-start">
+<div class={`grid ${selected_chunk ? "grid-cols-3" : "grid-cols-2"} place-items-start`}>
+    <div class="flex flex-row flex-wrap mt-5 col-span-2 w-full">
     {#if !$clusteringActive}
-        <div class="flex flex-row flex-wrap mt-5 col-span-2">
+
             {#each chunks as chunk}
                 <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
-                        on:click={() => selected_chunk = chunk}>
+                        on:click={() => selected_chunk === chunk ? selected_chunk = undefined : selected_chunk = chunk}>
                     {#if normals.indexOf(chunk ?? "") !== -1 }
                         <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
                             <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
@@ -65,27 +69,29 @@
                          class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
                 </button>
             {/each}
-        </div>
     {/if}
     {#if $clusteringActive}
-        {#each clusters as cluster}
-            <div class="flex flex-row flex-wrap mt-5 col-span-2 border-b-amber-600 border-solid border-2">
-            {#each cluster as chunk}
-                <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
-                        on:click={() => selected_chunk = chunk}>
-                    {#if normals.indexOf(chunk ?? "") !== -1 }
-                        <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
-                            <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
-                            Anomaly-Free
-                        </div>
-                    {/if}
-                    <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
-                         class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
-                </button>
-            {/each}
-        </div>
+        {#each clusters as cluster, idx}
+            <StyledDisclosure header_text={"Cluster " + idx} bg_color={cluster_colors((idx + 0.5) / $numberClusters)} classNames="w-full col-span-2 mx-2 mb-4" bg_opacity={0.4}>
+                <div class="flex flex-row flex-wrap mt-5 col-span-2 w-full justify-center gap-4">
+                    {#each cluster as chunk}
+                        <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
+                                on:click={() => selected_chunk === chunk ? selected_chunk = undefined : selected_chunk = chunk}>
+                            {#if normals.indexOf(chunk ?? "") !== -1 }
+                                <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
+                                    <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
+                                    Anomaly-Free
+                                </div>
+                            {/if}
+                            <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
+                                 class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
+                        </button>
+                    {/each}
+                </div>
+            </StyledDisclosure>
         {/each}
     {/if}
+        </div>
     {#if selected_chunk}
         <div class="flex flex-col items-center bg-indigo-50 rounded-3xl p-4 gap-4 mt-4 mb-4">
             <a
