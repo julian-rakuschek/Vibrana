@@ -5,6 +5,7 @@
 	import ChunkTableRow from '@components/lists/ChunkTableRow.svelte';
 	import { ColorMode } from '@lib/types';
 	import ColorLegend from '@components/atoms/ColorLegend.svelte';
+	import { simpleTable } from '@lib/stores';
 
 	export let dataset: string;
 	export let subset: string;
@@ -31,16 +32,20 @@
 					<thead class="sticky top-0 bg-white z-30">
 					<tr>
 						<th scope="col" class="text-left text-sm font-semibold text-gray-900 sm:pl-3">Name</th>
-						<th scope="col" class="text-center text-sm font-semibold text-gray-900">Anomalies</th>
-						<th scope="col" class="text-center text-sm font-semibold text-gray-900">Labels</th>
+						{#if !$simpleTable}
+							<th scope="col" class="text-center text-sm font-semibold text-gray-900">Anomalies</th>
+							<th scope="col" class="text-center text-sm font-semibold text-gray-900">Labels</th>
+						{/if}
 						<th scope="col" class="text-left text-sm font-semibold text-gray-900">Time Series / Signal</th>
 						<th scope="col" class="text-left text-sm font-semibold text-gray-900">Spectrogram</th>
 						<th scope="col" class="text-left text-sm font-semibold text-gray-900">Time Delay Embedding</th>
-						<th scope="col" class="text-left text-sm font-semibold text-gray-900">Seen</th>
-						<th scope="col" class="text-center text-sm font-semibold text-gray-900">Anomaly Free</th>
-						<th scope="col" class="relative text-center pl-3 pr-4 sm:pr-3">
-							<span class="sr-only">Reset Labels</span>
-						</th>
+						{#if !$simpleTable}
+							<th scope="col" class="text-left text-sm font-semibold text-gray-900">Seen</th>
+							<th scope="col" class="text-center text-sm font-semibold text-gray-900">Anomaly Free</th>
+							<th scope="col" class="relative text-center pl-3 pr-4 sm:pr-3">
+								<span class="sr-only">Reset Labels</span>
+							</th>
+						{/if}
 					</tr>
 					</thead>
 					<tbody class="bg-white">
@@ -61,6 +66,8 @@
 		</div>
 	</div>
 </div>
-<div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
-	<ColorLegend colorMode={ColorMode.Distance} />
-</div>
+{#if !$simpleTable}
+	<div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
+		<ColorLegend colorMode={ColorMode.Distance} />
+	</div>
+{/if}
