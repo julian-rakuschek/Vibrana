@@ -22,7 +22,7 @@
     export let clustering: Dendrogram;
 
     const d_vals = getDValues(clustering).sort().reverse();
-    const clusters = getClusters(clustering, d_vals[$numberClusters - 1])
+    let clusters = getClusters(clustering, d_vals[$numberClusters - 1])
     const cluster_colors = d3.scaleSequential(d3.interpolateViridis);
 
     let selected_chunk: string | undefined = undefined;
@@ -50,6 +50,10 @@
 
 
     $: selected_chunk_normal = normals.indexOf(selected_chunk ?? "") !== -1
+
+    numberClusters.subscribe((n) => {
+        clusters = getClusters(clustering, d_vals[Math.min(d_vals.length - 1, n - 1)])
+    })
 </script>
 
 <div class={`grid ${selected_chunk ? "grid-cols-3" : "grid-cols-2"} place-items-start`}>
@@ -72,7 +76,7 @@
     {/if}
     {#if $clusteringActive}
         {#each clusters as cluster, idx}
-            <StyledDisclosure header_text={"Cluster " + idx} bg_color={cluster_colors((idx + 0.5) / $numberClusters)} classNames="w-full col-span-2 mx-2 mb-4" bg_opacity={0.4}>
+            <StyledDisclosure header_text={"Cluster " + idx} bg_color={cluster_colors((idx + 0.5) / Math.min(d_vals.length - 1, $numberClusters))} classNames="w-full col-span-2 mx-2 mb-4" bg_opacity={0.4}>
                 <div class="flex flex-row flex-wrap mt-5 col-span-2 w-full justify-center gap-4">
                     {#each cluster as chunk}
                         <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}

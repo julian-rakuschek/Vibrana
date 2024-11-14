@@ -15,6 +15,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 app.register_blueprint(db_app, url_prefix="/api/db")
 app.register_blueprint(analysis_app, url_prefix="/api/analysis")
 
+SATIC_FILE_EXTENSIONS = ["js", "css", "html", "png", "jpg", "mp4"]
 
 @app.route("/")
 def index_route():
@@ -25,9 +26,9 @@ def index_route():
 @app.route("/<path:path>")
 def static_files(path):
     dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
-    if "." not in path:
-        return flask.send_from_directory(dist_path, 'index.html')
-    return flask.send_from_directory(dist_path, path)
+    if str(path).split(".")[-1] in SATIC_FILE_EXTENSIONS:
+        return flask.send_from_directory(dist_path, path)
+    return flask.send_from_directory(dist_path, 'index.html')
 
 
 if __name__ == '__main__':

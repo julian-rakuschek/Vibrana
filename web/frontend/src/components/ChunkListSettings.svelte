@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {type ChunkListSettingsType, SortMode} from '@lib/types';
+    import { type ChunkListSettingsType, type Dendrogram, SortMode } from '@lib/types';
     import {Menu, MenuButton, MenuItems, Transition} from '@rgossiaux/svelte-headlessui';
     import {Icon, Wrench} from 'svelte-hero-icons';
     import {ApiRoutes} from '@lib/api/ApiRoutes';
@@ -7,6 +7,7 @@
     import {getContext} from 'svelte';
     import {sessionResetLabels, resetViewHistory} from '@lib/helper/sessionStorageHelper';
     import {simpleTable, clusteringActive, numberClusters, displayMode} from '@lib/stores';
+    import RangeSlider from 'svelte-range-slider-pips';
 
     export let settings: ChunkListSettingsType;
     export let dataset: string;
@@ -80,7 +81,7 @@
                 <div class="relative flex items-start">
                     <div class="flex h-6 items-center">
                         <input id="simple-table" bind:checked={$simpleTable} name="simple-table" type="checkbox"
-                               class="size-4 rounded border-gray-300 text-indigo-600">
+                               class="appearance-none size-4 rounded border-gray-300 text-indigo-600">
                     </div>
                     <div class="ml-3 text-sm/6">
                         <label for="simple-table" class="font-medium text-gray-900">Simple Table</label>
@@ -99,8 +100,9 @@
                     </div>
                 </div>
                 {#if $clusteringActive}
-                    <div class="relative flex items-start">
-
+                    <div class="relative w-full">
+                        <p>Number of Clusters</p>
+                        <RangeSlider bind:value={$numberClusters}  min={1} max={10} step={1} pips float />
                     </div>
                 {/if}
             {/if}
