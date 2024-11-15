@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import type {Annotation, Color, Point, ProjectedPoint} from "@lib/types";
+    import type {Annotation, Color, Point} from "@lib/types";
     import {onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
     import {chartSettings, filterRangeIndexed, filterRangePercent, selectedProjectedPoints} from "@lib/stores";

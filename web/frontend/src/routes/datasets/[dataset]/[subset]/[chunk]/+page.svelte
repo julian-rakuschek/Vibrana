@@ -1,6 +1,6 @@
 <script lang="ts">
     import {page} from '$app/stores';
-    import ThreeChartsWrapper from "@components/charts/ThreeChartsWrapper.svelte";
+    import ThreeChartsWrapper from "@components/detail-view/ThreeChartsWrapper.svelte";
 
     $: dataset = $page.params.dataset;
     $: subset = $page.params.subset;

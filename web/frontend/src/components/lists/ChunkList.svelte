@@ -1,11 +1,9 @@
 <script lang="ts">
-	import ChunkCard from '@components/ChunkCard.svelte';
-	import type { AnomalyMetric, LabelCount } from '@lib/types';
-	import DistanceIndicator from '@components/DistanceIndicator.svelte';
+	import type {AnomalyMetric, LabelCount} from '@lib/types';
+	import {ColorMode} from '@lib/types';
 	import ChunkTableRow from '@components/lists/ChunkTableRow.svelte';
-	import { ColorMode } from '@lib/types';
 	import ColorLegend from '@components/atoms/ColorLegend.svelte';
-	import { simpleTable } from '@lib/stores';
+	import {simpleTable} from '@lib/stores';
 
 	export let dataset: string;
 	export let subset: string;

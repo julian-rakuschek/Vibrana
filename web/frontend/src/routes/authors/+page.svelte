@@ -1,6 +1,6 @@
 <script>
-    import Navbar from "@components/Navbar.svelte";
-    import AuthorPage from "@components/AuthorPage.svelte";
+    import Navbar from "@components/manage/Navbar.svelte";
+    import AuthorPage from "@components/pages/AuthorPage.svelte";
 </script>
 
 <Navbar />

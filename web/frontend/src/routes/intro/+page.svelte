@@ -1,6 +1,6 @@
 <script>
-    import IntroPage from "@components/IntroPage.svelte";
-    import Navbar from "@components/Navbar.svelte";
+    import IntroPage from "@components/pages/IntroPage.svelte";
+    import Navbar from "@components/manage/Navbar.svelte";
 </script>
 
 <Navbar />

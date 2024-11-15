@@ -1,11 +1,6 @@
 <script lang="ts">
-    import {
-        Dialog,
-        DialogOverlay,
-        DialogTitle,
-        DialogDescription, Transition, TransitionChild,
-    } from "@rgossiaux/svelte-headlessui";
-    import WindowSizeSelector from "@components/charts/WindowSizeSelector.svelte";
+    import {Dialog, DialogOverlay, Transition, TransitionChild,} from "@rgossiaux/svelte-headlessui";
+    import WindowSizeSelector from "@components/detail-view/WindowSizeSelector.svelte";
     import {chartSettings} from "@lib/stores";
     import type {Color} from "@lib/types";
 

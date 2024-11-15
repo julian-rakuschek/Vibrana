@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { Icon, CheckCircle, ArrowTopRightOnSquare, Eye } from 'svelte-hero-icons';
-	import AnomalyRatio from '@components/AnomalyRatio.svelte';
-	import type { AnomalyMetric } from '@lib/types';
-	import DistanceIndicator from '@components/DistanceIndicator.svelte';
-	import { itemSeen, sessionResetChunk, sessionToggleNormal } from '@lib/helper/sessionStorageHelper';
-	import AnomalyCount from '@components/AnomalyCount.svelte';
-	import { ApiRoutes } from '@lib/api/ApiRoutes';
-	import { getContext } from 'svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import {ArrowTopRightOnSquare, Eye, Icon} from 'svelte-hero-icons';
+	import type {AnomalyMetric} from '@lib/types';
+	import DistanceIndicator from '@components/similarities/DistanceIndicator.svelte';
+	import {itemSeen, sessionResetChunk, sessionToggleNormal} from '@lib/helper/sessionStorageHelper';
+	import {ApiRoutes} from '@lib/api/ApiRoutes';
+	import {getContext} from 'svelte';
+	import {useQueryClient} from '@tanstack/svelte-query';
 	import Toggle from '@components/atoms/Toggle.svelte';
 	import ImageWithLightbox from '@components/atoms/ImageWithLightbox.svelte';
-	import { simpleTable } from '@lib/stores';
+	import {simpleTable} from '@lib/stores';
 
 	export let isNormal: boolean;
 	export let dataset: string;

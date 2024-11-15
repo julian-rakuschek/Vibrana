@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { type ChunkListSettingsType, type Dendrogram, SortMode } from '@lib/types';
+    import {type ChunkListSettingsType, SortMode} from '@lib/types';
     import {Menu, MenuButton, MenuItems, Transition} from '@rgossiaux/svelte-headlessui';
     import {Icon, Wrench} from 'svelte-hero-icons';
     import {ApiRoutes} from '@lib/api/ApiRoutes';
     import {useQueryClient} from '@tanstack/svelte-query';
     import {getContext} from 'svelte';
-    import {sessionResetLabels, resetViewHistory} from '@lib/helper/sessionStorageHelper';
-    import {simpleTable, clusteringActive, numberClusters, displayMode} from '@lib/stores';
-    import RangeSlider from 'svelte-range-slider-pips';
+    import {resetViewHistory, sessionResetLabels} from '@lib/helper/sessionStorageHelper';
+    import {clusteringActive, displayMode, numberClusters, simpleTable} from '@lib/stores';
 
     export let settings: ChunkListSettingsType;
     export let dataset: string;
@@ -77,7 +76,7 @@
                     </fieldset>
                 </div>
             {/each}
-            {#if $displayMode === "vertical"}
+            {#if $displayMode === "table"}
                 <div class="relative flex items-start">
                     <div class="flex h-6 items-center">
                         <input id="simple-table" bind:checked={$simpleTable} name="simple-table" type="checkbox"
@@ -88,7 +87,7 @@
                     </div>
                 </div>
             {/if}
-            {#if $displayMode === "horizontal"}
+            {#if $displayMode === "grid"}
                 <div class="relative flex items-start">
                     <div class="flex h-6 items-center">
                         <input id="cluster-active" bind:checked={$clusteringActive} name="simple-table" type="checkbox"

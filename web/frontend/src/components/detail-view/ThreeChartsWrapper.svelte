@@ -2,7 +2,7 @@
     import {useQueryFetch} from "@lib/api/ApiQueries";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
-    import ThreeCharts from "@components/charts/ThreeCharts.svelte";
+    import ThreeCharts from "@components/detail-view/ThreeCharts.svelte";
     import {Icon, ArrowLeft} from "svelte-hero-icons";
     import {getContext} from "svelte";
     import {sessionGetAll, setItemSeen} from "@lib/helper/sessionStorageHelper";

@@ -1,12 +1,7 @@
 <script lang="ts">
-    import {
-        Menu,
-        MenuButton,
-        MenuItems,
-        MenuItem, Transition,
-    } from "@rgossiaux/svelte-headlessui";
+    import {Menu, MenuButton, MenuItems, Transition,} from "@rgossiaux/svelte-headlessui";
     import {Icon, Wrench} from "svelte-hero-icons";
-    import {ColorMode, ProjectionMode, WindowMode, type ThreeChartsSettingsType} from "@lib/types.js";
+    import {ColorMode, ProjectionMode, WindowMode} from "@lib/types.js";
     import {chartSettings} from "@lib/stores";
 
     const radioSelections = [

@@ -62,13 +62,13 @@
 {/if}
 
 {#if $chunkListQuery.isSuccess && $normalsQuery.isSuccess && $normalTubeQuery.isSuccess && $labelCountQuery.isSuccess && $clusteringQuery.isSuccess}
-    {#if displayMode === "vertical"}
+    {#if displayMode === "table"}
         <ChunkList
                 chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
                 normals={$normalsQuery.data}
                 anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}
         />
-    {:else}
+    {:else if displayMode === "grid"}
         <ChunkMatrix chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
                      normals={$normalsQuery.data} clustering={$clusteringQuery.data}
                      anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}/>

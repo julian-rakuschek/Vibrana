@@ -1,24 +1,22 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {
-        type ProjectedPoint,
-        type ThreeChartsSettingsType,
-        type Point,
-        WindowMode,
-        type Label,
-        type Annotation,
-        type LabelBase,
-        type Color
-    } from "@lib/types";
+    import {type Annotation, type Color, type LabelBase, type Point, type ProjectedPoint, WindowMode} from "@lib/types";
     import {getContext, onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
     import betterPointer from "@lib/helper/betterPointer";
-    import {filterRangeIndexed, filterRangePercent, chartSettings, hoverRange, hoverPoint, selectedProjectedPoints} from "@lib/stores";
+    import {
+        chartSettings,
+        filterRangeIndexed,
+        filterRangePercent,
+        hoverPoint,
+        hoverRange,
+        selectedProjectedPoints
+    } from "@lib/stores";
     import {selectedToColoredIntervals} from "@lib/helper/util";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
-    import WindowSizePopup from "@components/WindowSizePopup.svelte";
+    import WindowSizePopup from "@components/detail-view/WindowSizePopup.svelte";
     import {sessionAddLabel, sessionDeleteLabelPyPos} from "@lib/helper/sessionStorageHelper";
 
     export let dataset: string;

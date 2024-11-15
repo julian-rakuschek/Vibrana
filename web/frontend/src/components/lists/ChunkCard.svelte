@@ -1,10 +1,8 @@
 <script lang="ts">
-    import {Icon, CheckCircle} from "svelte-hero-icons";
-    import AnomalyRatio from "@components/AnomalyRatio.svelte";
+    import {CheckCircle, Icon} from "svelte-hero-icons";
     import type {AnomalyMetric} from "@lib/types";
-    import DistanceIndicator from "@components/DistanceIndicator.svelte";
-    import {itemSeen, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
-    import AnomalyCount from "@components/AnomalyCount.svelte";
+    import DistanceIndicator from "@components/similarities/DistanceIndicator.svelte";
+    import {sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {getContext} from "svelte";
     import {useQueryClient} from "@tanstack/svelte-query";

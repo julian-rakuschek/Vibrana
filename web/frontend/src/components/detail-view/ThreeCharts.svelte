@@ -1,9 +1,6 @@
 <script lang="ts">
-    import NavigatorChart from "./NavigatorChart.svelte";
     import {onMount} from "svelte";
     import {type Annotation, type ChartColors, type ProjectedPoint, ProjectionMode} from "@lib/types";
-    // import AnnotatorChart from "./AnnotatorChart.svelte";
-    // import ScatterPlot from "./ScatterPlot.svelte";
     import {
         chartSettings,
         defaultChartSettings,
@@ -13,10 +10,11 @@
         hoverRange,
         selectedProjectedPoints
     } from "@lib/stores";
-    import ChartSettings from "./ChartSettings.svelte";
+    import ChartSettings from "@components/detail-view/ChartSettings.svelte";
     import {computeColors} from "@lib/chartLogic/chartColors";
-    import AnnotatorChart from "@components/charts/AnnotatorChart.svelte";
-    import ScatterPlot from "@components/charts/ScatterPlot.svelte";
+    import NavigatorChart from "@components/detail-view/NavigatorChart.svelte";
+    import AnnotatorChart from "@components/detail-view/AnnotatorChart.svelte";
+    import ScatterPlot from "@components/detail-view/ScatterPlot.svelte";
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
 
     export let dataset: string;

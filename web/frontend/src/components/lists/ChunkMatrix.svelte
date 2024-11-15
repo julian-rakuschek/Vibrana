@@ -1,14 +1,14 @@
 <script lang="ts">
     import type {AnomalyMetric, Dendrogram, LabelCount} from "@lib/types";
-    import DistanceIndicator from "@components/DistanceIndicator.svelte";
+    import DistanceIndicator from "@components/similarities/DistanceIndicator.svelte";
     import Toggle from "@components/atoms/Toggle.svelte";
     import {getContext} from "svelte";
     import {useQueryClient} from "@tanstack/svelte-query";
     import {sessionResetChunk, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
-    import {CheckCircle, Icon, ArrowTopRightOnSquare} from "svelte-hero-icons";
+    import {ArrowTopRightOnSquare, CheckCircle, Icon} from "svelte-hero-icons";
     import {getClusters, getDValues} from "@lib/helper/dendrogram";
-    import {simpleTable, clusteringActive, numberClusters, displayMode} from '@lib/stores';
+    import {clusteringActive, numberClusters} from '@lib/stores';
     import StyledDisclosure from "@components/atoms/StyledDisclosure.svelte";
     import * as d3 from "d3";
 
