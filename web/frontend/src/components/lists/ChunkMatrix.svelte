@@ -1,16 +1,7 @@
 <script lang="ts">
-    import type {AnomalyMetric, Dendrogram, LabelCount} from "@lib/types";
-    import DistanceIndicator from "@components/similarities/DistanceIndicator.svelte";
-    import Toggle from "@components/atoms/Toggle.svelte";
-    import {getContext} from "svelte";
-    import {useQueryClient} from "@tanstack/svelte-query";
-    import {sessionResetChunk, sessionToggleNormal} from "@lib/helper/sessionStorageHelper";
-    import {ApiRoutes} from "@lib/api/ApiRoutes";
-    import {ArrowTopRightOnSquare, CheckCircle, Icon} from "svelte-hero-icons";
-    import {getClusters, getDValues} from "@lib/helper/dendrogram";
-    import {clusteringActive, numberClusters} from '@lib/stores';
-    import StyledDisclosure from "@components/atoms/StyledDisclosure.svelte";
-    import * as d3 from "d3";
+    import type {AnomalyMetric, LabelCount} from "@lib/types";
+    import {CheckCircle, Icon} from "svelte-hero-icons";
+    import ChunkCard from "@components/lists/ChunkCard.svelte";
 
     export let dataset: string;
     export let subset: string;
@@ -19,49 +10,21 @@
     export let anomaly_ratios: AnomalyMetric[];
     export let normalTube: [number, number];
     export let labelCounts: LabelCount[];
-    export let clustering: Dendrogram;
-
-    const d_vals = getDValues(clustering).sort().reverse();
-    let clusters = getClusters(clustering, d_vals[$numberClusters - 1])
-    const cluster_colors = d3.scaleSequential(d3.interpolateViridis);
 
     let selected_chunk: string | undefined = undefined;
-    let selected_chunk_normal: boolean;
-    const {ro} = getContext("ro") as { ro: boolean }
-    const client = useQueryClient()
-
-    const toggleNormal = async (chunk: string) => {
-        if (ro) sessionToggleNormal(dataset, subset, chunk)
-        else await ApiRoutes.toggleNormal.fetch({params: {dataset, subset, chunk}})
-        await client.invalidateQueries();
-    }
 
     const get_anomaly = (needle: string, anomaly_ratios: AnomalyMetric[]): AnomalyMetric | undefined => {
         const res = anomaly_ratios.find(a => a.chunk == needle)
         if (res) return res;
         else return undefined;
     }
-
-    const resetChunk = async (chunk: string) => {
-        if (ro) sessionResetChunk(dataset, subset, chunk)
-        else await ApiRoutes.resetChunk.fetch({params: {dataset, subset, chunk}})
-        await client.invalidateQueries();
-    }
-
-
-    $: selected_chunk_normal = normals.indexOf(selected_chunk ?? "") !== -1
-
-    numberClusters.subscribe((n) => {
-        clusters = getClusters(clustering, d_vals[Math.min(d_vals.length - 1, n - 1)])
-    })
 </script>
-
-<div class={`grid ${selected_chunk ? "grid-cols-3" : "grid-cols-2"} place-items-start`}>
-    <div class="flex flex-row flex-wrap mt-5 col-span-2 w-full">
-    {#if !$clusteringActive}
-
-            {#each chunks as chunk}
-                <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
+<div class="h-full w-full flex flex-col">
+    <div class="w-full flex flex-row gap-x-3 grow overflow-hidden">
+        <div class="w-2/3 h-full">
+            <div class="flex flex-row flex-wrap gap-3 overflow-y-scroll  max-h-full">
+                {#each chunks as chunk}
+                <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} w-40 h-40 transition`}
                         on:click={() => selected_chunk === chunk ? selected_chunk = undefined : selected_chunk = chunk}>
                     {#if normals.indexOf(chunk ?? "") !== -1 }
                         <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
@@ -70,84 +33,25 @@
                         </div>
                     {/if}
                     <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
-                         class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
+                         class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down w-40 h-40 bg-white`}/>
                 </button>
             {/each}
-    {/if}
-    {#if $clusteringActive}
-        {#each clusters as cluster, idx}
-            <StyledDisclosure header_text={"Cluster " + idx} bg_color={cluster_colors((idx + 0.5) / Math.min(d_vals.length - 1, $numberClusters))} classNames="w-full col-span-2 mx-2 mb-4" bg_opacity={0.4}>
-                <div class="flex flex-row flex-wrap mt-5 col-span-2 w-full justify-center gap-4">
-                    {#each cluster as chunk}
-                        <button class={`relative flex flex-col rounded-3xl p-2 ${chunk === selected_chunk ? "bg-indigo-500" : "bg-white"} transition`}
-                                on:click={() => selected_chunk === chunk ? selected_chunk = undefined : selected_chunk = chunk}>
-                            {#if normals.indexOf(chunk ?? "") !== -1 }
-                                <div class="absolute bottom-5 w-2/3 left-1/2 -translate-x-1/2 flex flex-row flex-nowrap text-xs gap-1 justify-center items-center bg-green-600 rounded-full px-2 py-1 text-white font-semibold">
-                                    <Icon src="{CheckCircle}" solid class="w-4 h-4 text-white"/>
-                                    Anomaly-Free
-                                </div>
-                            {/if}
-                            <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
-                                 class={`${chunk === selected_chunk ? "rounded-full" : ""} object-scale-down h-40 bg-white`}/>
-                        </button>
-                    {/each}
-                </div>
-            </StyledDisclosure>
-        {/each}
-    {/if}
-        </div>
-    {#if selected_chunk}
-        <div class="flex flex-col items-center bg-indigo-50 rounded-3xl p-4 gap-4 mt-4 mb-4">
-            <a
-                    class="flex flex-row gap-1 items-center text-center text-xl font-semibold text-indigo-600 border-dotted border-b-2 border-b-indigo-600 hover:text-indigo-800 hover:border-indigo-800"
-                    href={`/datasets/${dataset}/${subset}/${selected_chunk}`}
-            >
-                {selected_chunk}
-                <Icon src="{ArrowTopRightOnSquare}" solid class="w-6 h-6 text-indigo-600"/>
-            </a>
-            <div class="w-full flex flex-col items-center">
-                <div class="grid grid-cols-2">
-                    <div>Anomalies</div>
-                    <div class="place-self-center">{get_anomaly(selected_chunk, anomaly_ratios)?.count ?? 0}</div>
-                    <div>Labels</div>
-                    <div class="place-self-center">{labelCounts.find(item => item._id === selected_chunk)?.count ?? 0}</div>
-                    <div>Anomaly Free</div>
-                    <div class="place-self-center">
-                        <Toggle bind:enabled={selected_chunk_normal} onToggle={() => toggleNormal(selected_chunk)}/>
-                    </div>
-                    <div class="col-span-2">
-                        <button on:click={() => resetChunk(selected_chunk)}
-                                class="w-full rounded-lg px-2 bg-indigo-100 text-indigo-600 text-sm transition hover:bg-red-500 hover:text-white">
-                            Reset labels
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="border-t-[1px] border-solid border-indigo-500 w-full">
-                <p class="text-center text-indigo-600 font-semibold">Time Series / Signal</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/thumbnail`} alt="thumbnail"
-                     class=" object-scale-down w-full"/>
-            </div>
-            {#if get_anomaly(selected_chunk, anomaly_ratios) !== undefined}
-                <div class="border-t-[1px] border-solid border-indigo-500 w-full">
-                    <p class="text-center text-indigo-600 font-semibold">Distance Indicator</p>
-                    <div class="w-full h-[10px] flex justify-center">
-                        <DistanceIndicator distances={get_anomaly(selected_chunk, anomaly_ratios).distances_reduced}
-                                           normalTube={normalTube} width={380} height={10}/>
-                    </div>
-                </div>
-            {/if}
-            <div class="border-t-[1px] border-solid border-indigo-500 w-full">
-                <p class="text-center text-indigo-600 font-semibold">Spectrogram</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/spectrogram`} alt="thumbnail"
-                     class=" object-scale-down w-full"/>
-            </div>
-            <div class="border-t-[1px] border-solid border-indigo-500 w-full flex flex-col items-center">
-                <p class="text-center text-indigo-600 font-semibold">Time Delay Embedding</p>
-                <img src={`/api/db/${dataset}/${subset}/${selected_chunk}/projected_thumbnail`} alt="thumbnail"
-                     class="object-scale-down w-2/3"/>
             </div>
         </div>
-    {/if}
+        {#if selected_chunk}
+            <div class="w-1/3 h-full">
+                <ChunkCard
+                        dataset={dataset} subset={subset} chunk={selected_chunk}
+                        isNormal={normals.indexOf(selected_chunk ?? "") !== -1}
+                        anomaly={get_anomaly(selected_chunk, anomaly_ratios)}
+                        normalTube={normalTube}
+                        labelCount={labelCounts.find(l => l._id === selected_chunk)?.count ?? 0}
+                />
+            </div>
+        {:else}
+            <div class="flex flex-col h-full w-1/3 items-center justify-center bg-indigo-50 rounded-3xl p-4 text-indigo-600">
+                <p>Click on a point cloud to view its details.</p>
+            </div>
+        {/if}
+    </div>
 </div>

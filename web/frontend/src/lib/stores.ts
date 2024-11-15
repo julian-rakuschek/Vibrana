@@ -15,9 +15,6 @@ export const hoverPoint = writable<ProjectedPoint | undefined>(undefined)
 export const hoverRange = writable<number[] | undefined>(undefined)
 export const selectedProjectedPoints = writable<ProjectedPoint[]>([])
 
-
 export const displayMode = writable<string>("table")
-
 export const simpleTable = writable<boolean>(false)
-export const clusteringActive = writable<boolean>(false)
 export const numberClusters = writable<number>(2)

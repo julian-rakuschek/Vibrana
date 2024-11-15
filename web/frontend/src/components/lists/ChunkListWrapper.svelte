@@ -9,6 +9,7 @@
     import {sessionGetAll} from "@lib/helper/sessionStorageHelper";
     import ChunkMatrix from "@components/lists/ChunkMatrix.svelte";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
+    import ChunkCluster from "@components/lists/ChunkCluster.svelte";
 
     export let dataset: string;
     export let subset: string;
@@ -28,7 +29,12 @@
     const {ro} = getContext("ro") as { ro: boolean }
     const chunkListQuery = useQueryFetch(ApiRoutes.getChunks, {params: {dataset, subset}})
     const normalsQuery = useQueryFetch(ApiRoutes.getNormals, {params: {dataset, subset}}, undefined, undefined, ro)
-    const labelCountQuery = useQueryFetch(ApiRoutes.getLabelCounts, {params: {dataset, subset}}, undefined, undefined, ro)
+    const labelCountQuery = useQueryFetch(ApiRoutes.getLabelCounts, {
+        params: {
+            dataset,
+            subset
+        }
+    }, undefined, undefined, ro)
     const clusteringQuery = useQueryFetch(ApiRoutes.getCluster, {params: {dataset, subset}}, undefined, undefined, ro)
     const anomalyRatiosQuery = ro ?
         useQueryFetch(ApiRoutes.getAnomalyRatiosRO, {params: {dataset, subset}, data: sessionGetAll(dataset, subset)}) :
@@ -65,13 +71,22 @@
     {#if displayMode === "table"}
         <ChunkList
                 chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
-                normals={$normalsQuery.data}
-                anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}
+                normals={$normalsQuery.data} labelCounts={$labelCountQuery.data}
+                anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
         />
     {:else if displayMode === "grid"}
-        <ChunkMatrix chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)} dataset={dataset} subset={subset}
-                     normals={$normalsQuery.data} clustering={$clusteringQuery.data}
-                     anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data} labelCounts={$labelCountQuery.data}/>
+        <ChunkMatrix
+                chunks={sort_chunks($chunkListQuery.data, anomaly_ratios)}
+                normals={$normalsQuery.data} dataset={dataset} subset={subset}
+                anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
+                labelCounts={$labelCountQuery.data}
+        />
+    {:else if displayMode === "cluster"}
+        <ChunkCluster
+                clustering={$clusteringQuery.data} normals={$normalsQuery.data}
+                dataset={dataset} subset={subset}
+                anomaly_ratios={anomaly_ratios} normalTube={$normalTubeQuery.data}
+                labelCounts={$labelCountQuery.data}/>
     {/if}
 
 {/if}

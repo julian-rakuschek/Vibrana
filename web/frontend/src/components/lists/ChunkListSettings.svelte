@@ -6,7 +6,7 @@
     import {useQueryClient} from '@tanstack/svelte-query';
     import {getContext} from 'svelte';
     import {resetViewHistory, sessionResetLabels} from '@lib/helper/sessionStorageHelper';
-    import {clusteringActive, displayMode, numberClusters, simpleTable} from '@lib/stores';
+    import {displayMode, simpleTable} from '@lib/stores';
 
     export let settings: ChunkListSettingsType;
     export let dataset: string;
@@ -86,24 +86,6 @@
                         <label for="simple-table" class="font-medium text-gray-900">Simple Table</label>
                     </div>
                 </div>
-            {/if}
-            {#if $displayMode === "grid"}
-                <div class="relative flex items-start">
-                    <div class="flex h-6 items-center">
-                        <input id="cluster-active" bind:checked={$clusteringActive} name="simple-table" type="checkbox"
-                               class="size-4 rounded border-gray-300 text-indigo-600">
-                    </div>
-                    <div class="ml-3 text-sm/6">
-                        <label for="cluster-active" class="font-medium text-gray-900">Cluster Time Delay
-                            Embeddings</label>
-                    </div>
-                </div>
-                {#if $clusteringActive}
-                    <div class="relative w-full">
-                        <p>Number of Clusters</p>
-                        <RangeSlider bind:value={$numberClusters}  min={1} max={10} step={1} pips float />
-                    </div>
-                {/if}
             {/if}
             <button class="text-sm text-red-500 px-3 bg-red-300/50 rounded-lg transition hover:bg-red-500 hover:text-white"
                     on:click={() => reset_labels()}>Reset Labels
