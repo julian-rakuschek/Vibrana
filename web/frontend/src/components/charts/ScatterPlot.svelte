@@ -1,12 +1,11 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {type ProjectedPoint, ProjectionMode, WindowMode} from "@lib/types";
+    import {type Color, type ProjectedPoint, ProjectionMode, WindowMode} from "@lib/types";
     import {onMount} from "svelte";
     import {webglColor} from "@lib/helper/colorHelper";
     import betterPointer from "@lib/helper/betterPointer";
     import {chartSettings, filterRangeIndexed, hoverPoint, hoverRange, selectedProjectedPoints} from "@lib/stores";
-    import {colorsProjection} from "@lib/chartLogic/chartColors";
     import MouseButtonLeft from "@components/icons/MouseButtonLeft.svelte";
     import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
     import MouseScroll from "@components/icons/MouseScroll.svelte";
@@ -24,11 +23,10 @@
 
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
+    export let colors: Color[];
     export let dataset: string;
     export let subset: string;
     export let chunk: string;
-
-    const queryClient = useQueryClient();
 
 
     const projectionPadding = 0.1;
@@ -105,8 +103,8 @@
         .decorate((program) => fc
             .webglFillColor()
             .value((d: ProjectedPoint) => {
-                if (!$colorsProjection[d.projectedIndex]) return webglColor("black", 1)
-                const col = $colorsProjection[d.projectedIndex].color
+                if (!colors[d.projectedIndex]) return webglColor("black", 1)
+                const col = colors[d.projectedIndex].color
                 if (!$filterRangeIndexed) return webglColor(col, 1)
                 return webglColor(
                     d.timeSeriesIndex > $filterRangeIndexed[0] && d.timeSeriesIndex <= $filterRangeIndexed[1] ? col : "black",
@@ -245,7 +243,7 @@
     }
 
     const saveBrushes = async () => {
-        const intervals = selectedToColoredIntervals($selectedProjectedPoints, $colorsProjection, $chartSettings.windowSize)
+        const intervals = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize)
         for (const interval of intervals) {
             await ApiRoutes.addLabel.fetch({
                 data: {
@@ -283,6 +281,8 @@
     onMount(() => {
         render();
     })
+
+    $: projected, colors, render()
 
 </script>
 

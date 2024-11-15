@@ -1,21 +1,20 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import type {Annotation, Point, ProjectedPoint} from "@lib/types";
+    import type {Annotation, Color, Point, ProjectedPoint} from "@lib/types";
     import {onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
     import {chartSettings, filterRangeIndexed, filterRangePercent, selectedProjectedPoints} from "@lib/stores";
     import {selectedToColoredIntervals} from "@lib/helper/util";
-    import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
 
     export let timeSeries: number[];
-    export let projected: ProjectedPoint[];
+    export let colors: Color[];
     export let labels: Annotation[];
     export let events: number[];
 
     const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
 
-    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize)
+    let brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize)
 
 
     const min_value = timeSeries.toSorted((a, b) => a - b)[0]
@@ -72,7 +71,7 @@
         .decorate((program) => fc
             .webglStrokeColor()
             .value((d: Point) => {
-                const col = $colorsTimeSeries[d.x].color
+                const col = colors[d.x] === undefined ? "black" : colors[d.x].color
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -106,18 +105,18 @@
 
     filterRangeIndexed.subscribe(() => render())
     chartSettings.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render()
     })
     selectedProjectedPoints.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render()
     })
-    colorsTimeSeries.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+    $: {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render()
-    })
-    $: labels, render();
+    }
+    $: labels, colors, render();
 
     const resetRange = () => {
         filterRangeIndexed.set(null)

@@ -1,12 +1,20 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import {type ProjectedPoint, type ThreeChartsSettingsType, type Point, WindowMode, type Label, type Annotation, type LabelBase} from "@lib/types";
+    import {
+        type ProjectedPoint,
+        type ThreeChartsSettingsType,
+        type Point,
+        WindowMode,
+        type Label,
+        type Annotation,
+        type LabelBase,
+        type Color
+    } from "@lib/types";
     import {getContext, onMount} from "svelte";
     import {addAlphaToRGB, webglColor} from "@lib/helper/colorHelper";
     import betterPointer from "@lib/helper/betterPointer";
     import {filterRangeIndexed, filterRangePercent, chartSettings, hoverRange, hoverPoint, selectedProjectedPoints} from "@lib/stores";
-    import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
     import {selectedToColoredIntervals} from "@lib/helper/util";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {useQueryClient} from "@tanstack/svelte-query";
@@ -18,6 +26,7 @@
     export let chunk: string;
     export let timeSeries: number[];
     export let projected: ProjectedPoint[];
+    export let colors: Color[];
     export let labels: Annotation[];
     export let events: number[];
 
@@ -25,7 +34,7 @@
 
     const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
 
-    let brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize)
+    let brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize)
     let addAnnotation = true;
     let windowSizeSelectionOpen = false;
 
@@ -87,7 +96,7 @@
         .decorate((program) => fc
             .webglStrokeColor()
             .value((d: Point) => {
-                const col = $colorsTimeSeries[d.x].color
+                const col = colors[d.x] === undefined ? "black" : colors[d.x].color
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -177,19 +186,19 @@
     hoverRange.subscribe(() => render())
     hoverPoint.subscribe(() => render())
     chartSettings.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render()
     })
     selectedProjectedPoints.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
-        render()
-    })
-    colorsTimeSeries.subscribe(() => {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render()
     })
     $: {
-        brushed = selectedToColoredIntervals($selectedProjectedPoints, $colorsTimeSeries, $chartSettings.windowSize);
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
+        render()
+    }
+    $: {
+        brushed = selectedToColoredIntervals($selectedProjectedPoints, colors, $chartSettings.windowSize);
         render();
     }
 
@@ -209,4 +218,4 @@
     </button>
 </div>
 <div id="annotator" style="height: 170px; width: 100%"></div>
-<WindowSizePopup bind:isOpen={windowSizeSelectionOpen} timeSeries={timeSeries} />
+<WindowSizePopup bind:isOpen={windowSizeSelectionOpen} colors={colors} timeSeries={timeSeries} />

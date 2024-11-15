@@ -1,13 +1,14 @@
 <script lang="ts">
     import * as d3 from "d3";
     import * as fc from "d3fc";
-    import type {Point} from "@lib/types";
+    import type {Color, Point} from "@lib/types";
     import {onMount} from "svelte";
     import {webglColor} from "@lib/helper/colorHelper";
     import {chartSettings, filterRangeIndexed} from "@lib/stores";
-    import {colorsTimeSeries} from "@lib/chartLogic/chartColors";
 
     export let timeSeries: number[];
+    export let colors: Color[];
+
     const timeseriesIndexed: Point[] = timeSeries.map((d, index) => ({x: index, y: d}))
     export let window: [number, number] = [
         (timeSeries.length / 2 - $chartSettings.windowSize / 2) / timeSeries.length,
@@ -33,7 +34,7 @@
         .decorate((program) => fc
             .webglStrokeColor()
             .value((d: Point) => {
-                const col = $colorsTimeSeries[d.x].color
+                const col = colors[d.x] === undefined ? "black" : colors[d.x].color
                 return webglColor(col, 1)
             })
             .data(timeseriesIndexed)(program));
@@ -57,9 +58,7 @@
     };
 
     filterRangeIndexed.subscribe(() => render())
-    colorsTimeSeries.subscribe(() => {
-        render()
-    })
+    $: colors, render()
 
     onMount(() => {
         render()

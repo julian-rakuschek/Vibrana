@@ -1,10 +1,18 @@
 <script lang="ts">
     import NavigatorChart from "./NavigatorChart.svelte";
     import {onMount} from "svelte";
-    import {type Annotation, type ProjectedPoint, ProjectionMode} from "@lib/types";
+    import {type Annotation, type ChartColors, type ProjectedPoint, ProjectionMode} from "@lib/types";
     // import AnnotatorChart from "./AnnotatorChart.svelte";
     // import ScatterPlot from "./ScatterPlot.svelte";
-    import {chartSettings, defaultChartSettings, filterRangeIndexed, filterRangePercent, hoverPoint, hoverRange, selectedProjectedPoints} from "@lib/stores";
+    import {
+        chartSettings,
+        defaultChartSettings,
+        filterRangeIndexed,
+        filterRangePercent,
+        hoverPoint,
+        hoverRange,
+        selectedProjectedPoints
+    } from "@lib/stores";
     import ChartSettings from "./ChartSettings.svelte";
     import {computeColors} from "@lib/chartLogic/chartColors";
     import AnnotatorChart from "@components/charts/AnnotatorChart.svelte";
@@ -26,6 +34,8 @@
     let offset: number = timeSeries.length - projected.length;
 
     let projectedIndexed: ProjectedPoint[] = [];
+    let colors: ChartColors;
+
     const indexProjectedPoints = (data: number[][]) => {
         projectedIndexed = data.map((d, i): ProjectedPoint => ({
             projectedIndex: i,
@@ -45,30 +55,45 @@
         selectedProjectedPoints.set([])
     }
 
-    chartSettings.subscribe(() => {
+    const dataUpdate = (do_reset: boolean) => {
+        if (do_reset) reset();
         const projectionData = $chartSettings.projection === ProjectionMode.Paths ? projected : mdsEmbedding
         offset = timeSeries.length - projected.length;
-        computeColors($chartSettings, projectionData, similarities, freq, normalTube, offset)
+        colors = computeColors($chartSettings.color, projectionData, similarities, freq, normalTube, offset)
         indexProjectedPoints(projectionData)
-    })
+    }
 
-    onMount(() => {
-        reset()
-        indexProjectedPoints(projected)
-        computeColors($chartSettings, projected, similarities, freq, normalTube, offset)
-    })
+    chartSettings.subscribe(() => dataUpdate(false))
+
+    onMount(() => dataUpdate(true))
+
+    $: mdsEmbedding, dataUpdate(false)
 </script>
 
 <div class="fixed top-3 right-3 z-10">
     <ChartSettings/>
 </div>
-<NavigatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events}/>
-<AnnotatorChart timeSeries={timeSeries} projected={projectedIndexed} labels={labels} events={events} dataset={dataset} subset={subset} chunk={chunk} />
+<NavigatorChart timeSeries={timeSeries} labels={labels} events={events} colors={colors.tsColors}/>
+<AnnotatorChart
+        timeSeries={timeSeries} projected={projectedIndexed} labels={labels}
+        subset={subset} chunk={chunk} events={events} dataset={dataset}
+        colors={colors.tsColors}
+/>
 {#if $chartSettings.projection === ProjectionMode.Paths}
-    <ScatterPlot  dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries} projected={indexProjectedPoints(projected)}/>
+    <ScatterPlot
+            dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries}
+            projected={indexProjectedPoints(projected)}
+            colors={colors.projectedColors}
+    />
 {:else}
-    <ScatterPlot  dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries} projected={indexProjectedPoints(mdsEmbedding)}/>
+    {#key mdsEmbedding}
+        <ScatterPlot
+                dataset={dataset} subset={subset} chunk={chunk} timeSeries={timeSeries}
+                projected={indexProjectedPoints(mdsEmbedding)}
+                colors={colors.projectedColors}
+        />
+    {/key}
 {/if}
 <div class="fixed bottom-5 right-5 z-10 w-[500px] p-5 shadow-lg bg-white">
-    <ColorLegend colorMode={$chartSettings.color} />
+    <ColorLegend colorMode={$chartSettings.color}/>
 </div>

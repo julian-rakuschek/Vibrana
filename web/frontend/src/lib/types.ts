@@ -97,6 +97,11 @@ export type Color = {
     value: number;
 }
 
+export type ChartColors = {
+    tsColors: Color[];
+    projectedColors: Color[];
+}
+
 export type AnomalyMetric = {
     ratio: number,
     count: number,
@@ -138,3 +143,4 @@ export type Dendrogram = {
   left?: Dendrogram;
   right?: Dendrogram;
 };
+

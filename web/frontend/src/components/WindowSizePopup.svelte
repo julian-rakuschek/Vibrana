@@ -7,9 +7,11 @@
     } from "@rgossiaux/svelte-headlessui";
     import WindowSizeSelector from "@components/charts/WindowSizeSelector.svelte";
     import {chartSettings} from "@lib/stores";
+    import type {Color} from "@lib/types";
 
     export let isOpen = true;
     export let timeSeries: number[];
+    export let colors: Color[];
     let window: [number, number]
 
     const save = () => {
@@ -46,7 +48,7 @@
                 <p class="text-lg font-semibold">Select Interval Size</p>
                 <p>Adjust the interval size using the chart below. Click and drag on the chart to select a window.</p>
                 <div class="w-full">
-                    <WindowSizeSelector timeSeries={timeSeries} bind:window/>
+                    <WindowSizeSelector timeSeries={timeSeries} colors={colors} bind:window/>
                 </div>
                 <button on:click={save} class="bg-indigo-500 text-white hover:bg-indigo-700 transition px-2 py-1 rounded-md mt-5">Done</button>
             </div>
