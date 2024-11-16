@@ -10,7 +10,7 @@
     export let subset: string;
 
     let width = 300
-    const height = 20
+    const height = 30
     let tooltip: HeatmapTooltip = {show: false, x: 0, y: 0};
 
     const d_vals = getDValues(clustering).sort().reverse();

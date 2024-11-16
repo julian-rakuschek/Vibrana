@@ -43,12 +43,12 @@
 <div class="h-full w-full flex flex-col">
     <div class="flex flex-row flex-nowrap justify-between w-full items-center">
         <div class="flex flex-row flex-nowrap w-1/3 z-50">
-            <p>Number of clusters:</p>
+            <p class="mt-1.5">Number of clusters:</p>
             <div class="grow">
                 <RangeSlider bind:value={$numberClusters} min={1} max={10} step={1} pips float/>
             </div>
         </div>
-        <div class="w-1/2">
+        <div class="w-2/3">
             <ClusterHeatmap clustering={clustering} dataset={dataset} subset={subset}/>
         </div>
     </div>
