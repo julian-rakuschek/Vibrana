@@ -62,8 +62,8 @@
 	<td class="whitespace-nowrap text-sm text-left">
 		<ImageWithLightbox src={`/api/db/${dataset}/${subset}/${chunk}/thumbnail`} alt="thumbnail" classNames="object-contain h-[100px]" />
 		{#if anomaly !== undefined && !$simpleTable}
-			<div class="w-full h-[10px]">
-				<DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} width={320} height={10} />
+			<div class="h-[10px] w-[315px]">
+				<DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube} />
 			</div>
 		{/if}
 	</td>

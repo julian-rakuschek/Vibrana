@@ -3,9 +3,8 @@
     "name": "Hydro Power Plant",
     "folder": "hydro",
     "description": "Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.",
-    "tasks": [
-      "Change Detection"
-    ],
+    "task": "Change Detection",
+    "source": "Provided by Johanna Schmidt (VRVis GmbH)",
     "subsets": [
       {
         "name": "Vibrations in X-Direction",
@@ -25,10 +24,8 @@
     "name": "Engine Multiple Runs",
     "folder": "motor",
     "description": "Vibrations acquired from an engine, showing multiple runs (with and without damage). The subsets highlight the difference if noise is applied.",
-    "tasks": [
-      "Classification",
-      "Anomaly Detection"
-    ],
+    "task": "Classification",
+    "source": "https://www.timeseriesclassification.com/description.php?Dataset=FaultDetectionB",
     "subsets": [
       {
         "name": "Engines with and without inner bearing damage",
@@ -44,9 +41,8 @@
     "name": "Engine Run To Failure",
     "folder": "nasa-bearings",
     "description": "Vibrations acquired from the bearing of an engine in a run-to-failure setting.",
-    "tasks": [
-      "Change Detection"
-    ],
+    "task": "Change Detection",
+    "source": "https://www.kaggle.com/datasets/vinayak123tyagi/bearing-dataset",
     "subsets": [
       {
         "name": "Test 2",
@@ -58,9 +54,8 @@
     "name": "Hidden Gravitational Waves",
     "folder": "grav",
     "description": "Synthetic dataset highlighting hidden patterns in noise.",
-    "tasks": [
-      "Noise vs. Pattern"
-    ],
+    "task": "Noise vs. Pattern",
+    "source": "https://arxiv.org/abs/1910.08245",
     "subsets": [
       {
         "name": "Gravitational Waves SNR 0.1",
@@ -80,10 +75,8 @@
     "name": "Sorting Machine Debris Impact",
     "folder": "binder",
     "description": "This dataset features measurements acquired from a sorting machine that sorts cobbles by their size. To achieve this, a sieve is utilized, that naturally wears out, causing larger cobbles to fall through. The goal is to measure the impact of cobbles on a metal plate beneath the sieve. The dataset shows vibrations of the metal plate, with and without anomalies.",
-    "tasks": [
-      "Classification",
-      "Anomaly Detection"
-    ],
+    "task": "Classification",
+    "source": "Provided by Adrian Boesze (Binder+Co AG)",
     "subsets": [
       {
         "name": "Metall platte, FEST Montiert, 5-10 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",

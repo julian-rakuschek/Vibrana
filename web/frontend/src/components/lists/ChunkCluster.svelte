@@ -50,8 +50,9 @@
     <div class="w-full flex flex-row gap-3 grow overflow-hidden">
         <div class="flex flex-row gap-3 w-2/3 h-full">
             {#each clusters as cluster, idx}
-                <div class="flex flex-col h-full overflow-y-scroll w-[200px] border-2 rounded-2xl gap-2 p-2"
+                <div class="h-full overflow-y-scroll flex-grow border-2 rounded-2xl gap-2 p-2 basis-0"
                      style={`border-color: ${getColor(idx, $numberClusters)}; background-color: ${hexToRGBA(getColor(idx, $numberClusters), 0.4)};`}>
+                    <div class="flex flex-row flex-wrap justify-center gap-2">
                     {#each cluster as chunk}
                         <button class={`relative flex flex-col rounded-3xl p-2 ${isSelected(chunk, $selectedChunk) ? "bg-indigo-500" : "bg-white"} transition`}
                                 on:click={() => isSelected(chunk, $selectedChunk) ? selectedChunk.set(undefined) : selectedChunk.set({dataset, subset, chunk})}>
@@ -62,9 +63,10 @@
                                 </div>
                             {/if}
                             <img src={`/api/db/${dataset}/${subset}/${chunk}/projected_thumbnail`} alt="thumbnail"
-                                 class={`${isSelected(chunk, $selectedChunk) ? "rounded-full" : ""} object-scale-down w-full bg-white`}/>
+                                 class={`${isSelected(chunk, $selectedChunk) ? "rounded-full" : ""} object-scale-down w-40 bg-white`}/>
                         </button>
                     {/each}
+                    </div>
                 </div>
             {/each}
         </div>

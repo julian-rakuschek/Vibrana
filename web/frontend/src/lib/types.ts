@@ -12,7 +12,8 @@ export type Dataset = {
     name: string;
     folder: string;
     description: string;
-    tasks: string[];
+    task: string;
+    source: string;
     subsets: { name: string; folder: string }[]
 }
 

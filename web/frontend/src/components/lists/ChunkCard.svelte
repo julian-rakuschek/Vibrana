@@ -70,8 +70,7 @@
         <div class="border-t-[1px] border-solid border-indigo-500 w-full">
             <p class="text-center text-indigo-600 font-semibold">Distance Indicator</p>
             <div class="w-full h-[10px] flex justify-center">
-                <DistanceIndicator distances={anomaly.distances_reduced}
-                                   normalTube={normalTube} width={380} height={10}/>
+                <DistanceIndicator distances={anomaly.distances_reduced} normalTube={normalTube}/>
             </div>
         </div>
     {/if}

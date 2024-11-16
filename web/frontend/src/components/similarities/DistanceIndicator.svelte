@@ -5,8 +5,8 @@
     export let distances: number[];
     export let normalTube: [number, number];
 
-    export let width = 300
-    export let height = 10
+    let width = 300
+    const height = 10
 
     const normalizeDistances = (distances: number[], normalTube: [number, number]) => {
         const tolerance = 2
@@ -20,33 +20,23 @@
     let distancesNormalized: number[];
     $: distancesNormalized = normalizeDistances(distances, normalTube);
 
-    const xScale = d3
-        .scaleLinear()
-        .range([0, width])
-        .domain([0, distances.length]);
-
-    const yScale = d3
-        .scaleLinear()
-        .range([0, height])
-        .domain([0, 1])
-
-    const rect_width = width / distances.length;
-    const rect_height = height;
-
+    $: xScale = d3.scaleLinear().range([0, width]).domain([0, distances.length]);
+    $: yScale = d3.scaleLinear().range([0, height]).domain([0, 1])
 
 </script>
-
-<svg width={width} height={height}>
-    <g width={width} height={height}>
-        {#each distancesNormalized as d, i}
-            <rect
-                    x={xScale(i)}
-                    y={yScale(0)}
-                    width={rect_width}
-                    height={rect_height}
-                    opacity={1}
-                    fill={interpolateRdYlBu(d)}
-            />
-        {/each}
-    </g>
-</svg>
+<div class="w-full" bind:clientWidth={width}>
+    <svg width={width} height={height}>
+        <g width={width} height={height}>
+            {#each distancesNormalized as d, i}
+                <rect
+                        x={xScale(i)}
+                        y={yScale(0)}
+                        width={width / distances.length}
+                        height={height}
+                        opacity={1}
+                        fill={interpolateRdYlBu(d)}
+                />
+            {/each}
+        </g>
+    </svg>
+</div>
