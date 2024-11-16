@@ -150,3 +150,10 @@ export type SelectedChunk = {
     subset: string;
     chunk: string;
 }
+
+export type HeatmapTooltip = {
+    x: number;
+    y: number;
+    show: boolean;
+    chunk: string;
+}
