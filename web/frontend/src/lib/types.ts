@@ -144,3 +144,8 @@ export type Dendrogram = {
   right?: Dendrogram;
 };
 
+export type SelectedChunk = {
+    dataset: string;
+    subset: string;
+    chunk: string;
+}

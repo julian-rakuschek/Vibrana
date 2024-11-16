@@ -1,5 +1,5 @@
 import {writable} from 'svelte/store';
-import {ColorMode, type ProjectedPoint, ProjectionMode, type ThreeChartsSettingsType, WindowMode} from "@lib/types";
+import {ColorMode, type ProjectedPoint, ProjectionMode, type SelectedChunk, type ThreeChartsSettingsType, WindowMode} from "@lib/types";
 
 export const defaultChartSettings: ThreeChartsSettingsType = {
     color: ColorMode.Radius,
@@ -18,3 +18,4 @@ export const selectedProjectedPoints = writable<ProjectedPoint[]>([])
 export const displayMode = writable<string>("table")
 export const simpleTable = writable<boolean>(false)
 export const numberClusters = writable<number>(2)
+export const selectedChunk = writable<SelectedChunk | undefined>(undefined)
