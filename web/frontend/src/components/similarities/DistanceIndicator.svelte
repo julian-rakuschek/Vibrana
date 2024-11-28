@@ -1,12 +1,22 @@
 <script lang="ts">
     import * as d3 from "d3";
     import {interpolateRdYlBu} from "d3";
+    import type { Annotation } from '@lib/types';
 
     export let distances: number[];
     export let normalTube: [number, number];
+    export let labels: Annotation[] = [];
+    export let ts_length: number = 100000;
 
     let width = 300
-    const height = 10
+    let height = 10
+
+    const index_in_label = (index: number) => {
+        for (const label of labels) {
+            if (label.from <= index && index <= label.to) return true;
+        }
+        return false;
+    }
 
     const normalizeDistances = (distances: number[], normalTube: [number, number]) => {
         const tolerance = 2
@@ -24,7 +34,7 @@
     $: yScale = d3.scaleLinear().range([0, height]).domain([0, 1])
 
 </script>
-<div class="w-full" bind:clientWidth={width}>
+<div class="w-full" bind:clientWidth={width} bind:clientHeight={height}>
     <svg width={width} height={height}>
         <g width={width} height={height}>
             {#each distancesNormalized as d, i}
@@ -34,7 +44,7 @@
                         width={width / distances.length}
                         height={height}
                         opacity={1}
-                        fill={interpolateRdYlBu(d)}
+                        fill={index_in_label(i / distances.length * ts_length) ? "lime" : interpolateRdYlBu(d)}
                 />
             {/each}
         </g>

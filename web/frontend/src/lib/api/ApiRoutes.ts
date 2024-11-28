@@ -18,6 +18,7 @@ export const dbRoutes = {
   getChunkEvents: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/events"),
   getChunkFreq: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/freq"),
   getLabels: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, Annotation[]>("GET", "/db/:dataset/:subset/:chunk/labels"),
+  getAllLabels: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, Label[]>("GET", "/db/:dataset/:subset/labels"),
   getLabelCounts: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, LabelCount[]>("GET", "/db/:dataset/:subset/labels/count"),
   addLabel: new ApiRoute<LabelBase, {dataset: string; subset: string; chunk: string}, undefined, undefined>("POST", "/db/labels"),
   deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),

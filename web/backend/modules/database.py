@@ -106,10 +106,11 @@ def flask_get_sample_events(dataset, subset, chunk, chunk_path):
     return values.tolist()
 
 
-@db_app.get("<dataset>/<subset>/<chunk>/labels")
-def flask_get_labels(dataset, subset, chunk):
-    res = list(get_db()["labels"].find({"dataset": dataset, "subset": subset, "chunk": chunk}))
+@db_app.get("<dataset>/<subset>/labels")
+def flask_get_all_labels(dataset, subset):
+    res = list(get_db()["labels"].find({"dataset": dataset, "subset": subset}))
     return serialize_mongodb(res)
+
 
 @db_app.get("<dataset>/<subset>/labels/count")
 def flask_get_labels_count(dataset, subset):
@@ -120,6 +121,11 @@ def flask_get_labels_count(dataset, subset):
     res = list(get_db()["labels"].aggregate(pipeline))
     return serialize_mongodb(res)
 
+
+@db_app.get("<dataset>/<subset>/<chunk>/labels")
+def flask_get_chunk_labels(dataset, subset, chunk):
+    res = list(get_db()["labels"].find({"dataset": dataset, "subset": subset, "chunk": chunk}))
+    return serialize_mongodb(res)
 
 
 @db_app.post("labels")

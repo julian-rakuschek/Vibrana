@@ -3,6 +3,5 @@ venv
 .idea
 .npy
 data
-*.npy
 __pycache__
 evaluation
