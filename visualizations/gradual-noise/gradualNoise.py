@@ -56,4 +56,4 @@ for i in range(noise_iterations):
     ax[f"spectro{plot_row}"].set_title(f"Spectrogram", fontsize=30)
     values += 1 * np.random.randn(len(values))
 
-plt.savefig(f"gradual-noise.png", bbox_inches='tight', dpi=200)
+plt.savefig(f"gradual-noise-2.png", bbox_inches='tight', dpi=50)
