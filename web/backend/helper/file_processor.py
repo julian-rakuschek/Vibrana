@@ -9,7 +9,7 @@ import redis
 from redis import Redis
 
 from parser.dwparser import process_file
-from parser.extract_snippets import split_and_process_time_series
+from parser.extract_chunks import split_and_process_time_series
 
 raw_folder = os.path.join(Path(__file__).parents[3], "data", "raw")
 parsed_folder = os.path.join(Path(__file__).parents[3], "data", "parsed")

@@ -75,3 +75,40 @@ hydro
             values.npy
      ...
 ```
+
+### Available Parsers and Datasets
+All parsers are located in the "parser" directory.
+
+#### Hydro
+Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.
+
+Parser: `hydro.py`
+The parser takes a small slice of the hydro vibrations and stores all three directions in separate value.npy files.
+
+#### Binder
+This dataset features measurements acquired from a sorting machine that sorts cobbles by their size. To achieve this, a sieve is utilized, that naturally wears out, causing larger cobbles to fall through. The goal is to measure the impact of cobbles on a metal plate beneath the sieve. The dataset shows vibrations of the metal plate, with and without anomalies.
+
+Parser: `binder.py`
+Each subset contains two dxd files: One dxd file with and the other without anomalies.
+Note that the parser for binder already does the chunking at the end.
+
+#### Gravitational Waves
+Synthetic dataset highlighting hidden patterns in noise. The parser acts as a generator for data where the "raw data" is a sample of a signal that will be embedded in noise.
+
+Parser: `grav_waves.py`
+
+#### Engine Run To Failure
+Vibrations acquired from the bearing of an engine in a run-to-failure setting. 
+
+Parser: `nasa-bearings.py`
+
+#### Engine Multiple Runs
+Vibrations acquired from an engine, showing multiple runs (with and without damage). The subsets highlight the difference if noise is applied.
+
+Parser: `motor.py`
+
+
+### Chunking
+
+All the above-mentioned parsers, except binder (historic relict I guess, but no worries, can be altered accordingly),  produce 1D numpy arrays in the parsed stage.
+The script `extract_chunks.py` processes an entire dataset, thus iterating each subset and extracting the chunks accordingly.

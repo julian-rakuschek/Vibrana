@@ -72,7 +72,7 @@ def compute_time_varying_amplitude(values, window_size, sample_rate=20_000):
 def split_and_process_time_series(
         values: np.ndarray, timestamps: np.ndarray, events: np.ndarray,
         filename: str, prefix: str, dataset: str, subset: str,
-        max_sample_size: int, projection_window_size: int, redis_client: Redis, limit: int = None):
+        max_sample_size: int, projection_window_size: int, redis_client: Redis = None, limit: int = None):
     status = {}
     r_key = f"vibrana:{dataset}:{subset}:{filename}"
     if redis_client:
