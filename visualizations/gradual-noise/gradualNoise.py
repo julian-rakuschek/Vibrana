@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 from matplotlib.pyplot import colormaps
 from numpy.lib.stride_tricks import sliding_window_view
-from scipy.signal import ShortTimeFFT
+from scipy.signal import ShortTimeFFT, get_window
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 
@@ -11,7 +11,7 @@ noise_iterations = 10
 noise_row_selection = [0, 1, 5, 8]
 w = 200
 plot_mosaic = [
-    [f"values{i}", f"values{i}", f"spectro{i}", f"TDE{i}"] for i in range(len(noise_row_selection))
+    [f"values{i}", f"values{i}", f"TDE{i}", f"spectro{i}"] for i in range(len(noise_row_selection))
 ]
 
 fig, ax = plt.subplot_mosaic(plot_mosaic)
@@ -48,7 +48,8 @@ for i in range(noise_iterations):
     ax[f"values{plot_row}"].set_ylim(np.min(values), np.max(values))
     ax[f"values{plot_row}"].set_title(f"Noise Iteration {i}", fontsize=30)
 
-    SFT = ShortTimeFFT(np.repeat(1, 100), hop=1, fs=10_000, mfft=None, scale_to="magnitude")
+    window = get_window('hann', 300)
+    SFT = ShortTimeFFT(window, hop=100, fs=10_000, mfft=None, scale_to="psd")
     Sx = SFT.spectrogram(values)
     Sx[Sx > np.percentile(Sx, 95)] = np.percentile(Sx, 95)
     ax[f"spectro{plot_row}"].imshow(Sx, origin='lower', aspect='auto', extent=SFT.extent(len(values)), cmap='viridis')
