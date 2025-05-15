@@ -4,6 +4,7 @@ from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm
 
 
 def vibration_tde_plot(vibration, w, folder, title):
@@ -24,6 +25,7 @@ def vibration_tde_plot(vibration, w, folder, title):
     plt.subplots_adjust(wspace=0.1, hspace=0.3)
     fig.set_size_inches(30, 5)
     ax["values"].plot(vibration, color="black")
+    ax["values"].axvspan(0, w, color="red", alpha=0.7)
     ax["values"].set_xlim(0, len(vibration))
     ax["values"].set_title(title, fontsize=30)
 
@@ -34,9 +36,7 @@ def vibration_tde_plot(vibration, w, folder, title):
     plt.close(fig)
 
 
-vibration = np.load("hydro.npy")
-w = 2
-while w < 2500:
-    print(w)
-    vibration_tde_plot(vibration, w, "hydro", "Hydro Vibration")
-    w += 100
+vibration = np.load("motor-run-to-failure.npy")
+for w in tqdm(range(2, 2500)):
+    vibration_tde_plot(vibration, w, "plots-engine-2", "Engine Vibration")
+

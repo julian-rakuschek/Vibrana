@@ -8,6 +8,8 @@ from matplotlib.collections import LineCollection
 
 from parser.grav_waves import make_gravitational_waves
 
+cmap = "jet"
+
 plot_mosaic = [
     ["line1", "line1", "cloud1"],
     ["line2", "line2", "cloud2"],
@@ -32,7 +34,7 @@ projected = PCA(n_components=2).fit_transform(windows)
 ax["cloud1"].scatter(projected[:, 0], projected[:, 1], s=8, c="black")
 ax["cloud1"].axis("off")
 
-noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(1, snr=0.3)
+noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(1, snr=0.3, seed=42)
 values_a = noisy_signals_anomalous[0] * (10 ** 19)
 values_a = MinMaxScaler().fit_transform(values_a.reshape(-1, 1)).reshape(1, -1)[0]
 values_p = noisy_signals_plain[0] * (10 ** 19)
@@ -47,13 +49,13 @@ scores = []
 for point in projected:
     scores.append(np.linalg.norm(point))
 scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
-ax["cloud2"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps["turbo"](scores_norm))
+ax["cloud2"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps[cmap](scores_norm))
 ax["cloud2"].axis("off")
 
 segments = []
 for i in range(len(values_p) - 1):
     segments.append([(i, values_p[i]), (i + 1, values_p[i + 1])])
-lc = LineCollection(segments, cmap="turbo", linewidth=3)
+lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
 # ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line2"].add_collection(lc)
@@ -70,13 +72,13 @@ scores = []
 for point in projected:
     scores.append(np.linalg.norm(point))
 scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
-ax["cloud3"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps["turbo"](scores_norm))
+ax["cloud3"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps[cmap](scores_norm))
 ax["cloud3"].axis("off")
 
 segments = []
 for i in range(len(noisy_signals_anomalous[0]) - 1):
     segments.append([(i, noisy_signals_anomalous[0][i]), (i + 1, noisy_signals_anomalous[0][i + 1])])
-lc = LineCollection(segments, cmap="turbo", linewidth=3)
+lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
 # ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line3"].add_collection(lc)
@@ -96,13 +98,13 @@ scores = []
 for point in projected:
     scores.append(np.linalg.norm(point))
 scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
-ax["cloud4"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps["turbo"](scores_norm))
+ax["cloud4"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps[cmap](scores_norm))
 ax["cloud4"].axis("off")
 
 segments = []
 for i in range(len(noisy_signals_anomalous[0]) - 1):
     segments.append([(i, noisy_signals_anomalous[0][i]), (i + 1, noisy_signals_anomalous[0][i + 1])])
-lc = LineCollection(segments, cmap="turbo", linewidth=3)
+lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
 # ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line4"].add_collection(lc)
@@ -114,4 +116,4 @@ ax["line4"].set_xlim(0, len(noisy_signals_anomalous[0]))
 ax["line4"].spines["top"].set_visible(False)
 ax["line4"].spines["right"].set_visible(False)
 
-plt.savefig(f"window-size-effect.png", bbox_inches='tight', dpi=200)
+plt.savefig(f"window-size-effect-{cmap}.png", bbox_inches='tight', dpi=200)

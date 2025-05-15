@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import numpy as np
 import polars as pl
 from matplotlib import pyplot as plt
@@ -8,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 import matplotlib.dates as mdates
 
-def slice_and_project(df, channel, n_segments):
+def slice_and_project(df, channel, n_segments, global_coloring=False):
     channel_data = df[channel].to_numpy()
     window_size = len(channel_data) // n_segments
     plot_mosaic = [
@@ -21,6 +24,8 @@ def slice_and_project(df, channel, n_segments):
 
     cuts = []
     arrow_locations = []
+    all_projected = []
+    all_scores = []
     for i in tqdm(range(n_segments)):
         if i != 0:
             cuts.append(i * window_size)
@@ -28,12 +33,19 @@ def slice_and_project(df, channel, n_segments):
         subset = channel_data[i * window_size:(i + 1) * window_size]
         windows = sliding_window_view(subset, window_shape=2000)
         projected = PCA(n_components=2).fit_transform(windows)
-
+        all_projected.append(projected)
+        for point in projected:
+            all_scores.append(np.linalg.norm(point))
+    all_scores = np.array(all_scores)
+    for i in tqdm(range(n_segments)):
+        projected = all_projected[i]
         scores = []
         for point in projected:
             scores.append(np.linalg.norm(point))
-        scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
-
+        if global_coloring:
+            scores_norm = (np.array(scores) - np.min(all_scores)) / (np.max(all_scores) - np.min(all_scores))
+        else:
+            scores_norm = (np.array(scores) - np.min(scores)) / (np.max(scores) - np.min(scores))
         ax[f"projection{i}"].set_xlim([np.min(projected[:, 0]), np.max(projected[:, 0])])
         ax[f"projection{i}"].set_ylim([np.min(projected[:, 1]), np.max(projected[:, 1])])
         ax[f"projection{i}"].scatter(projected[:, 0], projected[:, 1], s=3, c=colormaps["turbo"](scores_norm))
@@ -54,7 +66,8 @@ def slice_and_project(df, channel, n_segments):
 
 
 def extract_slice(channel, start, length):
-    df = pl.read_parquet("vibrationsdaten_Nov4-5_2022.parquet")
+    data_path = os.path.join(Path(__file__).parents[2], "data", "johanna", "vibrationsdaten_Nov4-5_2022.parquet")
+    df = pl.read_parquet(data_path)
     df = df.slice(start, length)
     df = df.select(pl.col("TimeStamp", channel))
     df = df.select(["TimeStamp", channel])
@@ -80,4 +93,4 @@ def extract_slice(channel, start, length):
 
 if __name__ == '__main__':
     df = extract_slice("Ch1", 69_700_000, 1_100_000)
-    slice_and_project(df, "Ch1", 10)
+    slice_and_project(df, "Ch1", 10, global_coloring=True)

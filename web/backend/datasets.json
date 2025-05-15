@@ -72,6 +72,16 @@
     ]
   },
   {
+    "name": "Konrad Schweiger",
+    "folder": "schweiger",
+    "description": "",
+    "task": "",
+    "source": "Provided by Konrad Schweiger (Dewesoft)",
+    "subsets": [
+      {"name":  "bearing", "folder":  "bearing"}
+    ]
+  },
+  {
     "name": "Sorting Machine Debris Impact",
     "folder": "binder",
     "description": "This dataset features measurements acquired from a sorting machine that sorts cobbles by their size. To achieve this, a sieve is utilized, that naturally wears out, causing larger cobbles to fall through. The goal is to measure the impact of cobbles on a metal plate beneath the sieve. The dataset shows vibrations of the metal plate, with and without anomalies.",
