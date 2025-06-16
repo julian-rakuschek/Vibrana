@@ -29,15 +29,15 @@
 		const vec = new wasmPCA.arrayToVec(data);
 		// vec.reserve(data.length);
 		console.log('vec ready');
-		const tde = wasmPCA.slidingWindowView(vec, 1000, 0, data.length - 1);
+		const tde = wasmPCA.slidingWindowView(vec, 100, 0, data.length - 1);
 		console.log(tde)
-		const pc = wasmPCA.getPrincipalComponents(tde);
+		const pc = wasmPCA.fsvd(tde, 2, 100, true);
 		console.log(pc)
 		// const projected = wasmPCA.project(pc, tde);
-		// const projected_js = wasmPCA.matrixToArray(projected);
+		const projected_js = wasmPCA.matrixToArray(pc);
 		// console.log(projected_js);
-		// indexProjectedPoints(projected_js);
-		// return projected_js;
+		indexProjectedPoints(projected_js);
+		return projected_js;
 	};
 
 	onMount(async () => {
