@@ -4,105 +4,20 @@
     "folder": "hydro",
     "description": "Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.",
     "task": "Change Detection",
-    "source": "Provided by Johanna Schmidt (VRVis GmbH)",
+    "source": "Provided by Johanna Schmidt (TU Wien)",
+    "signals_or_stream": "stream",
     "subsets": [
       {
         "name": "Vibrations in X-Direction",
-        "folder": "hydro-1-x"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-x.npy"
       },
       {
         "name": "Vibrations in Y-Direction",
-        "folder": "hydro-1-y"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-y.npy"
       },
       {
         "name": "Vibrations in Z-Direction",
-        "folder": "hydro-1-z"
-      }
-    ]
-  },
-  {
-    "name": "Engine Multiple Runs",
-    "folder": "motor",
-    "description": "Vibrations acquired from an engine, showing multiple runs (with and without damage). The subsets highlight the difference if noise is applied.",
-    "task": "Classification",
-    "source": "https://www.timeseriesclassification.com/description.php?Dataset=FaultDetectionB",
-    "subsets": [
-      {
-        "name": "Engines with and without inner bearing damage",
-        "folder": "inner-damage"
-      },
-      {
-        "name": "Engines with and without inner bearing damage (added noise)",
-        "folder": "inner-damage-noise"
-      }
-    ]
-  },
-  {
-    "name": "Engine Run To Failure",
-    "folder": "nasa-bearings",
-    "description": "Vibrations acquired from the bearing of an engine in a run-to-failure setting.",
-    "task": "Change Detection",
-    "source": "https://www.kaggle.com/datasets/vinayak123tyagi/bearing-dataset",
-    "subsets": [
-      {
-        "name": "Test 2",
-        "folder": "test2"
-      }
-    ]
-  },
-  {
-    "name": "Hidden Gravitational Waves",
-    "folder": "grav",
-    "description": "Synthetic dataset highlighting hidden patterns in noise.",
-    "task": "Noise vs. Pattern",
-    "source": "https://arxiv.org/abs/1910.08245",
-    "subsets": [
-      {
-        "name": "Gravitational Waves SNR 0.1",
-        "folder": "grav-01"
-      },
-      {
-        "name": "Gravitational Waves SNR 0.15",
-        "folder": "grav-015"
-      },
-      {
-        "name": "Gravitational Waves SNR 0.2",
-        "folder": "grav-02"
-      }
-    ]
-  },
-  {
-    "name": "Konrad Schweiger",
-    "folder": "schweiger",
-    "description": "",
-    "task": "",
-    "source": "Provided by Konrad Schweiger (Dewesoft)",
-    "subsets": [
-      {"name":  "bearing", "folder":  "bearing"}
-    ]
-  },
-  {
-    "name": "Sorting Machine Debris Impact",
-    "folder": "binder",
-    "description": "This dataset features measurements acquired from a sorting machine that sorts cobbles by their size. To achieve this, a sieve is utilized, that naturally wears out, causing larger cobbles to fall through. The goal is to measure the impact of cobbles on a metal plate beneath the sieve. The dataset shows vibrations of the metal plate, with and without anomalies.",
-    "task": "Classification",
-    "source": "Provided by Adrian Boesze (Binder+Co AG)",
-    "subsets": [
-      {
-        "name": "Metall platte, FEST Montiert, 5-10 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
-        "folder": "1"
-      },
-      {
-        "name": "Metall platte, FEST Montiert, 10-16 Korngröse, 20 cm fall, Magnetisch befestigt X t pro stunde",
-        "folder": "13"
-      },
-      {
-        "name": "Metall platte, FEDER Montiert,  5-10 Korngröse, 25 cm fall, sensor fest xx t pro stunde",
-        "folder": "16"
-      },
-      {
-        "name": "5-10 Korngröse 5 cm, 45 Grad Aus Förderrinne 1 t pro h",
-        "folder": "29"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-z.npy"
       }
     ]
   }

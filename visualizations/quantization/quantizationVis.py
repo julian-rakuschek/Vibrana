@@ -3,7 +3,7 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 
-import web.backend.helper.analysis as vibrana
+import web.backend.helper.clustering as vibrana
 from web.backend.modules.database import get_db
 from web.backend.settings import chunks_folder
 
