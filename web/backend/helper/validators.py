@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 import os
 from pathlib import Path
@@ -6,17 +7,21 @@ from flask import jsonify
 
 from web.backend.settings import chunks_folder
 
+with open(os.path.join(Path(__file__).parents[1], "datasets.json")) as f:
+    datasets = json.load(f)
 
 def validate_subset(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         dataset = kwargs.get('dataset')
         subset = kwargs.get('subset')
-        subset_path = os.path.join(chunks_folder, dataset, subset)
-        if not os.path.exists(subset_path):
-            return jsonify({"error": "subset not found"}), 404
-        return f(subset_path=subset_path, *args, **kwargs)
-
+        if dataset not in datasets:
+            return jsonify({"error": "Dataset not found in config file"}), 404
+        if subset not in datasets[dataset]["subsets"]:
+            return jsonify({"error": "Subset not found in dataset"}), 404
+        file_path = datasets[dataset]["subsets"][subset]["file"]
+        absolute_file_path = os.path.join(Path(__file__).parents[3], "data", file_path)
+        return f(path=absolute_file_path, *args, **kwargs)
     return decorated_function
 
 

@@ -38,7 +38,7 @@ class PlaneThread(threading.Thread):
 
 if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[2], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
-    loader = RedisLoader(file_path, "vibrana:hydro-1-x")
+    loader = RedisLoader(file_path, "vibrana:hydro:x")
     loader.load_numpy_file(False)
     thread = PlaneThread(loader.r, loader, 1000, 10_000)
     thread.compute_plane()

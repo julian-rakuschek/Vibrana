@@ -1,29 +1,45 @@
-import json
-import os.path
-from pathlib import Path
-
 import flask
-import numpy as np
-import pymongo
-from bson import ObjectId, json_util
-from pymongo.database import Database
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from web.backend.helper.validators import validate_subset, validate_chunk_path
-from web.backend.settings import chunks_folder, READ_ONLY
+from web.backend.data_loaders.redisLoader import RedisLoader
+from web.backend.helper.validators import validate_subset
 
 db_app = flask.Blueprint("db", __name__)
 
 
-def serialize_mongodb(output):
-    temp = json.dumps(output, default=json_util.default)
-    return json.loads(temp)
+@db_app.get("<dataset>/<subset>/slice")
+@validate_subset
+def flask_get_slice(dataset, subset, path):
+    start_index = flask.request.args.get("start_index", 0)
+    end_index = flask.request.args.get("end_index", -1)
+
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    loader.load_numpy_file()
+    return loader.get_slice(start_index, end_index, as_numpy=False)
 
 
-def get_db() -> Database:
-    mongo_url = f"mongodb://{'vibrana_mongodb' if os.environ.get('DOCKER', "False") == 'True' else 'localhost'}:27017/"
-    conn = pymongo.MongoClient(mongo_url)
-    db: Database = conn["Vibrana"]
-    return db
+@db_app.get("<dataset>/<subset>/vectors")
+@validate_subset
+def flask_get_vectors(dataset, subset, path):
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    loader.load_numpy_file()
+    return loader.retrieve_hyperplane_vectors(exclude_vector_data=True)
+
+@db_app.get("<dataset>/<subset>/vector")
+@validate_subset
+def flask_get_vector(dataset, subset, path):
+    start_index = flask.request.args.get("start", None)
+    slice_size = flask.request.args.get("slice", None)
+    if slice_size is None or start_index is None:
+        return "Slice size and start index must both be defined", 400
+
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    loader.load_numpy_file()
+    return loader.retrieve_hyperplane_vectors(int(start_index), int(slice_size))
 
 
+@db_app.post("<dataset>/<subset>/clear")
+@validate_subset
+def flask_clear_dataset(dataset, subset, path):
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    loader.clear()
+    return "OK", 200

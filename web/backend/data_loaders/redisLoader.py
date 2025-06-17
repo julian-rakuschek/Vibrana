@@ -38,28 +38,32 @@ class RedisLoader(DataLoaderBase):
         self.data_size = data_size
         print("Done!")
 
-    def get_slice(self, start=0, end=-1):
+    def get_slice(self, start_index=0, end_index=-1, as_numpy=True):
         self.load_numpy_file()
         data_key = f"{self.redis_prefix}:data"
-        retrieved = self.r.lrange(data_key, start, end)
-        retrieved = np.array([float(x) for x in retrieved])
+        retrieved = self.r.lrange(data_key, start_index, end_index)
+        retrieved = [float(x) for x in retrieved]
+        if as_numpy:
+            retrieved = np.array(retrieved)
         return retrieved
 
-    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start: int, window_size: int):
-        data_key = f"{self.redis_prefix}:vectors:{start}:{window_size}"
-        data = {"v1": v1, "v2": v2, "start": start, "window_size": window_size}
+    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start_index: int, slice_length: int):
+        data_key = f"{self.redis_prefix}:vectors:{start_index}:{slice_length}"
+        data = {"v1": v1.tolist(), "v2": v2.tolist(), "start_index": start_index, "slice_length": slice_length}
         serialized = pickle.dumps(data)
         self.r.set(data_key, serialized)
 
-    def retrieve_hyperplane_vectors(self, start: int = None, window_size: int = None):
+    def retrieve_hyperplane_vectors(self, start_index: int = None, slice_length: int = None, exclude_vector_data: bool = False):
         data_key = f"{self.redis_prefix}:vectors:*"
-        if start is not None and window_size is not None:
-            data_key = f"{self.redis_prefix}:vectors:{start}:{window_size}"
+        if start_index is not None and slice_length is not None:
+            data_key = f"{self.redis_prefix}:vectors:{start_index}:{slice_length}"
         results = []
         for key in self.r.scan_iter(data_key):
             serialized = self.r.get(key)
             if serialized:
                 data = pickle.loads(serialized)
+                if exclude_vector_data:
+                    data = {"slice_length": data["slice_length"], "start_index": data["start_index"]}
                 results.append(data)
         return results
 
@@ -78,7 +82,8 @@ class RedisLoader(DataLoaderBase):
 
 if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
-    loader = RedisLoader(file_path, "vibrana:hydro-1-x")
+    loader = RedisLoader(file_path, "vibrana:hydro:x")
+    loader.clear()
     loader.load_numpy_file(False)
     res = loader.get_slice(0, 10_000)
     print(res)
