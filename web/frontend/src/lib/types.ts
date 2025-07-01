@@ -7,19 +7,8 @@ export type Diff<T, U> = T extends U ? never : T;
 export type Successful<T> = Diff<T, { success: false }>;
 export type Failed<T> = Diff<T, { success: true }>;
 
-
-export type Dataset = {
-    name: string;
-    folder: string;
-    description: string;
-    task: string;
-    source: string;
-    subsets: { name: string; folder: string }[]
-}
-
-export type ObjectId = {
-  $oid: string;
-};
+// ---------------------------------------------------------
+// Enums
 
 export enum ToastType {
   Info = "Info",
@@ -48,6 +37,35 @@ export enum SortMode {
 export enum ProjectionMode {
     Paths, Cluster
 }
+
+// ---------------------------------------------------------
+// Data Structures
+
+export type ObjectId = { $oid: string; };
+
+export type Dataset = {
+    name: string;
+    folder: string;
+    description: string;
+    task: string;
+    source: string;
+    subsets: { name: string; folder: string }[]
+}
+
+export type Dendrogram = {
+  id: string;
+  dist?: number;
+  left?: Dendrogram;
+  right?: Dendrogram;
+};
+
+export type HyperplaneVector = {
+    slice_length: number;
+    start_index: number;
+    v1: number[];
+    v2: number[];
+}
+
 
 export type ThreeChartsSettingsType = {
     window: WindowMode;
@@ -103,47 +121,8 @@ export type ChartColors = {
     projectedColors: Color[];
 }
 
-export type AnomalyMetric = {
-    ratio: number,
-    count: number,
-    distances_reduced: number[],
-    dataset: string,
-    subset: string
-    chunk: string
-}
 
-export type ParseStatus = {
-    dwparse?: {
-        status: string
-    };
-    split?: {
-        status: string;
-        items: {[file: string]: string}
-    };
-}
 
-export type AnalysisPostData = {
-    normals: { dataset: string, subset: string, chunks: string[] },
-    labels: Label[]
-}
-
-export type LabelCount = {
-    _id: string;
-    count: number;
-}
-
-export type SessionNormals = {
-    [dataset: string]: {
-        [subset: string]: string[]
-    }
-}
-
-export type Dendrogram = {
-  id: string;
-  dist?: number;
-  left?: Dendrogram;
-  right?: Dendrogram;
-};
 
 export type SelectedChunk = {
     dataset: string;

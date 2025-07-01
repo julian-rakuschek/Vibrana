@@ -1,7 +1,6 @@
 <script lang="ts">
     import {Icon, Bars3, XMark} from "svelte-hero-icons";
     import {goto} from '$app/navigation';
-    import {getContext} from "svelte";
 
     export let darkMode = false; // Default to light mode
 
@@ -25,8 +24,6 @@
         goto(link);
         closeMobileMenu();
     }
-
-    const {ro} = getContext("ro") as { ro: boolean }
 </script>
 
 <header class={`${darkMode ? 'bg-[#0e1b40]' : 'bg-white'} z-50`}>
@@ -40,11 +37,6 @@
 
         <div class="flex flex-row gap-5 lg:hidden">
             <div class="flex lg:flex-1 lg:justify-end gap-x-4">
-                {#if ro}
-                    <div class="bg-[#304ffe] text-white rounded-lg px-4 py-2 text-sm">
-                        Read-Only Mode
-                    </div>
-                {/if}
             </div>
             <button
                     type="button"
@@ -63,11 +55,6 @@
             {/each}
         </div>
         <div class="hidden lg:flex lg:flex-1 lg:justify-end gap-x-4">
-            {#if ro}
-                <div class="bg-[#304ffe] text-white rounded-lg px-4 py-2 text-sm">
-                    Read-Only Mode
-                </div>
-            {/if}
         </div>
     </nav>
 

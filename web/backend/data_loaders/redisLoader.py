@@ -69,11 +69,12 @@ class RedisLoader(DataLoaderBase):
 
     def set_target_threads(self, num_threads):
         data_key = f"{self.redis_prefix}:data:threads"
-        self.r.set(data_key, num_threads)
+        self.r.set(data_key, str(num_threads))
 
     def get_target_threads(self):
         data_key = f"{self.redis_prefix}:data:threads"
-        self.r.get(data_key)
+        value = self.r.get(data_key)
+        return int(value) if value else None
 
     def clear(self):
         for key in self.r.scan_iter(f"{self.redis_prefix}:*"):
@@ -83,7 +84,10 @@ class RedisLoader(DataLoaderBase):
 if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
     loader = RedisLoader(file_path, "vibrana:hydro:x")
-    loader.clear()
-    loader.load_numpy_file(False)
-    res = loader.get_slice(0, 10_000)
-    print(res)
+    # loader.clear()
+    # loader.load_numpy_file(False)
+    # res = loader.get_slice(0, 10_000)
+    # print(res)
+    print(loader.get_target_threads())
+    loader.set_target_threads(1)
+    print(loader.get_target_threads())

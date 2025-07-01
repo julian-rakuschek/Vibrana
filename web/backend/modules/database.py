@@ -27,8 +27,8 @@ def flask_get_vectors(dataset, subset, path):
 @db_app.get("<dataset>/<subset>/vector")
 @validate_subset
 def flask_get_vector(dataset, subset, path):
-    start_index = flask.request.args.get("start", None)
-    slice_size = flask.request.args.get("slice", None)
+    start_index = flask.request.args.get("start_index", None)
+    slice_size = flask.request.args.get("slice_size", None)
     if slice_size is None or start_index is None:
         return "Slice size and start index must both be defined", 400
 

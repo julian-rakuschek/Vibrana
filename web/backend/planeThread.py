@@ -27,11 +27,13 @@ class PlaneThread(threading.Thread):
         projected = PCA(n_components=2).fit_transform(windows)
         v1, v2 = projected[:, 0], projected[:, 1]
         self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size)
+        print(f"Computed vectors at {next_index}")
 
     def run(self):
         while True:
-            if self.loader.get_target_threads() == 0:
+            if self.loader.get_target_threads() == 0 or self.loader.get_target_threads() is None:
                 time.sleep(1)
+                print("Inactive")
                 continue
             self.compute_plane()
 
@@ -41,7 +43,5 @@ if __name__ == '__main__':
     loader = RedisLoader(file_path, "vibrana:hydro:x")
     loader.load_numpy_file(False)
     thread = PlaneThread(loader.r, loader, 1000, 10_000)
-    thread.compute_plane()
-    vectors = loader.retrieve_hyperplane_vectors()
-    print(vectors)
+    thread.run()
 

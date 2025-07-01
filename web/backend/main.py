@@ -5,12 +5,14 @@ import flask
 
 from web.backend.modules.database import db_app
 from web.backend.modules.analysis import analysis_app
+from web.backend.modules.computing import computing_app
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"
 
 app.register_blueprint(db_app, url_prefix="/api/db")
 app.register_blueprint(analysis_app, url_prefix="/api/analysis")
+app.register_blueprint(computing_app, url_prefix="/api/computing")
 
 SATIC_FILE_EXTENSIONS = ["js", "css", "html", "png", "jpg", "mp4"]
 

@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppResponse, Dendrogram, Label, LabelBase, LabelCount, ParseStatus} from "../types";
+import type { DefaultAppResponse, HyperplaneVector } from '@lib/types';
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -10,42 +10,20 @@ import type {AnalysisPostData, Annotation, AnomalyMetric, Dataset, DefaultAppRes
 // (4) TResponse = Response object
 
 export const dbRoutes = {
-  getReadOnly: new ApiRoute<undefined, undefined, undefined, boolean>("GET", "/db/is_read_only"),
-  getDatasetList: new ApiRoute<undefined, undefined, undefined, Dataset[]>("GET", "/db/datasets"),
-  getChunks: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, string[]>("GET", "/db/:dataset/:subset/chunks"),
-  getChunkValues: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/values"),
-  getChunkProjected: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[][]>("GET", "/db/:dataset/:subset/:chunk/projected"),
-  getChunkEvents: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/events"),
-  getChunkFreq: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/db/:dataset/:subset/:chunk/freq"),
-  getLabels: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, Annotation[]>("GET", "/db/:dataset/:subset/:chunk/labels"),
-  getAllLabels: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, Label[]>("GET", "/db/:dataset/:subset/labels"),
-  getLabelCounts: new ApiRoute<undefined, {dataset: string; subset: string; }, undefined, LabelCount[]>("GET", "/db/:dataset/:subset/labels/count"),
-  addLabel: new ApiRoute<LabelBase, {dataset: string; subset: string; chunk: string}, undefined, undefined>("POST", "/db/labels"),
-  deleteLabelById: new ApiRoute<undefined, {labelId: string}, undefined, undefined>("DELETE", "/db/labels/byId/:labelId"),
-  deleteLabelByPos: new ApiRoute<undefined, {dataset: string; subset: string; pos: string | number; chunk: string}, undefined, undefined>("DELETE", "/db/:dataset/:subset/:chunk/labels/:pos"),
-  getNormals: new ApiRoute<undefined, { dataset: string; subset: string }, undefined, string[]>("GET", "/db/:dataset/:subset/normals"),
-  toggleNormal: new ApiRoute<undefined, { dataset: string; subset: string; chunk: string }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/normals"),
-  reset: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/reset"),
-  resetChunk: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/:chunk/reset"),
+  getSlice: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index?: number; end_index?: number }, number[]>("GET", "/db/:dataset/:subset/slice"),
+  getVectors: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, HyperplaneVector[]>("GET", "/db/:dataset/:subset/vectors"),
+  getVector: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index: number; slice_index: number }, HyperplaneVector>("GET", "/db/:dataset/:subset/vector"),
+  clearVectors: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/clear"),
 };
 
-export const analysisRoutesDB = {
-  getMDSEmbedding: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, {window_size: number}, number[][]>("GET", "/analysis/:dataset/:subset/:chunk/mdsEmbedding"),
-  getSimilarities: new ApiRoute<undefined, {dataset: string; subset: string; chunk: string}, undefined, number[]>("GET", "/analysis/:dataset/:subset/:chunk/distanceProfile/quantized"),
-  getNormalTube: new ApiRoute<undefined, {dataset: string; subset: string }, undefined, [number, number]>("GET", "/analysis/:dataset/:subset/normal_tube"),
-  getAnomalyRatios: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, AnomalyMetric[]>("GET", "/analysis/:dataset/:subset/anomaly_metrics"),
-  getCluster: new ApiRoute<undefined, {dataset: string; subset: string}, undefined, Dendrogram>("GET", "/analysis/:dataset/:subset/cluster"),
+export const computingRoutes = {
+  computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/single_step"),
+  setTargetThreads: new ApiRoute<{ threads: number }, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/set_target_threads"),
+  getTargetThreads: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, number>("GET", "/computing/:dataset/:subset/get_target_threads"),
 }
 
-// RO = Read Only, this means the user needs to supply data that would normally be stored in the database
-export const analysisRoutesRO = {
-  getSimilaritiesRO: new ApiRoute<AnalysisPostData, {dataset: string; subset: string; chunk: string}, undefined, number[]>("POST", "/analysis/:dataset/:subset/:chunk/distanceProfile/quantized"),
-  getNormalTubeRO: new ApiRoute<AnalysisPostData, {dataset: string; subset: string}, undefined, [number, number]>("POST", "/analysis/:dataset/:subset/normal_tube"),
-  getAnomalyRatiosRO: new ApiRoute<AnalysisPostData, {dataset: string; subset: string}, undefined, AnomalyMetric[]>("POST", "/analysis/:dataset/:subset/anomaly_metrics"),
-}
 
 export const ApiRoutes = {
   ...dbRoutes,
-  ...analysisRoutesDB,
-  ...analysisRoutesRO
+  ...computingRoutes
 };
