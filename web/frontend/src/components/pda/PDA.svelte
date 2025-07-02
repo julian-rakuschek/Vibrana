@@ -2,6 +2,7 @@
 	import { useQueryFetch } from '@lib/api/ApiQueries';
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import PDAThreadsControl from '@components/pda/PDAThreadsControl.svelte';
+	import PDASocket from '@components/pda/PDASocket.svelte';
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
@@ -16,3 +17,5 @@
 {#if $vectorsQuery.data && $vectorsQuery.isSuccess}
 	<p>{$vectorsQuery.data.length}</p>
 {/if}
+
+<PDASocket />

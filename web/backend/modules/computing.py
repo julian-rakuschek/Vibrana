@@ -4,7 +4,7 @@ import flask
 
 from web.backend.data_loaders.redisLoader import RedisLoader
 from web.backend.helper.validators import validate_subset
-from web.backend.planeThread import PlaneThread
+from web.backend.threads.computingThread import ComputingThread
 
 computing_app = flask.Blueprint("computing", __name__)
 
@@ -38,6 +38,6 @@ def flask_make_single_step(dataset, subset, path):
     slice_size = int(flask.request.args.get("slice_size", 10_000))
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
     loader.load_numpy_file(False)
-    thread = PlaneThread(loader.r, loader, sliding_window_size, slice_size)
+    thread = ComputingThread(loader.r, loader, sliding_window_size, slice_size)
     thread.compute_plane()
     return {"success": True}
