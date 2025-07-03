@@ -51,7 +51,11 @@ class RedisLoader(DataLoaderBase):
 
     def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start_index: int, slice_length: int):
         data_key = f"{self.redis_prefix}:vectors:{start_index}:{slice_length}"
-        data = {"v1": v1.tolist(), "v2": v2.tolist(), "start_index": start_index, "slice_length": slice_length, "timestamp": datetime.datetime.now().timestamp()}
+        data = {
+            "v1": v1.tolist(), "v2": v2.tolist(),
+            "start_index": start_index, "slice_length": slice_length, "max_index": self.data_size,
+            "timestamp": datetime.datetime.now().timestamp()
+        }
         serialized = pickle.dumps(data)
         self.r.set(data_key, serialized)
 
@@ -65,7 +69,8 @@ class RedisLoader(DataLoaderBase):
             if serialized:
                 data = pickle.loads(serialized)
                 if exclude_vector_data:
-                    data = {"slice_length": data["slice_length"], "start_index": data["start_index"]}
+                    del data["v1"]
+                    del data["v2"]
                 results.append(data)
         return results
 
@@ -87,10 +92,3 @@ if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
     loader = RedisLoader(file_path, "vibrana:hydro:x")
     loader.clear()
-    # loader.clear()
-    # loader.load_numpy_file(False)
-    # res = loader.get_slice(0, 10_000)
-    # print(res)
-    print(loader.get_target_threads())
-    loader.set_target_threads(1)
-    print(loader.get_target_threads())

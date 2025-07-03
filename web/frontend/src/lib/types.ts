@@ -62,6 +62,7 @@ export type Dendrogram = {
 export type HyperplaneVector = {
     slice_length: number;
     start_index: number;
+    max_index: number;
     v1: number[];
     v2: number[];
 }

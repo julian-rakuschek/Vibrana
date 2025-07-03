@@ -35,7 +35,7 @@ class ComputingThread(threading.Thread):
         projected = PCA(n_components=2).fit_transform(windows)
         v1, v2 = projected[:, 0], projected[:, 1]
         self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size)
-        data = {"start_index": next_index, "slice_length": self.slice_size, "timestamp": datetime.datetime.now().timestamp()}
+        data = {"start_index": next_index, "slice_length": self.slice_size, "timestamp": datetime.datetime.now().timestamp(), "max_index": self.loader.data_size}
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': data})
         print(f"Computed vectors at {next_index}")

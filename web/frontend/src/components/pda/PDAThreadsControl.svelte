@@ -27,7 +27,7 @@
 	})
 </script>
 
-<div class="flex flex-row gap-2 p-2">
+<div class="flex flex-row gap-2">
 	<button class="h-10 w-10" on:click={async () => {threads = 0; await setThreads(0)}}>
 		<FancyButton icon="{Pause}" button_color="primary" />
 	</button>
