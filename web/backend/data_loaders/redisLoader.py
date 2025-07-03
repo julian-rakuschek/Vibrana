@@ -1,3 +1,4 @@
+import datetime
 import os
 import pickle
 from pathlib import Path
@@ -18,6 +19,7 @@ class RedisLoader(DataLoaderBase):
         if os.environ.get('DOCKER', "False") == 'True':
             redis_host = "anoscout_redis"
         self.r = redis.Redis(host=redis_host, port=6379, db=1)
+        self.set_target_threads(0)
 
     def load_numpy_file(self, overwrite_existing=False):
         data_key = f"{self.redis_prefix}:data"
@@ -49,7 +51,7 @@ class RedisLoader(DataLoaderBase):
 
     def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start_index: int, slice_length: int):
         data_key = f"{self.redis_prefix}:vectors:{start_index}:{slice_length}"
-        data = {"v1": v1.tolist(), "v2": v2.tolist(), "start_index": start_index, "slice_length": slice_length}
+        data = {"v1": v1.tolist(), "v2": v2.tolist(), "start_index": start_index, "slice_length": slice_length, "timestamp": datetime.datetime.now().timestamp()}
         serialized = pickle.dumps(data)
         self.r.set(data_key, serialized)
 
@@ -84,6 +86,7 @@ class RedisLoader(DataLoaderBase):
 if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
     loader = RedisLoader(file_path, "vibrana:hydro:x")
+    loader.clear()
     # loader.clear()
     # loader.load_numpy_file(False)
     # res = loader.get_slice(0, 10_000)

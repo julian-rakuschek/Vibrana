@@ -5,19 +5,25 @@
     "description": "Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.",
     "task": "Change Detection",
     "source": "Provided by Johanna Schmidt (TU Wien)",
-    "signals_or_stream": "stream",
+    "chunks_or_stream_or_large": "large",
     "subsets": {
       "x": {
         "name": "Vibrations in X-Direction",
-        "file": "parsed/hydro/hydro-1/values-hydro-1-x.npy"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-x.npy",
+        "slice_size": 10000,
+        "sliding_window_size": 1000
       },
       "y": {
         "name": "Vibrations in Y-Direction",
-        "file": "parsed/hydro/hydro-1/values-hydro-1-y.npy"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-y.npy",
+        "slice_size": 10000,
+        "sliding_window_size": 1000
       },
       "z": {
         "name": "Vibrations in Z-Direction",
-        "file": "parsed/hydro/hydro-1/values-hydro-1-z.npy"
+        "file": "parsed/hydro/hydro-1/values-hydro-1-z.npy",
+        "slice_size": 10000,
+        "sliding_window_size": 1000
       }
     }
   }

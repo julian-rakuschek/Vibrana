@@ -10,8 +10,8 @@
 	let threads = 0;
 	
 	
-	async function setThreads() {
-		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads}})
+	async function setThreads(new_threads: number) {
+		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads: new_threads}})
 	}
 
 	async function getThreads(): Promise<number> {
@@ -28,19 +28,19 @@
 </script>
 
 <div class="flex flex-row gap-2 p-2">
-	<button class="h-10 w-10" on:click={async () => {threads = 0; await setThreads()}}>
+	<button class="h-10 w-10" on:click={async () => {threads = 0; await setThreads(0)}}>
 		<FancyButton icon="{Pause}" button_color="primary" />
 	</button>
-	<button class="h-10 w-10" on:click={async () => {threads = 0; await setThreads(); await oneStep()}}>
+	<button class="h-10 w-10" on:click={async () => {threads = 0; await setThreads(0); await oneStep()}}>
 		<FancyButton icon="{PlayPause}" button_color="primary" />
 	</button>
-	<button class="h-10 w-10" on:click={async () => {threads = 1; await setThreads();}}>
+	<button class="h-10 w-10" on:click={async () => {threads = 1; await setThreads(1);}}>
 		<FancyButton icon="{Play}" button_color="primary" />
 	</button>
-	<button class="h-10 w-10" on:click={async () => {threads = 10; await setThreads();}}>
+	<button class="h-10 w-10" on:click={async () => {threads = 10; await setThreads(10);}}>
 		<FancyButton icon="{Forward}" button_color="primary" />
 	</button>
 	<div class="w-52">
-		<RangeSlider min={0} max={10} bind:value={threads} pips first last float suffix=" threads" />
+		<RangeSlider min={0} max={10} bind:value={threads} on:stop={(e) => setThreads(e.detail.value)} pips first last float suffix=" threads" />
 	</div>
 </div>
