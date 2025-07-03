@@ -38,7 +38,7 @@ class ComputingThread(threading.Thread):
         data = {"start_index": next_index, "slice_length": self.slice_size, "timestamp": datetime.datetime.now().timestamp(), "max_index": self.loader.data_size}
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': data})
-        print(f"Computed vectors at {next_index}")
+        # print(f"Computed vectors at {next_index}")
 
     def stop(self):
         self.stop_request = True

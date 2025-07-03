@@ -83,8 +83,11 @@ class RedisLoader(DataLoaderBase):
         value = self.r.get(data_key)
         return int(value) if value else None
 
-    def clear(self):
-        for key in self.r.scan_iter(f"{self.redis_prefix}:*"):
+    def clear(self, only_vectors=True):
+        pattern = f"{self.redis_prefix}:*"
+        if only_vectors:
+            pattern = f"{self.redis_prefix}:vectors:*"
+        for key in self.r.scan_iter(pattern):
             self.r.delete(key)
 
 

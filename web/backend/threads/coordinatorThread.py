@@ -41,17 +41,20 @@ class CoordinatorThread(threading.Thread):
                     t.start()
                 self.loaders[dataset_name][subset_name] = loader
                 self.threads[dataset_name][subset_name] = threads
+        print("Coordinator initialized!")
 
     def run(self):
         while True:
-            print(datetime.datetime.now().isoformat())
+            # print(datetime.datetime.now().isoformat())
             for dataset_name, dataset_object in self.datasets.items():
                 for subset_name, subset_object in dataset_object["subsets"].items():
                     target_threads = self.loaders[dataset_name][subset_name].get_target_threads()
-                    print(dataset_name, subset_name, target_threads)
+                    if target_threads is None:
+                        target_threads = 0
+                    # print(dataset_name, subset_name, target_threads)
                     for i, t in enumerate(self.threads[dataset_name][subset_name]):
                         t.set_active(i < target_threads)
-            time.sleep(3)
+            time.sleep(0.5)
 
 
 if __name__ == '__main__':

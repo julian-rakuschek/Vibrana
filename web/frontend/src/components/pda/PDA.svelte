@@ -2,25 +2,47 @@
 	import { useQueryFetch } from '@lib/api/ApiQueries';
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import PDAThreadsControl from '@components/pda/PDAThreadsControl.svelte';
-	import PDASocket from '@components/pda/PDASocket.svelte';
 	import PDAVis from "@components/pda/PDAVis.svelte";
+	import { io } from 'socket.io-client';
+	import type {HyperplaneVector} from "@lib/types";
+	import {onMount} from "svelte";
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
-	const vectorsQuery = useQueryFetch(ApiRoutes.getVectors, { params: { dataset, subset } });
+	const socket = io('http://localhost:5000');
+
+	let vectors: HyperplaneVector[] = [];
+	let pdaVis: PDAVis;
+
+	socket.on('connect', () => {
+		const room = 'vibrana:hydro:x';
+		socket.emit('join', { room });
+	});
+
+	socket.on('message', (data) => {
+		console.log(data);
+		vectors = [...vectors, data];
+		if (pdaVis) pdaVis.addRectangle(data);
+	});
+
+	async function fetchAndDrawAll() {
+		console.log("called")
+		let vectors_query = await ApiRoutes.getVectors.fetch({ params: { dataset, subset } })
+		vectors = [...vectors_query]
+		if (pdaVis) {
+			pdaVis.drawVectors(vectors);
+		}
+	}
+
+	onMount(async () => {
+		await fetchAndDrawAll();
+	})
 
 </script>
 
-
 <div class="grid grid-cols-3 px-10">
-	<PDAThreadsControl dataset={dataset} subset={subset} />
+	<PDAThreadsControl dataset={dataset} subset={subset} handleReset={() => fetchAndDrawAll()} />
 	<p class="self-center text-center text-xl font-bold">Long Signal Analysis</p>
-	<p class="self-center text-right">{#if $vectorsQuery.data && $vectorsQuery.isSuccess}{$vectorsQuery.data.length} Fingerprints{/if}</p>
+	<p class="self-center text-right">{vectors.length} Fingerprints</p>
 </div>
-
-
-{#if $vectorsQuery.data && $vectorsQuery.isSuccess}
-	<PDAVis vectors={$vectorsQuery.data} />
-{/if}
-
-<PDASocket />
+<PDAVis vectors={vectors} bind:this={pdaVis} />

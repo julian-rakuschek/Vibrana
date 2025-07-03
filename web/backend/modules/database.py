@@ -41,5 +41,5 @@ def flask_get_vector(dataset, subset, path):
 @validate_subset
 def flask_clear_dataset(dataset, subset, path):
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
-    loader.clear()
+    loader.clear(only_vectors=True)
     return "OK", 200
