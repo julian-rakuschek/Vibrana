@@ -13,7 +13,7 @@ class DataLoaderBase:
     def get_slice(self, start=0, end=-1):
         pass
 
-    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start: int, window_size: int):
+    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start: int, window_size: int, feature_descriptors: dict):
         pass
 
     def retrieve_hyperplane_vectors(self, start: int = None, window_size: int = None):

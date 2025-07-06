@@ -49,12 +49,13 @@ class RedisLoader(DataLoaderBase):
             retrieved = np.array(retrieved)
         return retrieved
 
-    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start_index: int, slice_length: int):
+    def store_hyperplane_vectors(self, v1: np.ndarray, v2: np.ndarray, start_index: int, slice_length: int, feature_descriptors: dict):
         data_key = f"{self.redis_prefix}:vectors:{start_index}:{slice_length}"
         data = {
             "v1": v1.tolist(), "v2": v2.tolist(),
             "start_index": start_index, "slice_length": slice_length, "max_index": self.data_size,
-            "timestamp": datetime.datetime.now().timestamp()
+            "timestamp": datetime.datetime.now().timestamp(),
+            "feature_descriptors": feature_descriptors
         }
         serialized = pickle.dumps(data)
         self.r.set(data_key, serialized)
