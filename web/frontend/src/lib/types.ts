@@ -59,12 +59,22 @@ export type Dendrogram = {
   right?: Dendrogram;
 };
 
+export type Histogram = {
+    bins: number[];
+    counts: number[];
+}
+
 export type HyperplaneVector = {
     slice_length: number;
     start_index: number;
     max_index: number;
     v1: number[];
     v2: number[];
+    timestamp: number;
+    feature_descriptors: {
+        radii_distribution: Histogram;
+        freq_distribution: Histogram;
+    }
 }
 
 
