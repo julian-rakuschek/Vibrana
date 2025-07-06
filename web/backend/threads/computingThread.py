@@ -21,13 +21,13 @@ def compute_feature_descriptors(data, projected):
 
     radii = np.linalg.norm(projected, axis=1)
     counts, bins = np.histogram(radii, bins=20, range=(0, np.max(radii)), density=True)
-    feature_descriptors["radii_distribution"] = {"bins": bins,"counts": counts}
+    feature_descriptors["radii_distribution"] = {"bins": bins.tolist(), "counts": counts.tolist()}
 
     freqs = np.fft.rfftfreq(len(data))
     fft_values = np.fft.rfft(data)
     magnitude = np.abs(fft_values)
     counts, bins = np.histogram(freqs, bins=20, weights=magnitude)
-    feature_descriptors["freq_distribution"] = {"bins": bins, "counts": counts}
+    feature_descriptors["freq_distribution"] = {"bins": bins.tolist(), "counts": counts.tolist()}
 
     return feature_descriptors
 
