@@ -1,9 +1,13 @@
 <script lang="ts">
     import * as d3 from 'd3';
     import * as fc from 'd3fc';
-    import { mousePolygon } from '@lib/helper/brushHelper';
+    import {DemoRBush, DummyClusterRBush, mousePolygon} from '@lib/helper/brushHelper';
     import betterPointer from '@lib/helper/betterPointer';
     import { onMount } from 'svelte';
+    import {DBSCAN} from "@lib/algorithms/incrementalDBSCAN";
+    import type {ScatterPoint} from "@lib/types";
+    import {createColorsArray} from "@lib/helper/colorHelper";
+    import {interpolateTurbo} from "d3";
 
     const getRandomNumber = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -15,7 +19,9 @@
     let radius = 0.035
     let mouseState: [number, number, number] | null = null
 
-    let scatter_points: [number, number, number][] = [];
+    let scatter_points: ScatterPoint[] = [];
+    let cluster_colors: string[] = [];
+    const rtree = new DummyClusterRBush()
 
     function handleMouseEvent(coord: { x: number; y: number, buttons: number }) {
         if (!coord) {
@@ -31,14 +37,21 @@
         }
         const random_radius = getRandomNumber(0, radius);
         const random_angle = getRandomNumber(0, 2 * Math.PI);
-        const new_point = [x + Math.cos(random_angle) * random_radius, y + Math.sin(random_angle) * random_radius, scatter_points.length];
+        const new_point: ScatterPoint = {
+            x: x + Math.cos(random_angle) * random_radius,
+            y: y + Math.sin(random_angle) * random_radius,
+            index: scatter_points.length
+        };
         scatter_points = [...scatter_points, new_point];
+        rtree.insert(new_point);
         render();
     }
 
 
-    const scatterPlot = fc.seriesCanvasPoint().crossValue(d => d[0]).mainValue(d => d[1]).decorate((context, datum, index) => {
-        context.fillStyle = "gray"
+    const scatterPlot = fc.seriesCanvasPoint().crossValue(d => d.x).mainValue(d => d.y).decorate((context, datum, index) => {
+        let color = "lightgray"
+        if (index < cluster_colors.length) color = cluster_colors[index];
+        context.fillStyle = color
         context.strokeStyle = "transparent";
     });
 
@@ -77,6 +90,7 @@
     const reset = () => {
         triangulation = [];
         scatter_points = [];
+        cluster_colors = [];
         render();
     }
 
@@ -89,6 +103,16 @@
         }).call(chart);
     };
 
+    const cluster = () => {
+        const neighborhood_query = (query: ScatterPoint, eps: number): ScatterPoint[] => {
+            return rtree.find(query.x, query.y, radius);
+        }
+        const cluster_labels = DBSCAN<ScatterPoint>(scatter_points, neighborhood_query, 3, 300);
+        const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
+        let distinct_cluster_colors: string[] = createColorsArray(distinct_clusters.length, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
+        cluster_colors = cluster_labels.map(l => l === -1 ? "gray" : distinct_cluster_colors[distinct_clusters.indexOf(l)]);
+    };
+
     onMount(() => {
         render()
     })
@@ -99,6 +123,10 @@
     <button on:click={() => reset()}
             class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  me-2 mb-2">
         Reset
+    </button>
+    <button on:click={() => cluster()}
+            class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  me-2 mb-2">
+        Cluster
     </button>
     <div id={"demo"} class="border-gray-700 border-2" style="width: 800px; height: 800px">
     </div>

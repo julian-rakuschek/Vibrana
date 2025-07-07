@@ -1,10 +1,34 @@
 import RBush from "rbush";
 import type {Pair, Polygon} from "polygon-clipping";
 import earcut from "earcut";
-import type {Earcut, Point, ProjectedPoint} from "../types";
+import type {Earcut, Point, ProjectedPoint, ScatterPoint} from "../types";
 
 export function euclidean(p1: Point, p2: Point) {
     return Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)
+}
+
+export class DummyClusterRBush extends RBush<ScatterPoint> {
+    toBBox(point: ScatterPoint) {
+        return {minX: point.x, minY: point.y, maxX: point.x, maxY: point.y};
+    }
+
+    compareMinX(a: ScatterPoint, b: ScatterPoint) {
+        return a.x - b.x;
+    }
+
+    compareMinY(a: ScatterPoint, b: ScatterPoint) {
+        return a.y - b.y;
+    }
+
+    find(x: number, y: number, radius: number): ScatterPoint[] {
+        const init_res = this.search({
+            minX: x - radius,
+            minY: y - radius,
+            maxX: x + radius,
+            maxY: y + radius
+        })
+        return init_res.filter(p => Math.sqrt(euclidean(p, {x, y})) < radius)
+    }
 }
 
 export class DemoRBush extends RBush<[number, number, number]> {

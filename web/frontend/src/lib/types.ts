@@ -59,6 +59,12 @@ export type Dendrogram = {
   right?: Dendrogram;
 };
 
+export type ScatterPoint = {
+    x: number;
+    y: number;
+    index: number;
+}
+
 export type Histogram = {
     bins: number[];
     counts: number[];
