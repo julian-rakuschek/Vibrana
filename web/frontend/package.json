@@ -37,6 +37,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@d3fc/d3fc-element": "^6.2.0",
     "@d3fc/d3fc-rebind": "^6.0.1",
     "@rgossiaux/svelte-headlessui": "^2.0.0",
     "@sveltejs/adapter-static": "^3.0.5",
