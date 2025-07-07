@@ -4,7 +4,7 @@
     import {DemoRBush, DummyClusterRBush, mousePolygon} from '@lib/helper/brushHelper';
     import betterPointer from '@lib/helper/betterPointer';
     import { onMount } from 'svelte';
-    import {DBSCAN} from "@lib/algorithms/incrementalDBSCAN";
+    import {DBSCAN_Scatter} from "@lib/algorithms/incrementalDBSCAN";
     import type {ScatterPoint} from "@lib/types";
     import {createColorsArray} from "@lib/helper/colorHelper";
     import {interpolateTurbo} from "d3";
@@ -21,7 +21,7 @@
 
     let scatter_points: ScatterPoint[] = [];
     let cluster_colors: string[] = [];
-    const rtree = new DummyClusterRBush()
+    let dbscan = new DBSCAN_Scatter(0.1, 3, scatter_points);
 
     function handleMouseEvent(coord: { x: number; y: number, buttons: number }) {
         if (!coord) {
@@ -43,7 +43,7 @@
             index: scatter_points.length
         };
         scatter_points = [...scatter_points, new_point];
-        rtree.insert(new_point);
+        dbscan.insert(new_point);
         render();
     }
 
@@ -90,7 +90,7 @@
     const reset = () => {
         triangulation = [];
         scatter_points = [];
-        cluster_colors = [];
+        dbscan = new DBSCAN_Scatter(0.1, 3, scatter_points);
         render();
     }
 
@@ -104,10 +104,7 @@
     };
 
     const cluster = () => {
-        const neighborhood_query = (query: ScatterPoint, eps: number): ScatterPoint[] => {
-            return rtree.find(query.x, query.y, radius);
-        }
-        const cluster_labels = DBSCAN<ScatterPoint>(scatter_points, neighborhood_query, 3, 300);
+        const cluster_labels = dbscan.cluster()
         const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
         let distinct_cluster_colors: string[] = createColorsArray(distinct_clusters.length, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
         cluster_colors = cluster_labels.map(l => l === -1 ? "gray" : distinct_cluster_colors[distinct_clusters.indexOf(l)]);
