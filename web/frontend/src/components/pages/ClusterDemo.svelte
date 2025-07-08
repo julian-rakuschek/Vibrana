@@ -17,9 +17,9 @@
 	let mouseState: [number, number, number] | null = null;
 
 	let scatter_points: ScatterPoint[] = [];
-	let dbscan = new DBSCAN_Scatter(0.06, 3, scatter_points);
+	let dbscan = new DBSCAN_Scatter(0.04, 3, scatter_points);
 
-	let brush_active: boolean = true;
+	let brush_active: boolean = false;
 
 	function handleMouseEvent(coord: { x: number; y: number, buttons: number }, singleClick: boolean) {
 		if (!coord) {

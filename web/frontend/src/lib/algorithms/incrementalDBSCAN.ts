@@ -75,31 +75,27 @@ class DBSCAN<DataType extends IndexRequirement> {
 		return this.labels;
 	}
 
-	// https://github.com/DataOmbudsman/incdbscan/blob/master/incdbscan/_inserter.py
 	insert(new_point: DataType) {
 		this.data.push(new_point);
 		const [new_cores, old_cores] = this.separate_core_neighbors_by_novelty(new_point);
-		// Case (1) Noise
-		// if (new_cores.length === 0) {
-		//     if (old_cores.length > 0) {
-		//         const most_recent_label = Math.max(...old_cores.map(c => this.labels[c.index]))
-		//         this.labels.push(most_recent_label)
-		//     }
-		//     else {
-		//         this.labels.push(-1);
-		//     }
-		//     return;
-		// }
 
 		const update_seeds = this.get_update_seeds(new_cores);
-		const update_labels = Array.from(new Set(update_seeds.map(item => this.labels[item.index])));
+		const update_labels = Array.from(new Set(update_seeds.map(item => this.labels[item.index]))).filter(i => i !== undefined);
 		update_labels.sort();
+
+		// console.log("new cores", new_cores);
+		// console.log("old cores", old_cores);
+		// console.log("update_seeds", update_seeds);
+		// console.log("update_labels", update_labels);
+
 		// Case (1) Noise
 		if (update_seeds.length === 0) {
+			// console.log("CASE Noise")
 			this.labels.push(-1);
 		}
 		// Case (2) Creation
 		else if (update_labels.length === 1 && update_labels[0] === -1) {
+			// console.log("CASE Creation")
 			const new_cluster_id = this.cluster_id_count;
 			this.cluster_id_count++;
 			this.labels.push(new_cluster_id);
@@ -109,6 +105,7 @@ class DBSCAN<DataType extends IndexRequirement> {
 		}
 		// Case (3) Absorption and Case (4) Merge
 		else {
+			// console.log("CASE Absorption and Merge")
 			const last_label = update_labels[update_labels.length - 1];
 			this.labels.push(last_label);
 			for (const seed of update_seeds) {
