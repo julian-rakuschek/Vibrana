@@ -32,6 +32,7 @@ class DBSCAN<DataType extends IndexRequirement> {
 
 	getColor(index: number): string {
 		if (index === undefined || index >= this.labels.length || this.labels[index] === undefined) return 'lightgray';
+		if (this.labels[index] === -1) return "gray";
 		return this.colors[this.labels[index] % this.colors.length];
 	}
 

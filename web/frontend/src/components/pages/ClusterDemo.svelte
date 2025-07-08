@@ -107,6 +107,7 @@
 	const cluster = () => {
 		const res = dbscan.cluster();
 		console.log(res);
+		render();
 		// const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
 		// let distinct_cluster_colors: string[] = createColorsArray(distinct_clusters.length, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
 		// cluster_colors = cluster_labels.map(l => l === -1 ? "gray" : distinct_cluster_colors[distinct_clusters.indexOf(l)]);
