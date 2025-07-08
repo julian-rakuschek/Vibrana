@@ -8,7 +8,7 @@ type IndexRequirement = {
 class DBSCAN<DataType extends IndexRequirement> {
     protected readonly eps: number;
     protected readonly minPts: number;
-    protected readonly data: DataType[];
+    protected data: DataType[];
     protected labels: number[];
     protected cluster_id_count: number;
 
@@ -18,6 +18,12 @@ class DBSCAN<DataType extends IndexRequirement> {
         this.data = data;
         this.cluster_id_count = 0;
         this.labels = [];
+    }
+
+    reset() {
+        this.data = [];
+        this.labels = [];
+        this.cluster_id_count = 0;
     }
 
     neighborhoodQuery(query: DataType): DataType[] {
@@ -67,6 +73,11 @@ export class DBSCAN_Scatter extends DBSCAN<ScatterPoint>{
         super(eps, minPts, data);
         this.rbush = new DummyClusterRBush()
         this.rbush.load(data);
+    }
+
+    reset() {
+        super.reset();
+        this.rbush.clear();
     }
 
     neighborhoodQuery(query: ScatterPoint): ScatterPoint[] {

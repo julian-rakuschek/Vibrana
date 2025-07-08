@@ -90,7 +90,8 @@
     const reset = () => {
         triangulation = [];
         scatter_points = [];
-        dbscan = new DBSCAN_Scatter(0.1, 3, scatter_points);
+        cluster_colors = [];
+        dbscan.reset();
         render();
     }
 
