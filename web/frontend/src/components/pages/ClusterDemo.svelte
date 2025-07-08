@@ -6,8 +6,6 @@
     import { onMount } from 'svelte';
     import {DBSCAN_Scatter} from "@lib/algorithms/incrementalDBSCAN";
     import type {ScatterPoint} from "@lib/types";
-    import {createColorsArray} from "@lib/helper/colorHelper";
-    import {interpolateTurbo} from "d3";
 
     const getRandomNumber = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -15,13 +13,11 @@
     const xScale = d3.scaleLinear()
     const yScale = d3.scaleLinear()
 
-    let triangulation: number[][][] = []
     let radius = 0.035
     let mouseState: [number, number, number] | null = null
 
     let scatter_points: ScatterPoint[] = [];
-    let cluster_colors: string[] = [];
-    let dbscan = new DBSCAN_Scatter(0.1, 3, scatter_points);
+    let dbscan = new DBSCAN_Scatter(0.06, 3, scatter_points);
 
     function handleMouseEvent(coord: { x: number; y: number, buttons: number }) {
         if (!coord) {
@@ -49,9 +45,7 @@
 
 
     const scatterPlot = fc.seriesCanvasPoint().crossValue(d => d.x).mainValue(d => d.y).decorate((context, datum, index) => {
-        let color = "lightgray"
-        if (index < cluster_colors.length) color = cluster_colors[index];
-        context.fillStyle = color
+        context.fillStyle = dbscan.getColor(index);
         context.strokeStyle = "transparent";
     });
 
@@ -88,9 +82,7 @@
         );
 
     const reset = () => {
-        triangulation = [];
         scatter_points = [];
-        cluster_colors = [];
         dbscan.reset();
         render();
     }
@@ -99,16 +91,16 @@
         d3.select(`#demo`).datum({
             scatter: scatter_points,
             polygonOutline: [],
-            triangles: triangulation,
             mouse: mouseState !== null ? mousePolygon(...mouseState, radius) : []
         }).call(chart);
     };
 
     const cluster = () => {
-        const cluster_labels = dbscan.cluster()
-        const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
-        let distinct_cluster_colors: string[] = createColorsArray(distinct_clusters.length, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
-        cluster_colors = cluster_labels.map(l => l === -1 ? "gray" : distinct_cluster_colors[distinct_clusters.indexOf(l)]);
+        const res = dbscan.cluster()
+        console.log(res)
+        // const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
+        // let distinct_cluster_colors: string[] = createColorsArray(distinct_clusters.length, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
+        // cluster_colors = cluster_labels.map(l => l === -1 ? "gray" : distinct_cluster_colors[distinct_clusters.indexOf(l)]);
     };
 
     onMount(() => {
