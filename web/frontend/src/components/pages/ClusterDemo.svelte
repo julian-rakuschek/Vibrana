@@ -5,7 +5,8 @@
 	import betterPointer from '@lib/helper/betterPointer';
 	import { onMount } from 'svelte';
 	import { DBSCAN_Scatter } from '@lib/algorithms/incrementalDBSCAN';
-	import type { ScatterPoint } from '@lib/types';
+	import type {ClusterHistogram, ScatterPoint} from '@lib/types';
+	import {rgbStringToHex} from "@lib/helper/colorHelper.js";
 
 	const getRandomNumber = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -17,7 +18,8 @@
 	let mouseState: [number, number, number] | null = null;
 
 	let scatter_points: ScatterPoint[] = [];
-	let dbscan = new DBSCAN_Scatter(0.04, 3, scatter_points);
+	let dbscan = new DBSCAN_Scatter(0.05, 10, scatter_points);
+	let cluster_histogram: ClusterHistogram = dbscan.get_cluster_distribution();
 
 	let brush_active: boolean = false;
 
@@ -46,7 +48,7 @@
 		}
 		scatter_points = [...scatter_points, new_point];
 		dbscan.insert(new_point);
-
+		cluster_histogram = dbscan.get_cluster_distribution();
 		render();
 	}
 
@@ -93,6 +95,7 @@
 	const reset = () => {
 		scatter_points = [];
 		dbscan.reset();
+		cluster_histogram = [];
 		render();
 	};
 
@@ -106,6 +109,7 @@
 
 	const cluster = () => {
 		const res = dbscan.cluster();
+		cluster_histogram = dbscan.get_cluster_distribution();
 		console.log(res);
 		render();
 		// const distinct_clusters = Array.from(new Set(cluster_labels.filter(r => r !== -1)));
@@ -118,21 +122,31 @@
 	});
 
 </script>
-
 <div class="p-10">
+<p class="text-3xl">Incremental DBSCAN Demo</p>
 	<button on:click={() => reset()}
-					class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2">
+			class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2">
 		Reset
 	</button>
 	<button on:click={() => cluster()}
-					class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2">
+			class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2">
 		Cluster
 	</button>
 	<button on:click={() => brush_active = !brush_active}
-					class={`${brush_active ? "text-white bg-indigo-600 hover:bg-indigo-700" : "text-gray-900 bg-gray-100 hover:bg-gray-200"}  font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2`}>
+			class={`${brush_active ? "text-white bg-indigo-600 hover:bg-indigo-700" : "text-gray-900 bg-gray-100 hover:bg-gray-200"}  font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2`}>
 		Brush Active
 	</button>
-	<div id={"demo"} class="border-gray-700 border-2" style="width: 800px; height: 800px">
+	<div class="flex flex-row">
+		<div id={"demo"} class="border-gray-700 border-2" style="width: 800px; height: 800px"></div>
+		<div class="px-6">
+			<p>Cluster Details</p>
+			<div class="grid grid-cols-6 place-items-start gap-2">
+				{#each cluster_histogram as cluster}
+					<p class="text-right place-self-end" style={`color: ${cluster.color}`}>{cluster.cluster_id}</p>
+					<div class="h-[20px] col-span-4" style={`background-color: ${cluster.color}; width: ${cluster.relative_size * 100}%`}></div>
+					<p style={`color: ${cluster.color}`}>{cluster.size} members</p>
+				{/each}
+			</div>
+		</div>
 	</div>
-	<p>Points: {scatter_points.length}</p>
 </div>

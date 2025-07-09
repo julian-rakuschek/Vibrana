@@ -1,4 +1,4 @@
-import type { ScatterPoint } from '@lib/types';
+import type {ClusterHistogram, ScatterPoint} from '@lib/types';
 import { DummyClusterRBush } from '@lib/helper/brushHelper';
 import { createColorsArray } from '@lib/helper/colorHelper';
 import { interpolateTurbo } from 'd3';
@@ -146,6 +146,26 @@ class DBSCAN<DataType extends IndexRequirement> {
 			}
 		}
 		return seeds;
+	}
+
+	get_cluster_distribution(): ClusterHistogram {
+		const getColor = (cluster_id: number) => {
+			if (cluster_id === undefined) return 'lightgray';
+			if (cluster_id === -1) return "gray";
+			return this.colors[cluster_id % this.colors.length];
+		}
+
+		const hist: { [key: string]: number } = {"-1": 0}
+		for (const label of this.labels) {
+			if (!hist[label]) hist[label] = 0;
+			hist[label]++;
+		}
+		return Object.keys(hist).map(cluster_id => ({
+			cluster_id: cluster_id,
+			size: hist[cluster_id],
+			color: getColor(Number.parseInt(cluster_id)),
+			relative_size: hist[cluster_id] / this.labels.length
+		}));
 	}
 }
 

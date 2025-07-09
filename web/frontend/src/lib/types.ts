@@ -70,6 +70,13 @@ export type Histogram = {
     counts: number[];
 }
 
+export type ClusterHistogram = {
+    cluster_id: string;
+    color: string;
+    size: number;
+    relative_size: number;
+}[]
+
 export type HyperplaneVector = {
     slice_length: number;
     start_index: number;
