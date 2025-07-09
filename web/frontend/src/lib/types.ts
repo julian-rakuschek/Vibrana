@@ -78,6 +78,7 @@ export type ClusterHistogram = {
 }[]
 
 export type HyperplaneVector = {
+    index: number;
     slice_length: number;
     start_index: number;
     max_index: number;

@@ -1,4 +1,4 @@
-import type {ClusterHistogram, ScatterPoint} from '@lib/types';
+import type {ClusterHistogram, HyperplaneVector, ScatterPoint} from '@lib/types';
 import { DummyClusterRBush } from '@lib/helper/brushHelper';
 import { createColorsArray } from '@lib/helper/colorHelper';
 import { interpolateTurbo } from 'd3';
@@ -192,4 +192,10 @@ export class DBSCAN_Scatter extends DBSCAN<ScatterPoint> {
 		this.rbush.insert(new_point);
 		super.insert(new_point);
 	}
-} 
+}
+
+export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
+	constructor(eps: number, minPts: number, data: HyperplaneVector[]) {
+		super(eps, minPts, data);
+	}
+}
