@@ -1,7 +1,8 @@
 import type {ClusterHistogram, HyperplaneVector, ScatterPoint} from '@lib/types';
-import { DummyClusterRBush } from '@lib/helper/brushHelper';
-import { createColorsArray } from '@lib/helper/colorHelper';
-import { interpolateTurbo } from 'd3';
+import {DummyClusterRBush} from '@lib/helper/brushHelper';
+import {createColorsArray} from '@lib/helper/colorHelper';
+import {interpolateTurbo} from 'd3';
+import {jensenShannon} from "@lib/algorithms/jensenShannonDivergence";
 
 type IndexRequirement = {
 	index: number;
@@ -195,7 +196,66 @@ export class DBSCAN_Scatter extends DBSCAN<ScatterPoint> {
 }
 
 export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
+	private similarity_matrix: Float32Array = new Float32Array(1000);
+
 	constructor(eps: number, minPts: number, data: HyperplaneVector[]) {
 		super(eps, minPts, data);
+		this.compute_similarity_matrix();
+	}
+
+	resizeFloat32Array(new_size: number) {
+		if (new_size < this.similarity_matrix.length) throw "New size needs to be larger or equal than old size";
+		const newArray = new Float32Array(new_size);
+		newArray.set(this.similarity_matrix);
+		this.similarity_matrix = newArray;
+	}
+
+	compute_similarity_matrix() {
+		const N = this.data.length;
+		const required_slots = (N*N - N) / 2;
+		if (required_slots > this.similarity_matrix.length) this.resizeFloat32Array(required_slots);
+		let index_count = 0;
+		for (let i = 0; i < N; i++) {
+			for (let j = 0; j < N; j++) {
+				if (i == j) break;
+				const q = this.data[i].feature_descriptors.radii_distribution.counts;
+				const p = this.data[j].feature_descriptors.radii_distribution.counts;
+				this.similarity_matrix[index_count] = jensenShannon(p, q);
+				index_count++;
+			}
+		}
+	}
+
+	access_similarity_entry(i: number, j: number): number {
+		if (j > i) [i, j] = [j, i];
+		if (i === j) return 0;
+		const flat_index = (i*(i-1)) / 2 + j;
+		return this.similarity_matrix[flat_index];
+	}
+
+	neighborhoodQuery(query: HyperplaneVector): HyperplaneVector[] {
+		const neighbors: HyperplaneVector[] = [];
+		for (let i = 0; i < this.data.length; i++) {
+			if (query.index === i) continue;
+			const dist = this.access_similarity_entry(query.index, i);
+			if (dist < this.eps) {
+				neighbors.push(this.data[i]);
+			}
+		}
+		return neighbors;
+	}
+
+	insert(new_point: HyperplaneVector) {
+		const N = this.data.length;
+		const required_slots = (N*N - N) / 2;
+		if (required_slots > this.similarity_matrix.length) this.resizeFloat32Array(required_slots + 1000);
+		let index = required_slots
+		for (let i = 0; i < this.data.length; i++) {
+			const q = this.data[i].feature_descriptors.radii_distribution.counts;
+			const p = new_point.feature_descriptors.radii_distribution.counts;
+			this.similarity_matrix[index] = jensenShannon(p, q);
+			index++;
+		}
+		super.insert(new_point);
 	}
 }
