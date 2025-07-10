@@ -5,13 +5,14 @@
 	import { onMount } from 'svelte';
 	import {useQueryClient} from "@tanstack/svelte-query";
 	import RangeSlider from "svelte-range-slider-pips";
+	import type {HyperplaneVector} from "@lib/types";
 
 	export let dataset: string;
 	export let subset: string;
 	let threads = 0;
 	let client = useQueryClient();
 	export let handleReset: () => void;
-	
+	export let handleSingleItem: (new_item: HyperplaneVector) => void;
 	
 	async function setThreads(new_threads: number) {
 		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads: new_threads}});
@@ -22,14 +23,12 @@
 	}
 
 	async function oneStep() {
-		await ApiRoutes.computeSingleStep.fetch({ params: {dataset, subset}});
-		// await client.invalidateQueries();
-		if (handleReset) handleReset();
+		const data = await ApiRoutes.computeSingleStep.fetch({ params: {dataset, subset}});
+		if (handleSingleItem) handleSingleItem(data);
 	}
 
 	async function clearVectors() {
 		await ApiRoutes.clearVectors.fetch({ params: {dataset, subset}});
-		// await client.invalidateQueries();
 		if (handleReset) handleReset();
 	}
 

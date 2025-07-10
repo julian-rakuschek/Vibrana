@@ -32,7 +32,7 @@ def compute_feature_descriptors(data, projected):
     return feature_descriptors
 
 class ComputingThread(threading.Thread):
-    def __init__(self, redis_instance: redis.Redis, dataLoader: DataLoaderBase, sliding_window_size: int, slice_size: int, socket_client=None):
+    def __init__(self, redis_instance: redis.Redis, dataLoader: RedisLoader, sliding_window_size: int, slice_size: int, socket_client=None):
         threading.Thread.__init__(self)
         self.redis = redis_instance
         self.loader = dataLoader
@@ -57,11 +57,18 @@ class ComputingThread(threading.Thread):
         projected = pca.transform(windows)
         feature_descriptors = compute_feature_descriptors(data, projected)
         self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size, feature_descriptors)
-        data = {"start_index": next_index, "slice_length": self.slice_size, "timestamp": datetime.datetime.now().timestamp(), "max_index": self.loader.data_size, "feature_descriptors": feature_descriptors}
+        data = {
+            "start_index": next_index,
+            "slice_length": self.slice_size,
+            "timestamp": datetime.datetime.now().timestamp(),
+            "max_index": self.loader.data_size,
+            "feature_descriptors": feature_descriptors
+        }
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': data})
         end = time.time()
         print(f"Computed vectors at {next_index} in {end - start} seconds")
+        return data
 
     def stop(self):
         self.stop_request = True

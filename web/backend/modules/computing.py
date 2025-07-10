@@ -13,7 +13,6 @@ computing_app = flask.Blueprint("computing", __name__)
 @validate_subset
 def flask_get_target_threads(dataset, subset, path):
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
-    print(loader.get_target_threads())
     return str(loader.get_target_threads())
 
 
@@ -26,7 +25,6 @@ def flask_set_target_threads(dataset, subset, path):
         return 400, "Threads must be >= 0"
     elif target_threads > 10:
         return 400, "Don't fry your computer please"
-    print(target_threads)
     loader.set_target_threads(target_threads)
     return {"success": True}
 
@@ -39,5 +37,5 @@ def flask_make_single_step(dataset, subset, path):
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
     loader.load_numpy_file(False)
     thread = ComputingThread(loader.r, loader, sliding_window_size, slice_size)
-    thread.compute_plane()
-    return {"success": True}
+    data = thread.compute_plane()
+    return data

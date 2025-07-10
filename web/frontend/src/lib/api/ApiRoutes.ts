@@ -17,7 +17,7 @@ export const dbRoutes = {
 };
 
 export const computingRoutes = {
-  computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/single_step"),
+  computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, HyperplaneVector>("POST", "/computing/:dataset/:subset/single_step"),
   setTargetThreads: new ApiRoute<{ threads: number }, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/set_target_threads"),
   getTargetThreads: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, number>("GET", "/computing/:dataset/:subset/get_target_threads"),
 }

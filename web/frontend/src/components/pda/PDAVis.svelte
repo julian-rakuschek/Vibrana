@@ -9,20 +9,20 @@
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null
 
-    export function addRectangle(vec: HyperplaneVector) {
+    export function addRectangle(vec: HyperplaneVector, color?: string) {
         if (!context) return;
-        context.fillStyle = "red"
+        context.fillStyle = color ?? "red"
         context.fillRect((vec.start_index / vec.max_index) * 1000, 0, (vec.slice_length / vec.max_index) * 1000, 100)
     }
 
-    export function drawVectors(vectors_to_draw: HyperplaneVector[]) {
-        if (context) {
-            context.fillStyle = "#eeeeee"
-            context.fillRect(0, 0, 1000, 100)
-            for (const vec of vectors_to_draw) {
-                context.fillStyle = "red"
-                context.fillRect((vec.start_index / vec.max_index) * 1000, 0, (vec.slice_length / vec.max_index) * 1000, 100)
-            }
+    export function drawVectors(vectors_to_draw: HyperplaneVector[], colors?: string[]) {
+        if (!context) return;
+        context.fillStyle = "#eeeeee"
+        context.fillRect(0, 0, 1000, 100)
+        for (let i = 0; i < vectors_to_draw.length; i++) {
+            const vec = vectors_to_draw[i];
+            context.fillStyle = (colors && i < colors.length && colors[i]) ? colors[i] : "red";
+            context.fillRect((vec.start_index / vec.max_index) * 1000, 0, (vec.slice_length / vec.max_index) * 1000, 100)
         }
     }
 

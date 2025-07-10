@@ -37,6 +37,10 @@ class DBSCAN<DataType extends IndexRequirement> {
 		return this.colors[this.labels[index] % this.colors.length];
 	}
 
+	getAllColors(): string[] {
+		return this.labels.map((l, index) => this.getColor(index));
+	}
+
 	neighborhoodQuery(query: DataType): DataType[] {
 		return [];
 	}
@@ -77,7 +81,7 @@ class DBSCAN<DataType extends IndexRequirement> {
 		return this.labels;
 	}
 
-	insert(new_point: DataType) {
+	insert(new_point: DataType): number {
 		this.data.push(new_point);
 		const [new_cores, old_cores] = this.separate_core_neighbors_by_novelty(new_point);
 
@@ -89,37 +93,46 @@ class DBSCAN<DataType extends IndexRequirement> {
 		// console.log("old cores", old_cores);
 		// console.log("update_seeds", update_seeds);
 		// console.log("update_labels", update_labels);
-
+		let changes_count = 0;
 		// Case (1) Noise
 		if (update_seeds.length === 0) {
-			// console.log("CASE Noise")
+			console.log("CASE Noise")
 			this.labels.push(-1);
+			changes_count++;
 		}
 		// Case (2) Creation
 		else if (update_labels.length === 1 && update_labels[0] === -1) {
-			// console.log("CASE Creation")
+			console.log("CASE Creation")
 			const new_cluster_id = this.cluster_id_count;
 			this.cluster_id_count++;
 			this.labels.push(new_cluster_id);
+			changes_count++;
 			for (const seed of update_seeds) {
+				if (this.labels[seed.index] !== new_cluster_id) changes_count++;
 				this.labels[seed.index] = new_cluster_id;
 			}
 		}
 		// Case (3) Absorption and Case (4) Merge
 		else {
-			// console.log("CASE Absorption and Merge")
+			console.log("CASE Absorption and Merge")
 			const last_label = update_labels[update_labels.length - 1];
 			this.labels.push(last_label);
+			changes_count++;
 			for (const seed of update_seeds) {
+				if (this.labels[seed.index] !== last_label) changes_count++;
 				this.labels[seed.index] = last_label;
 			}
 			const upd_labels_no_noise = update_labels.filter(i => i !== -1);
 			if (upd_labels_no_noise.length >= 2) {
 				for (let i = 0; i < this.labels.length; i++) {
-					if (upd_labels_no_noise.includes(this.labels[i])) this.labels[i] = last_label;
+					if (upd_labels_no_noise.includes(this.labels[i])) {
+						if (this.labels[i] !== last_label) changes_count++;
+						this.labels[i] = last_label;
+					}
 				}
 			}
 		}
+		return changes_count;
 	}
 
 	separate_core_neighbors_by_novelty(point_inserted: DataType): [DataType[], DataType[]] {
@@ -189,9 +202,9 @@ export class DBSCAN_Scatter extends DBSCAN<ScatterPoint> {
 		return this.rbush.find(query.x, query.y, this.eps);
 	}
 
-	insert(new_point: ScatterPoint) {
+	insert(new_point: ScatterPoint): number {
 		this.rbush.insert(new_point);
-		super.insert(new_point);
+		return super.insert(new_point);
 	}
 }
 
@@ -230,6 +243,11 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		if (j > i) [i, j] = [j, i];
 		if (i === j) return 0;
 		const flat_index = (i*(i-1)) / 2 + j;
+		const N = this.data.length;
+		const required_slots = (N*N - N) / 2;
+		if (flat_index > required_slots) console.log("ACCESS BEYOND");
+		if (this.similarity_matrix[flat_index] === 0) console.log("NULL")
+		// console.log(this.similarity_matrix[flat_index])
 		return this.similarity_matrix[flat_index];
 	}
 
@@ -245,7 +263,7 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		return neighbors;
 	}
 
-	insert(new_point: HyperplaneVector) {
+	insert(new_point: HyperplaneVector): number {
 		const N = this.data.length;
 		const required_slots = (N*N - N) / 2;
 		if (required_slots > this.similarity_matrix.length) this.resizeFloat32Array(required_slots + 1000);
@@ -256,6 +274,6 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 			this.similarity_matrix[index] = jensenShannon(p, q);
 			index++;
 		}
-		super.insert(new_point);
+		return super.insert(new_point);
 	}
 }

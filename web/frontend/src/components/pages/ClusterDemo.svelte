@@ -18,8 +18,9 @@
 	let mouseState: [number, number, number] | null = null;
 
 	let scatter_points: ScatterPoint[] = [];
-	let dbscan = new DBSCAN_Scatter(0.05, 10, scatter_points);
+	let dbscan = new DBSCAN_Scatter(0.05, 5, scatter_points);
 	let cluster_histogram: ClusterHistogram = dbscan.get_cluster_distribution();
+	let updates_of_last_insert = 0;
 
 	let brush_active: boolean = false;
 
@@ -47,7 +48,7 @@
 			};
 		}
 		scatter_points = [...scatter_points, new_point];
-		dbscan.insert(new_point);
+		updates_of_last_insert = dbscan.insert(new_point);
 		cluster_histogram = dbscan.get_cluster_distribution();
 		render();
 	}
@@ -140,6 +141,8 @@
 		<div id={"demo"} class="border-gray-700 border-2" style="width: 800px; height: 800px"></div>
 		<div class="px-6">
 			<p>Cluster Details</p>
+			{#if updates_of_last_insert > 1}<p>{updates_of_last_insert} points affected with last insert.</p>{/if}
+			{#if updates_of_last_insert === 1}<p>1 point affected with last insert.</p>{/if}
 			<div class="grid grid-cols-6 place-items-start gap-2">
 				{#each cluster_histogram as cluster}
 					<p class="text-right place-self-end" style={`color: ${cluster.color}`}>{cluster.cluster_id}</p>
