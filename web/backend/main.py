@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -23,6 +24,11 @@ def index_route():
     dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
     return flask.send_from_directory(dist_path, 'index.html')
 
+@app.route("/api/config")
+def flask_get_config():
+    with open("datasets.json", "r") as f:
+        return json.load(f)
+    
 
 @app.route("/<path:path>")
 def static_files(path):

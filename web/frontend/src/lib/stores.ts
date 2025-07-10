@@ -1,5 +1,6 @@
 import {writable} from 'svelte/store';
-import {ColorMode, type ProjectedPoint, ProjectionMode, type SelectedChunk, type ThreeChartsSettingsType, WindowMode} from "@lib/types";
+import {ColorMode,
+    type Config, type ProjectedPoint, ProjectionMode, type SelectedChunk, type ThreeChartsSettingsType, WindowMode} from "@lib/types";
 
 export const defaultChartSettings: ThreeChartsSettingsType = {
     color: ColorMode.Radius,

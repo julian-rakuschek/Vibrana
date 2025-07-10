@@ -22,7 +22,7 @@ def flask_get_slice(dataset, subset, path):
 def flask_get_vectors(dataset, subset, path):
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
     loader.load_numpy_file()
-    return loader.retrieve_hyperplane_vectors(exclude_vector_data=True)
+    return loader.retrieve_hyperplane_vectors(exclude_vector_data=False)
 
 @db_app.get("<dataset>/<subset>/vector")
 @validate_subset

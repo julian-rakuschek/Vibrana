@@ -7,6 +7,7 @@
 	import type {HyperplaneVector} from "@lib/types";
 	import {onMount} from "svelte";
 	import {DBSCAN_VibrationFingerprints} from "@lib/algorithms/incrementalDBSCAN";
+	import FingerprintVis from "@components/pda/FingerprintVis.svelte";
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
@@ -67,3 +68,4 @@
 	<p class="self-center text-right">{vectors.length} Fingerprints</p>
 </div>
 <PDAVis vectors={vectors} bind:this={pdaVis} />
+<FingerprintVis dataset={dataset} subset={subset} />

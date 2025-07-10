@@ -59,6 +59,7 @@ class RedisLoader(DataLoaderBase):
         }
         serialized = pickle.dumps(data)
         self.r.set(data_key, serialized)
+        return data
 
     def retrieve_hyperplane_vectors(self, start_index: int = None, slice_length: int = None, exclude_vector_data: bool = False):
         data_key = f"{self.redis_prefix}:vectors:*"

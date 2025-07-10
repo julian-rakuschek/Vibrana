@@ -41,16 +41,29 @@ export enum ProjectionMode {
 // ---------------------------------------------------------
 // Data Structures
 
-export type ObjectId = { $oid: string; };
+export type Config = {
+    [dataset: string]: DatasetConfig;
+}
 
-export type Dataset = {
+export type DatasetConfig = {
     name: string;
     folder: string;
     description: string;
     task: string;
     source: string;
-    subsets: { name: string; folder: string }[]
+    chunks_or_stream_or_large: "chunks" | "stream" | "large";
+    too_large_for_memory: boolean;
+    subsets: { [subset: string]: SubsetConfig };
 }
+
+export type SubsetConfig = {
+    name: string;
+    file: string;
+    slice_size: number;
+    sliding_window_size: number;
+}
+
+export type ObjectId = { $oid: string; };
 
 export type Dendrogram = {
   id: string;

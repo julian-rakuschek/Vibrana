@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type { DefaultAppResponse, HyperplaneVector } from '@lib/types';
+import type { DefaultAppResponse, HyperplaneVector, Config } from '@lib/types';
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -8,6 +8,10 @@ import type { DefaultAppResponse, HyperplaneVector } from '@lib/types';
 // (2) TRequestParams = things that go into the url, e.g. /mongodb/data/:bucket then TRequestParams would be {bucket: string}
 // (3) TQueryParams = Everything that comes after the url, e.g. /some?query=value, then TQueryParams would be {query: string}
 // (4) TResponse = Response object
+
+export const genericRoutes = {
+  getConfig: new ApiRoute<undefined, undefined, undefined, Config>("GET", "/config"),
+}
 
 export const dbRoutes = {
   getSlice: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index?: number; end_index?: number }, number[]>("GET", "/db/:dataset/:subset/slice"),
@@ -24,6 +28,7 @@ export const computingRoutes = {
 
 
 export const ApiRoutes = {
+  ...genericRoutes,
   ...dbRoutes,
   ...computingRoutes
 };

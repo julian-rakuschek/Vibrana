@@ -56,14 +56,7 @@ class ComputingThread(threading.Thread):
         v1, v2 = pca.components_[:, 0], pca.components_[:, 1]
         projected = pca.transform(windows)
         feature_descriptors = compute_feature_descriptors(data, projected)
-        self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size, feature_descriptors)
-        data = {
-            "start_index": next_index,
-            "slice_length": self.slice_size,
-            "timestamp": datetime.datetime.now().timestamp(),
-            "max_index": self.loader.data_size,
-            "feature_descriptors": feature_descriptors
-        }
+        data = self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size, feature_descriptors)
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': data})
         end = time.time()
