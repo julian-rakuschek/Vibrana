@@ -96,13 +96,13 @@ class DBSCAN<DataType extends IndexRequirement> {
 		let changes_count = 0;
 		// Case (1) Noise
 		if (update_seeds.length === 0) {
-			console.log("CASE Noise")
+			// console.log("CASE Noise")
 			this.labels.push(-1);
 			changes_count++;
 		}
 		// Case (2) Creation
 		else if (update_labels.length === 1 && update_labels[0] === -1) {
-			console.log("CASE Creation")
+			// console.log("CASE Creation")
 			const new_cluster_id = this.cluster_id_count;
 			this.cluster_id_count++;
 			this.labels.push(new_cluster_id);
@@ -114,7 +114,7 @@ class DBSCAN<DataType extends IndexRequirement> {
 		}
 		// Case (3) Absorption and Case (4) Merge
 		else {
-			console.log("CASE Absorption and Merge")
+			// console.log("CASE Absorption and Merge")
 			const last_label = update_labels[update_labels.length - 1];
 			this.labels.push(last_label);
 			changes_count++;
@@ -139,9 +139,11 @@ class DBSCAN<DataType extends IndexRequirement> {
 		const new_cores: DataType[] = [];
 		const old_cores: DataType[] = [];
 		const neighbors = this.neighborhoodQuery(point_inserted);
+		if (neighbors.length >= this.minPts) new_cores.push(point_inserted);
+
 		for (const neighbor of neighbors) {
 			const neighbor_neighbors = this.neighborhoodQuery(neighbor);
-			if (neighbor.index === point_inserted.index && neighbor_neighbors.length >= this.minPts) new_cores.push(neighbor);
+			if (neighbor.index === point_inserted.index) continue;
 			else if (neighbor_neighbors.length === this.minPts) new_cores.push(neighbor);
 			else if (neighbor_neighbors.length > this.minPts) old_cores.push(neighbor);
 		}
@@ -243,11 +245,6 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		if (j > i) [i, j] = [j, i];
 		if (i === j) return 0;
 		const flat_index = (i*(i-1)) / 2 + j;
-		const N = this.data.length;
-		const required_slots = (N*N - N) / 2;
-		if (flat_index > required_slots) console.log("ACCESS BEYOND");
-		if (this.similarity_matrix[flat_index] === 0) console.log("NULL")
-		// console.log(this.similarity_matrix[flat_index])
 		return this.similarity_matrix[flat_index];
 	}
 

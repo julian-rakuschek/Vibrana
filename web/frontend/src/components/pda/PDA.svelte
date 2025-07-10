@@ -48,7 +48,7 @@
 			vectors_query[i]["index"] = i;
 		}
 		vectors = [...vectors_query]
-		dbscan = new DBSCAN_VibrationFingerprints(0.3, 3, vectors);
+		dbscan = new DBSCAN_VibrationFingerprints(0.2, 5, vectors);
 		dbscan.cluster();
 		if (pdaVis) {
 			pdaVis.drawVectors(vectors, dbscan.getAllColors());
