@@ -6,7 +6,7 @@
     "task": "Change Detection",
     "source": "Provided by Johanna Schmidt (TU Wien)",
     "chunks_or_stream_or_large": "large",
-    "too_large_for_memory": false,
+    "in_memory": true,
     "subsets": {
       "x": {
         "name": "Vibrations in X-Direction",

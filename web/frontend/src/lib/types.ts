@@ -52,7 +52,7 @@ export type DatasetConfig = {
     task: string;
     source: string;
     chunks_or_stream_or_large: "chunks" | "stream" | "large";
-    too_large_for_memory: boolean;
+    in_memory: boolean;
     subsets: { [subset: string]: SubsetConfig };
 }
 
