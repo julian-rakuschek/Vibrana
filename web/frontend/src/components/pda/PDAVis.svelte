@@ -2,8 +2,9 @@
     import type {HyperplaneVector} from "@lib/types";
     import {onMount} from "svelte";
     import {DataProvider} from "@lib/dataProvider/dataProvider";
-    import { page } from '$app/stores';
+    import {page} from '$app/stores';
     import FingerprintVis from "@components/pda/FingerprintVis.svelte";
+    import PDAAging from "@components/pda/PDAAging.svelte";
 
     export let vectors: HyperplaneVector[] = []
     export let colors: string[] = []
@@ -40,7 +41,7 @@
     }
 
     onMount(async () => {
-		context = canvas.getContext('2d')
+        context = canvas.getContext('2d')
         dataProvider = new DataProvider(
             dataset, subset,
             $page.data.config[dataset].subsets[subset].sliding_window_size,
@@ -71,17 +72,25 @@
             }
         }
         drawVectors(vectors, colors);
-	})
+    })
 </script>
 
-<div>
-    <canvas height={height} width={width} bind:this={canvas}></canvas>
+<div class="flex flex-col items-center justify-center">
+    <div>
+        <canvas height={height} width={width} bind:this={canvas}></canvas>
+    </div>
+    <div class="relative w-full h-[200px]" style={`width: ${width}px;`}>
+        {#if currently_hovering !== -1}
+            <div class="absolute bg-indigo-800 w-[50px] h-[50px] -translate-x-1/2 rotate-45"
+                 style={`left: ${fingerprint_position}px`}></div>
+            <div class="absolute mt-3 p-3 bg-white rounded-xl shadow-xl -translate-x-1/2 border-2 border-solid border-indigo-800"
+                 style={`left: ${fingerprint_position}px`}>
+                <FingerprintVis dataProvider={dataProvider} hyperplane={vectors[currently_hovering]}/>
+            </div>
+        {/if}
+    </div>
+    <div>
+        <PDAAging aging={index_allocation} />
+    </div>
 </div>
 
-<div class="relative" style={`width: ${width}; height: 200px`}>
-    {#if currently_hovering !== -1}
-        <div class="absolute mt-5 p-3 rounded-xl shadow-xl -translate-x-1/2" style={`left: ${fingerprint_position}px`}>
-            <FingerprintVis dataProvider={dataProvider} hyperplane={vectors[currently_hovering]} />
-        </div>
-    {/if}
-</div>
