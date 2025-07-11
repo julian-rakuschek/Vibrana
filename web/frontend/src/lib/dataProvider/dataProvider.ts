@@ -26,13 +26,14 @@ export class DataProvider {
         console.log("Load complete")
     }
 
-    async get_fingerprint_data(hyperplane: HyperplaneVector) {
+    get_fingerprint_data(hyperplane: HyperplaneVector) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
         const tde = this.wasm.slidingWindowView(this.wasm_vibration_signal, this.w, hyperplane.start_index, hyperplane.start_index + hyperplane.slice_length);
         const pc1 = this.wasm.arrayToVec(hyperplane.v1);
         const pc2 = this.wasm.arrayToVec(hyperplane.v2);
         const wasm_projected = this.wasm.project(pc1, pc2, tde);
-        return this.wasm.matrixToArray(wasm_projected);
+        const projected: number[][] = this.wasm.matrixToArray(wasm_projected);
+        return projected;
     }
 
     async get_fingerprint_image(hyperplane: HyperplaneVector) {

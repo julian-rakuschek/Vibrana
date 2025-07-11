@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { useQueryFetch } from '@lib/api/ApiQueries';
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import PDAThreadsControl from '@components/pda/PDAThreadsControl.svelte';
 	import PDAVis from "@components/pda/PDAVis.svelte";
@@ -7,16 +6,15 @@
 	import type {HyperplaneVector} from "@lib/types";
 	import {onMount} from "svelte";
 	import {DBSCAN_VibrationFingerprints} from "@lib/algorithms/incrementalDBSCAN";
-	import FingerprintVis from "@components/pda/FingerprintVis.svelte";
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
 	const socket = io('http://localhost:5000');
 
 	let vectors: HyperplaneVector[] = [];
+	let colors: string[] = [];
 	let pdaVis: PDAVis;
 	let dbscan: DBSCAN_VibrationFingerprints;
-	let fingerprintVis: FingerprintVis;
 
 	socket.on('connect', () => {
 		const room = 'vibrana:hydro:x';
@@ -32,14 +30,16 @@
 		data["index"] = new_index;
 		vectors = [...vectors, data];
 		const changes = dbscan.insert(data);
+		colors = [...colors, dbscan.getColor(new_index)];
 		if (pdaVis) {
 			if (changes === 1) {
 				console.log("Single change", new_index, dbscan.getColor(new_index))
-				pdaVis.addRectangle(data, dbscan.getColor(new_index));
+				pdaVis.addVector(data, dbscan.getColor(new_index));
 			}
 			else {
 				console.log("redraw all");
-				pdaVis.drawVectors(vectors, dbscan.getAllColors());
+				colors = dbscan.getAllColors();
+				pdaVis.drawVectors(vectors, colors);
 			}
 		}
 	}
@@ -52,8 +52,9 @@
 		vectors = [...vectors_query]
 		dbscan = new DBSCAN_VibrationFingerprints(0.2, 5, vectors);
 		dbscan.cluster();
+		colors = dbscan.getAllColors();
 		if (pdaVis) {
-			pdaVis.drawVectors(vectors, dbscan.getAllColors());
+			pdaVis.drawVectors(vectors, colors);
 		}
 	}
 
@@ -68,8 +69,4 @@
 	<p class="self-center text-center text-xl font-bold">Long Signal Analysis</p>
 	<p class="self-center text-right">{vectors.length} Fingerprints</p>
 </div>
-<PDAVis vectors={vectors} bind:this={pdaVis} />
-{#if vectors.length > 0}
-	<FingerprintVis dataset={dataset} subset={subset} bind:this={fingerprintVis} hyperplane={vectors[1]} />
-{/if}
-<button on:click={() => fingerprintVis.vis(vectors[0])}>Dummy</button>
+<PDAVis vectors={vectors} colors={colors} bind:this={pdaVis} dataset={dataset} subset={subset} />
