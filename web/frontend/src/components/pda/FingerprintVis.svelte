@@ -12,7 +12,7 @@
     const size = 200;
 
     export function visualizeFingerprint(vec: HyperplaneVector) {
-        const projected = dataProvider.get_fingerprint_data(vec);
+        const projected = dataProvider.get_fingerprint_data_javascript(vec);
 
         const min_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[0]
         const max_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[projected.length - 1]

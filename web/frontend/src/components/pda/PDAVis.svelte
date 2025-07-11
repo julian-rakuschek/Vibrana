@@ -46,7 +46,7 @@
             $page.data.config[dataset].subsets[subset].sliding_window_size,
             $page.data.config[dataset].in_memory
         )
-        await dataProvider.wasm_load();
+        await dataProvider.load();
         canvas.onmousemove = (e) => {
             const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
             const index = Math.floor(x)

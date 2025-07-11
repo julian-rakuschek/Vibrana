@@ -1,5 +1,4 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
-import createPCA from "@lib/dataProvider/pca";
 import type {HyperplaneVector} from "@lib/types";
 
 export class DataProvider {
@@ -8,8 +7,7 @@ export class DataProvider {
     private w: number;
     private in_memory: boolean;
     // only used if in_memory is true
-    private wasm_vibration_signal;
-    private wasm;
+    private vibration_signal: number[] | undefined;
 
     constructor(dataset: string, subset: string, w: number, in_memory: boolean) {
         this.dataset = dataset;
@@ -18,21 +16,29 @@ export class DataProvider {
         this.in_memory = in_memory;
     }
 
-    async wasm_load() {
+    async load() {
         if (!this.in_memory) throw "only allowed when dataset is configured as in memory";
-        this.wasm = await createPCA();
-        const data = await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }})
-        this.wasm_vibration_signal = new this.wasm.arrayToVec(data);
+        this.vibration_signal = await ApiRoutes.getSlice.fetch({params: {dataset: this.dataset, subset: this.subset}});
         console.log("Load complete")
     }
 
-    get_fingerprint_data(hyperplane: HyperplaneVector) {
+
+    get_fingerprint_data_javascript(hyperplane: HyperplaneVector) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
-        const tde = this.wasm.slidingWindowView(this.wasm_vibration_signal, this.w, hyperplane.start_index, hyperplane.start_index + hyperplane.slice_length);
-        const pc1 = this.wasm.arrayToVec(hyperplane.v1);
-        const pc2 = this.wasm.arrayToVec(hyperplane.v2);
-        const wasm_projected = this.wasm.project(pc1, pc2, tde);
-        const projected: number[][] = this.wasm.matrixToArray(wasm_projected);
+        if (!this.vibration_signal) {
+            console.warn("Vibration signal has not been loaded, returning empty projection.")
+            return [];
+        }
+        const projected: number[][] = []
+        for (let i = 0; i < hyperplane.slice_length - this.w; i++) {
+            const window = this.vibration_signal.slice(hyperplane.start_index + i, hyperplane.start_index + i + this.w);
+            let x = 0, y = 0;
+            for (let j = 0; j < window.length; j++) {
+                x += window[j] * hyperplane.v1[j];
+                y += window[j] * hyperplane.v2[j];
+            }
+            projected.push([x, y]);
+        }
         return projected;
     }
 
@@ -41,8 +47,8 @@ export class DataProvider {
     }
 
     async get_slice(start_index: number, end_index: number): Promise<number[]> {
-        if (this.in_memory) {
-            return this.wasm.getSlice(this.wasm_vibration_signal, start_index, end_index);
+        if (this.in_memory && this.vibration_signal) {
+            return this.vibration_signal.slice(start_index, end_index);
         }
         else {
             return await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }, queryParams: { start_index, end_index }})
