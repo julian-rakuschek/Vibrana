@@ -16,6 +16,7 @@
 	let vectors: HyperplaneVector[] = [];
 	let pdaVis: PDAVis;
 	let dbscan: DBSCAN_VibrationFingerprints;
+	let fingerprintVis: FingerprintVis;
 
 	socket.on('connect', () => {
 		const room = 'vibrana:hydro:x';
@@ -68,4 +69,7 @@
 	<p class="self-center text-right">{vectors.length} Fingerprints</p>
 </div>
 <PDAVis vectors={vectors} bind:this={pdaVis} />
-<FingerprintVis dataset={dataset} subset={subset} />
+{#if vectors.length > 0}
+	<FingerprintVis dataset={dataset} subset={subset} bind:this={fingerprintVis} hyperplane={vectors[1]} />
+{/if}
+<button on:click={() => fingerprintVis.vis(vectors[0])}>Dummy</button>

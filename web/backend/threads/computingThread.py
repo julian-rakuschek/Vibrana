@@ -53,7 +53,7 @@ class ComputingThread(threading.Thread):
         windows = StandardScaler().fit_transform(windows)
         pca = PCA(n_components=2)
         pca.fit(windows)
-        v1, v2 = pca.components_[:, 0], pca.components_[:, 1]
+        v1, v2 = pca.components_[0, :], pca.components_[1, :]
         projected = pca.transform(windows)
         feature_descriptors = compute_feature_descriptors(data, projected)
         data = self.loader.store_hyperplane_vectors(v1, v2, next_index, self.slice_size, feature_descriptors)

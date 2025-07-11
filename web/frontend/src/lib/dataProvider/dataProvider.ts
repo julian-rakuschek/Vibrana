@@ -23,24 +23,28 @@ export class DataProvider {
         this.wasm = await createPCA();
         const data = await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }})
         this.wasm_vibration_signal = new this.wasm.arrayToVec(data);
+        console.log("Load complete")
     }
 
     async get_fingerprint_data(hyperplane: HyperplaneVector) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
         const tde = this.wasm.slidingWindowView(this.wasm_vibration_signal, this.w, hyperplane.start_index, hyperplane.start_index + hyperplane.slice_length);
-
+        const pc1 = this.wasm.arrayToVec(hyperplane.v1);
+        const pc2 = this.wasm.arrayToVec(hyperplane.v2);
+        const wasm_projected = this.wasm.project(pc1, pc2, tde);
+        return this.wasm.matrixToArray(wasm_projected);
     }
 
     async get_fingerprint_image(hyperplane: HyperplaneVector) {
 
     }
 
-    // async get_slice(start_index: number, end_index: number) {
-    //     if (this.in_memory) {
-    //         return this.wasm_vibration_signal;
-    //     }
-    //     else {
-    //         return await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }, queryParams: { start_index, end_index }})
-    //     }
-    // }
+    async get_slice(start_index: number, end_index: number): Promise<number[]> {
+        if (this.in_memory) {
+            return this.wasm.getSlice(this.wasm_vibration_signal, start_index, end_index);
+        }
+        else {
+            return await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }, queryParams: { start_index, end_index }})
+        }
+    }
 }
