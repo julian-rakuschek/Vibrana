@@ -9,6 +9,8 @@
     const width = 1000;
     const height = 20;
 
+    console.log(aging)
+
     function plotAging() {
         const max = aging.toSorted((a, b) => a - b)[aging.length - 1];
         const min = -1;
