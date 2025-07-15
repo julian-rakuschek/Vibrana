@@ -1,12 +1,11 @@
 <script lang="ts">
 	import * as d3 from 'd3';
 	import * as fc from 'd3fc';
-	import { DemoRBush, DummyClusterRBush, mousePolygon } from '@lib/helper/brushHelper';
+	import { mousePolygon } from '@lib/helper/brushHelper';
 	import betterPointer from '@lib/helper/betterPointer';
 	import { onMount } from 'svelte';
 	import { DBSCAN_Scatter } from '@lib/algorithms/incrementalDBSCAN';
 	import type {ClusterHistogram, ScatterPoint} from '@lib/types';
-	import {rgbStringToHex} from "@lib/helper/colorHelper.js";
 
 	const getRandomNumber = (min: number, max: number) => Math.random() * (max - min) + min;
 
