@@ -1,7 +1,7 @@
 import type {ClusterHistogram, HyperplaneVector, ScatterPoint} from '@lib/types';
 import {DummyClusterRBush} from '@lib/helper/brushHelper';
 import {createColorsArray} from '@lib/helper/colorHelper';
-import {interpolateTurbo} from 'd3';
+import { interpolateRainbow, interpolateSinebow, interpolateTurbo } from 'd3';
 import {jensenShannon} from "@lib/algorithms/jensenShannonDivergence";
 
 type IndexRequirement = {
@@ -14,7 +14,8 @@ class DBSCAN<DataType extends IndexRequirement> {
 	protected data: DataType[];
 	protected labels: number[];
 	protected cluster_id_count: number;
-	protected colors: string[];
+	protected colors: { [key: number]: string } = {};
+	protected color_stops: number[] = [0];
 
 	constructor(eps: number, minPts: number, data: DataType[]) {
 		this.eps = eps;
@@ -22,7 +23,6 @@ class DBSCAN<DataType extends IndexRequirement> {
 		this.data = data;
 		this.cluster_id_count = 0;
 		this.labels = [];
-		this.colors = createColorsArray(10, { start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo })
 	}
 
 	reset() {
@@ -34,11 +34,32 @@ class DBSCAN<DataType extends IndexRequirement> {
 	getColor(index: number): string {
 		if (index === undefined || index >= this.labels.length || this.labels[index] === undefined) return 'lightgray';
 		if (this.labels[index] === -1) return "gray";
-		return this.colors[this.labels[index] % this.colors.length];
+		if (!this.colors[this.labels[index]]) {
+			let color_stop = 0
+			if (this.color_stops.length === 1) color_stop = 1;
+			else if (this.color_stops.length > 1) {
+				let max_diff = 0;
+				let current_min_diff_pair: [number, number] | null = null;
+				for (let i = 0; i < this.color_stops.length - 1; i++) {
+					const diff = this.color_stops[i + 1] - this.color_stops[i];
+					if (diff > max_diff || current_min_diff_pair === null) {
+						max_diff = diff;
+						current_min_diff_pair = [this.color_stops[i], this.color_stops[i + 1]];
+					}
+				}
+				if (current_min_diff_pair) color_stop = (current_min_diff_pair[0] + current_min_diff_pair[1]) / 2;
+			}
+			console.log(color_stop);
+			this.color_stops.push(color_stop);
+			this.color_stops.sort();
+			console.log(this.color_stops);
+			this.colors[this.labels[index]] = interpolateSinebow(color_stop);
+		}
+		return this.colors[this.labels[index]];
 	}
 
 	getAllColors(): string[] {
-		return this.labels.map((l, index) => this.getColor(index));
+		return this.labels.map(l => this.getColor(l));
 	}
 
 	neighborhoodQuery(query: DataType): DataType[] {
@@ -165,12 +186,6 @@ class DBSCAN<DataType extends IndexRequirement> {
 	}
 
 	get_cluster_distribution(): ClusterHistogram {
-		const getColor = (cluster_id: number) => {
-			if (cluster_id === undefined) return 'lightgray';
-			if (cluster_id === -1) return "gray";
-			return this.colors[cluster_id % this.colors.length];
-		}
-
 		const hist: { [key: string]: number } = {"-1": 0}
 		for (const label of this.labels) {
 			if (!hist[label]) hist[label] = 0;
@@ -179,7 +194,7 @@ class DBSCAN<DataType extends IndexRequirement> {
 		return Object.keys(hist).map(cluster_id => ({
 			cluster_id: cluster_id,
 			size: hist[cluster_id],
-			color: getColor(Number.parseInt(cluster_id)),
+			color: cluster_id === "-1" ? "gray" : this.colors[Number.parseInt(cluster_id)],
 			relative_size: hist[cluster_id] / this.labels.length
 		}));
 	}
