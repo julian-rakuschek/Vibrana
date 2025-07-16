@@ -25,6 +25,8 @@
                 return "The similarity of your marked labels with positions in the signal.";
             case ColorMode.Frequency:
                 return "Mean amplitude of the SFFT over time."
+            case ColorMode.Age:
+                return "Age of the fingerprint."
             default:
                 return "";
         }
@@ -51,6 +53,12 @@
             <span class="text-sm text-gray-700 col-span-1">Low Amplitude</span>
             <div class="w-full h-[10px] col-span-2" style={`background: ${freq_color_gradient}`}></div>
             <span class="text-sm text-gray-700 col-span-1">High Amplitude</span>
+        {/if}
+
+        {#if colorMode === ColorMode.Age}
+            <span class="text-sm text-gray-700 col-span-1">Old Fingerprint</span>
+            <div class="w-full h-[10px] col-span-2" style={`background: ${freq_color_gradient}`}></div>
+            <span class="text-sm text-gray-700 col-span-1">Recent Result</span>
         {/if}
     </div>
 </div>

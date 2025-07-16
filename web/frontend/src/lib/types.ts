@@ -23,7 +23,7 @@ export type ToastDto = {
 };
 
 export enum ColorMode {
-    Radius, Frequency, Distance
+    Radius, Frequency, Distance, Age
 }
 
 export enum WindowMode {

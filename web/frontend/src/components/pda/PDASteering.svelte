@@ -4,6 +4,8 @@
 	import type { D3DragEvent } from 'd3';
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import type { DistributionWeights } from '@lib/types';
+	import {ColorMode} from "@lib/types";
+	import ColorLegend from '@components/atoms/ColorLegend.svelte';
 
 	let canvas: HTMLCanvasElement;
 	let context: CanvasRenderingContext2D | null;
@@ -31,7 +33,7 @@
 		context.beginPath();
 		circles.sort((a, b) => a.index - b.index);
 		const path = new Path2D(lineGenerator(circles) ?? '');
-		context.strokeStyle = 'orange';
+		context.strokeStyle = '#9fa8da';
 		context.lineWidth = 2;
 		context.stroke(path);
 
@@ -46,7 +48,7 @@
 			context.beginPath();
 			context.moveTo(x + radius, y);
 			context.arc(x, y, radius, 0, 2 * Math.PI);
-			context.fillStyle = 'orange';
+			context.fillStyle = '#9fa8da';
 			context.fill();
 			if (active) {
 				context.lineWidth = 2;
@@ -151,9 +153,12 @@
 	$: aging, render();
 
 </script>
-<div class="ml-5">
+<div>
 	<canvas bind:this={canvas} width={width} height={height}></canvas>
-</div>
-<div class="mt-5 ml-5">
-	<button on:click={() => reset()} class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  me-2 mb-2">Reset</button>
+	<button on:click={() => reset()} class="text-indigo-600 px-4 pt-1 hover:text-indigo-800">Reset Curve</button>
+	<p class="italic text-wrap p-4"><b>Steering</b> Adjust the curve by dragging points up or down to change the probability that the algorithm will compute a fingerprint at that point.
+The color beneath the curve indicates the age of each fingerprint: darker shades represent older fingerprints, while brighter shades show more recent computation results.</p>
+	<div class="w-1/2">
+		<ColorLegend colorMode={ColorMode.Age} />
+	</div>
 </div>

@@ -3,7 +3,7 @@
 	import PDAThreadsControl from '@components/pda/PDAThreadsControl.svelte';
 	import PDAVis from "@components/pda/PDAVis.svelte";
 	import { io } from 'socket.io-client';
-	import type {HyperplaneVector} from "@lib/types";
+	import type { ClusterHistogram, HyperplaneVector } from '@lib/types';
 	import {onMount} from "svelte";
 	import {DBSCAN_VibrationFingerprints} from "@lib/algorithms/incrementalDBSCAN";
 
@@ -15,6 +15,7 @@
 	let colors: string[] = [];
 	let pdaVis: PDAVis;
 	let dbscan: DBSCAN_VibrationFingerprints;
+	let cluster_histogram: ClusterHistogram = [];
 
 	socket.on('connect', () => {
 		const room = 'vibrana:hydro:x';
@@ -23,6 +24,7 @@
 
 	socket.on('message', (data) => {
 		addNewItem(data);
+		cluster_histogram = dbscan.get_cluster_distribution();
 	});
 
 	function addNewItem(data: HyperplaneVector) {
@@ -42,6 +44,7 @@
 				pdaVis.drawVectors(vectors, colors);
 			}
 		}
+		cluster_histogram = dbscan.get_cluster_distribution();
 	}
 
 	async function fetchAndDrawAll() {
@@ -56,6 +59,7 @@
 		if (pdaVis) {
 			pdaVis.drawVectors(vectors, colors);
 		}
+		cluster_histogram = dbscan.get_cluster_distribution();
 	}
 
 	onMount(async () => {
@@ -69,4 +73,4 @@
 	<p class="self-center text-center text-xl font-bold">Long Signal Analysis</p>
 	<p class="self-center text-right">{vectors.length} Fingerprints</p>
 </div>
-<PDAVis vectors={vectors} colors={colors} bind:this={pdaVis} dataset={dataset} subset={subset} />
+<PDAVis vectors={vectors} colors={colors} bind:this={pdaVis} dataset={dataset} subset={subset} cluster_histogram={cluster_histogram} />
