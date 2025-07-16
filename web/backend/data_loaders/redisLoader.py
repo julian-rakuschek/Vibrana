@@ -92,6 +92,19 @@ class RedisLoader(DataLoaderBase):
         for key in self.r.scan_iter(pattern):
             self.r.delete(key)
 
+    def store_weights(self, weights):
+        data_key = f"{self.redis_prefix}:data:weights"
+        serialized = pickle.dumps(weights)
+        self.r.set(data_key, serialized)
+
+    def get_weights(self):
+        data_key = f"{self.redis_prefix}:data:weights"
+        serialized = self.r.get(data_key)
+        data = {"controlPoints": [], "curve": []}
+        if serialized:
+            data = pickle.loads(serialized)
+        return data
+
 
 if __name__ == '__main__':
     file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")

@@ -1,3 +1,5 @@
+import json
+
 import flask
 
 from web.backend.data_loaders.redisLoader import RedisLoader
@@ -43,3 +45,19 @@ def flask_clear_dataset(dataset, subset, path):
     loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
     loader.clear(only_vectors=True)
     return "OK", 200
+
+
+@db_app.post("<dataset>/<subset>/weights")
+@validate_subset
+def flask_clear_store_weights(dataset, subset, path):
+    weights = json.loads(flask.request.data)
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    loader.store_weights(weights)
+    return "OK", 200
+
+
+@db_app.get("<dataset>/<subset>/weights")
+@validate_subset
+def flask_clear_get_weights(dataset, subset, path):
+    loader = RedisLoader(path, f"vibrana:{dataset}:{subset}")
+    return loader.get_weights()

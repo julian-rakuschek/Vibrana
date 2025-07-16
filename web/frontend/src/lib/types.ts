@@ -104,6 +104,13 @@ export type HyperplaneVector = {
     }
 }
 
+export type DistributionControlPoints = { x: number; y: number; active: boolean; index: number }
+
+export type DistributionWeights = {
+    controlPoints: DistributionControlPoints[];
+    curve: Point[];
+}
+
 
 export type ThreeChartsSettingsType = {
     window: WindowMode;

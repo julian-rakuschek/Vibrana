@@ -9,6 +9,5 @@
     <div class="flex flex-row mt-10 gap-5">
         <a class="rounded-md text-center bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/demos/brushing">Brushing</a>
         <a class="rounded-md text-center bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/demos/cluster">Incremental Clustering</a>
-        <a class="rounded-md text-center bg-[#1c2934] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#121a21]" href="/demos/distributionSculpting">Distribution Sculpting</a>
     </div>
 </div>

@@ -5,6 +5,7 @@
     import {page} from '$app/stores';
     import FingerprintVis from "@components/pda/FingerprintVis.svelte";
     import PDAAging from "@components/pda/PDAAging.svelte";
+    import PDASteering from '@components/pda/PDASteering.svelte';
 
     export let vectors: HyperplaneVector[] = []
     export let colors: string[] = []
@@ -76,10 +77,10 @@
 </script>
 
 <div class="flex flex-col items-center justify-center">
-    <div>
+    <div on:mouseleave={() => currently_hovering = -1}>
         <canvas height={height} width={width} bind:this={canvas}></canvas>
     </div>
-    <div class="relative w-full h-[200px]" style={`width: ${width}px;`}>
+    <div class="relative w-full" style={`width: ${width}px;`}>
         {#if currently_hovering !== -1}
             <div class="absolute bg-indigo-800 w-[50px] h-[50px] -translate-x-1/2 rotate-45"
                  style={`left: ${fingerprint_position}px`}></div>
@@ -90,7 +91,7 @@
         {/if}
     </div>
     <div>
-        <PDAAging aging={index_allocation} />
+        <PDASteering aging={index_allocation} dataset={dataset} subset={subset} />
     </div>
 </div>
 

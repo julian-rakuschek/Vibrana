@@ -1,0 +1,159 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import * as d3 from 'd3';
+	import type { D3DragEvent } from 'd3';
+	import { ApiRoutes } from '@lib/api/ApiRoutes';
+	import type { DistributionWeights } from '@lib/types';
+
+	let canvas: HTMLCanvasElement;
+	let context: CanvasRenderingContext2D | null;
+	const width = 1000;
+	const height = 200;
+	const radius = 3;
+	const selectRadius = radius * 2;
+	const numberPoints = 60;
+	export let aging: number[] = [];
+	export let dataset: string;
+	export let subset: string;
+
+
+	type Circle = { x: number; y: number; active: boolean; index: number }
+	type DragEvenet = D3DragEvent<HTMLCanvasElement, unknown, Circle>;
+	let circles: Circle[] = [];
+
+	function render() {
+		if (!context) return;
+		context.clearRect(0, 0, width, height);
+		const max = aging.toSorted((a, b) => a - b)[aging.length - 1];
+		const min = -1;
+		const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([min, max]);
+
+		context.beginPath();
+		circles.sort((a, b) => a.index - b.index);
+		const path = new Path2D(lineGenerator(circles) ?? '');
+		context.strokeStyle = 'orange';
+		context.lineWidth = 2;
+		context.stroke(path);
+
+		const gradient = context.createLinearGradient(0, 0, width, 0);
+		aging.forEach((d, i) => {
+			gradient.addColorStop(i / (aging.length - 1), colorScale(d));
+		});
+		context.fillStyle = gradient;
+		context.fill(path);
+
+		for (const { x, y, active } of circles) {
+			context.beginPath();
+			context.moveTo(x + radius, y);
+			context.arc(x, y, radius, 0, 2 * Math.PI);
+			context.fillStyle = 'orange';
+			context.fill();
+			if (active) {
+				context.lineWidth = 2;
+				context.stroke();
+			}
+		}
+	}
+
+	const lineGenerator = d3.area<Circle>().curve(d3.curveBumpX).x(d => d.x).y0(height).y1(d => d.y);
+
+
+	function drag(circles: Circle[]) {
+		function dragsubject(event: DragEvenet) {
+			let subject = null;
+			let distance = selectRadius;
+			for (const c of circles) {
+				let d = Math.sqrt(Math.pow(event.x - c.x, 2) + Math.pow(event.y - c.y, 2));
+				if (d < distance) {
+					distance = d;
+					subject = c;
+				}
+			}
+			return subject;
+		}
+
+		function dragstarted(event: DragEvenet) {
+			circles.splice(circles.indexOf(event.subject), 1);
+			circles.push(event.subject);
+			event.subject.active = true;
+		}
+
+		function dragged(event: DragEvenet) {
+			event.subject.y = Math.max(radius, Math.min(height - radius, event.y));
+		}
+
+
+		async function dragended(event: DragEvenet) {
+			event.subject.active = false;
+			await handleUpdate();
+		}
+
+		return d3.drag()
+			.subject(dragsubject)
+			.on('start', (event) => {
+				dragstarted(event);
+				render();
+			})
+			.on('drag', (event) => {
+				dragged(event);
+				render();
+			})
+			.on('end', (event) => {
+				dragended(event);
+				render();
+			});
+	}
+
+	function samplePath(pathString: string, numPoints: number): { x: number; y: number }[] {
+			const svgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			svgPath.setAttribute('d', pathString);
+
+			const length = svgPath.getTotalLength();
+			const points = [];
+
+			for (let i = 0; i < numPoints; i++) {
+				const pos = svgPath.getPointAtLength((i / (numPoints - 1)) * length);
+				points.push({ x: pos.x, y: height - pos.y });
+			}
+
+			return points;
+		}
+
+	async function handleUpdate() {
+			const lineGenerator = d3.line<Circle>().curve(d3.curveBumpX).x(d => d.x).y(d => d.y);
+			const sampledPoints = samplePath(lineGenerator(circles)!, 1000);
+			const data: DistributionWeights = {
+				controlPoints: circles,
+				curve: sampledPoints
+			};
+			await ApiRoutes.storeWeights.fetch({ data: data, params: { dataset, subset } });
+		}
+
+	const reset = async () => {
+		circles.forEach(c => c.y = height - 10);
+		render();
+		await handleUpdate();
+	};
+
+	onMount(async () => {
+		const data = await ApiRoutes.getWeights.fetch({ params: {dataset, subset}})
+			context = canvas.getContext('2d');
+		circles = data.controlPoints.length > 0 ? data.controlPoints : d3.range(numberPoints).map(i => ({
+			x: i / numberPoints * width + radius,
+			y: height - 10,
+			active: false,
+			index: i
+		}));
+		d3.select(canvas).call(drag(circles, context));
+		render();
+	});
+
+	$: aging, render();
+
+</script>
+<div class="ml-5">
+	<canvas bind:this={canvas} width={width} height={height}></canvas>
+</div>
+<div class="mt-5 ml-5">
+	<button on:click={() => reset()} class="text-gray-900 bg-gray-100 hover:bg-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center  me-2 mb-2">Reset</button>
+</div>

@@ -3,6 +3,7 @@ import os
 import threading
 import time
 import random
+from math import floor
 from pathlib import Path
 
 import numpy as np
@@ -31,6 +32,7 @@ def compute_feature_descriptors(data, projected):
 
     return feature_descriptors
 
+
 class ComputingThread(threading.Thread):
     def __init__(self, redis_instance: redis.Redis, dataLoader: RedisLoader, sliding_window_size: int, slice_size: int, socket_client=None):
         threading.Thread.__init__(self)
@@ -44,10 +46,34 @@ class ComputingThread(threading.Thread):
         self.stop_request = False
         self.active = False
 
+    def compute_next_index(self):
+        distribution = self.loader.get_weights()
+        if len(distribution["curve"]) == 0:
+            return random.randint(0, self.loader.data_size - self.slice_size)
+
+        x_values = np.array([e["x"] for e in distribution["curve"]])
+        x_values = (x_values - np.min(x_values)) / (np.max(x_values) - np.min(x_values))
+        y_values = np.array([e["y"] for e in distribution["curve"]])
+        y_values = y_values / np.sum(y_values)
+        cdf_values = np.cumsum(y_values)
+
+        u = random.random()
+        diffs = cdf_values - u
+        left_side = np.copy(diffs)
+        left_side[left_side > 0] = -np.inf
+        left_idx = np.argmax(left_side)
+        right_side = np.copy(diffs)
+        right_side[right_side <= 0] = np.inf
+        right_idx = np.argmin(right_side)
+
+        random_index = x_values[left_idx] + (-left_side[left_idx] / (right_side[right_idx] - left_side[left_idx])) * (x_values[right_idx] - x_values[left_idx])
+        random_index = floor(random_index * self.loader.data_size)
+        return random_index
+
     def compute_plane(self):
         start = time.time()
         self.loader.load_numpy_file()
-        next_index = random.randint(0, self.loader.data_size - self.slice_size)
+        next_index = self.compute_next_index()
         data = self.loader.get_slice(next_index, next_index + self.slice_size)
         windows = sliding_window_view(data, window_shape=self.sliding_window_size)
         windows = StandardScaler().fit_transform(windows)
@@ -94,4 +120,3 @@ if __name__ == '__main__':
     # thread.join()
     # print(thread.is_alive())
     # thread.compute_plane()
-
