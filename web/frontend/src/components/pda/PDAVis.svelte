@@ -6,6 +6,7 @@
 	import FingerprintVis from '@components/pda/FingerprintVis.svelte';
 	import PDAAging from '@components/pda/PDAAging.svelte';
 	import PDASteering from '@components/pda/PDASteering.svelte';
+	import { fillGaps } from '@lib/algorithms/gapFill';
 
 	export let vectors: HyperplaneVector[] = [];
 	export let cluster_histogram: ClusterHistogram = [];
@@ -23,6 +24,10 @@
 	let currently_hovering = -1;
 	let fingerprint_position = -1;
 	let dataProvider: DataProvider;
+
+	const dummy_data = [2, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 2, 2, 0, 0, 1, 0, 2, 2, 2, 0];
+	const res = fillGaps(dummy_data, 0);
+	console.log(res);
 
 	export function addVector(vec: HyperplaneVector, color?: string) {
 		if (!context) return;
