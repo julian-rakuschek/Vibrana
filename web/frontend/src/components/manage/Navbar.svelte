@@ -26,12 +26,11 @@
     }
 </script>
 
-<header class={`${darkMode ? 'bg-[#0e1b40]' : 'bg-white'} z-50`}>
+<header class={`${darkMode ? 'bg-[#0e1b40]' : 'bg-[#faf9f5]'} z-50`}>
     <nav class="mx-auto flex items-center justify-between py-4 px-6 lg:px-8" aria-label="Global">
         <div class="flex lg:flex-1">
             <a href="/" class="-m-1.5 p-1.5 flex flex-row flex-nowrap gap-4 items-center">
-                <img width="50" alt="Vibrana" src="/vibrana.png"/>
-                <span class={`${darkMode ? 'text-white' : 'text-black'} font-bold text-2xl`}>Vibrana</span>
+                <span class={`${darkMode ? 'text-white' : 'text-black'} averia text-2xl`}>Vibrana</span>
             </a>
         </div>
 
@@ -49,7 +48,7 @@
         </div>
         <div class="hidden lg:flex lg:gap-x-12">
             {#each menuLinks as menuLink}
-                <a href={menuLink.link} class={`text-sm font-semibold leading-6 ${(darkMode) ? "text-white before:border-b-white" : "text-gray-900 before:border-b-indigo-700"} border-animation`}>
+                <a href={menuLink.link} class={`text-sm font-[Poppins] leading-6 ${(darkMode) ? "text-white before:border-b-white" : "text-[#141413] before:border-b-[#141413]"} border-animation`}>
                     {menuLink.name}
                 </a>
             {/each}

@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,6 +8,7 @@
 html, body {
     @apply w-full;
     @apply h-full;
+    @apply bg-[#faf9f5];
 }
 
 .defaultIconSize {
@@ -104,8 +108,6 @@ html, body {
     width: 100%;
 }
 
-.landing-page-gradient {
-    background: #0e1b40; /* fallback for old browsers */
-    background: -webkit-linear-gradient(to top, #1c367d, #0e1b40); /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(to top, #1c367d, #0e1b40); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+.averia {
+    font-family: "Averia Serif Libre", serif;
 }
