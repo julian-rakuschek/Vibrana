@@ -5,5 +5,5 @@
 
 </script>
 
-<Navbar/>
+<Navbar isBeige/>
 <DatasetList/>

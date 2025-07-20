@@ -2,12 +2,13 @@
     import {Icon, Bars3, XMark} from "svelte-hero-icons";
     import {goto} from '$app/navigation';
 
-    export let darkMode = false; // Default to light mode
+    export let isBeige = false; // Default to light mode
 
     let mobileMenuOpen = false;
 
     const menuLinks = [
         {name: "Introduction", link: "/intro"},
+        {name: "Dev Demos", link: "/demos"},
         {name: "Datasets", link: "/datasets"},
         {name: "Authors", link: "/authors"}
     ];
@@ -26,11 +27,11 @@
     }
 </script>
 
-<header class={`${darkMode ? 'bg-[#0e1b40]' : 'bg-[#faf9f5]'} z-50`}>
+<header class={`${isBeige ? 'bg-[#faf9f5]' : 'bg-white'} z-50`}>
     <nav class="mx-auto flex items-center justify-between py-4 px-6 lg:px-8" aria-label="Global">
         <div class="flex lg:flex-1">
             <a href="/" class="-m-1.5 p-1.5 flex flex-row flex-nowrap gap-4 items-center">
-                <span class={`${darkMode ? 'text-white' : 'text-black'} averia text-2xl`}>Vibrana</span>
+                <span class={`averia text-2xl`}>Vibrana</span>
             </a>
         </div>
 
@@ -48,7 +49,7 @@
         </div>
         <div class="hidden lg:flex lg:gap-x-12">
             {#each menuLinks as menuLink}
-                <a href={menuLink.link} class={`text-sm font-[Poppins] leading-6 ${(darkMode) ? "text-white before:border-b-white" : "text-[#141413] before:border-b-[#141413]"} border-animation`}>
+                <a href={menuLink.link} class={`text-sm font-[Poppins] leading-6 text-[#141413] before:border-b-[#141413] border-animation`}>
                     {menuLink.name}
                 </a>
             {/each}
@@ -60,10 +61,10 @@
     <!-- Mobile Menu -->
     {#if mobileMenuOpen}
         <div class="lg:hidden fixed inset-0 z-10 bg-black opacity-50" on:click={closeMobileMenu}></div>
-        <div class={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${darkMode ? 'bg-[#0e1b40]' : 'bg-white'} px-6 py-6 sm:max-w-sm`}>
+        <div class={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${isBeige ? 'bg-[#faf9f5]' : 'bg-white'} px-6 py-6 sm:max-w-sm`}>
             <div class="flex items-center justify-between">
                 <a href="/" class="-m-1.5 p-1.5">
-                    <span class={`${darkMode ? 'text-white' : 'text-black'} font-bold text-2xl`}>Vibrana</span>
+                    <span class={`font-bold text-2xl`}>Vibrana</span>
                 </a>
                 <button
                         type="button"
@@ -80,7 +81,7 @@
                         {#each menuLinks as menuLink}
                             <a
                                     href={menuLink.link}
-                                    class={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${darkMode ? 'text-white' : 'text-gray-900'}`}
+                                    class={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7`}
                                     on:click={() => navigateTo(menuLink.link)}
                             >
                                 {menuLink.name}

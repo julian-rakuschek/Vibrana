@@ -74,7 +74,7 @@
 
 </script>
 
-<div class="w-full h-full grid place-items-center relative">
+<div class="w-full h-full grid place-items-center relative bg-[#faf9f5]">
     <div>
         <canvas height={height} width={width} bind:this={canvas}></canvas>
     </div>
@@ -83,7 +83,7 @@
         <p class="text-[#141413] text-6xl averia">Vibrana</p>
         <div class="flex flex-col mt-4 gap-5">
             <a class="rounded-md text-center bg-[#141413] px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#141413] font-[Poppins]"
-               href="/pda">Explore Datasets</a>
+               href="/datasets">Explore Datasets</a>
         </div>
     </div>
 </div>

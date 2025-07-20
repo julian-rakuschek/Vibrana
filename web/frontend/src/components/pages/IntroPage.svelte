@@ -2,8 +2,6 @@
     import {getContext} from "svelte";
     import StyledDisclosure from "@components/atoms/StyledDisclosure.svelte";
 
-    const {ro} = getContext("ro") as { ro: boolean }
-
     let tab_paths = "no_anomaly"
 </script>
 
@@ -58,13 +56,6 @@
         Currently, only <i>dxd</i> files are supported, which are highly compressed signals collected and analyzed by <a
             href="https://dewesoft.com/de" class="text-indigo-500">DEWESoft</a> products.
     </p>
-    {#if ro}
-        <br/>
-        <div class="bg-red-100 text-red-500 rounded-lg p-3"><b>Note:</b>
-            This demo is in read-only mode, therefore the upload feature is disabled.
-        </div>
-        <br/>
-    {/if}
     <p>
         During upload, the signal is split into smaller chunks to be more manageable by the visualization.
         After the upload is finished, the user may start exploring the chunks of the signal through the three-charts
