@@ -21,6 +21,7 @@ python-socketio = {extras = ["client"], version = "^5.13.0"}
 rustworkx = "^0.16.0"
 sortedcontainers = "^2.4.0"
 xxhash = "^3.5.0"
+pymongo = "^4.13.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
