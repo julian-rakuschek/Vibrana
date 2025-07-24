@@ -35,11 +35,10 @@
 		colors = [...colors, dbscan.getColor(new_index)];
 		if (pdaVis) {
 			if (changes === 1) {
-				console.log("Single change", new_index, dbscan.getColor(new_index))
 				pdaVis.addVector(data, dbscan.getColor(new_index));
 			}
 			else {
-				console.log("redraw all");
+				console.log("redraw all", changes, new_index);
 				colors = dbscan.getAllColors();
 				pdaVis.drawVectors(vectors, colors);
 			}
@@ -54,6 +53,10 @@
 		}
 		vectors = [...vectors_query]
 		dbscan = new DBSCAN_VibrationFingerprints(0.2, 5, vectors);
+		// for (let i = 0; i < vectors.length; i++) {
+		// 	dbscan.insert(vectors[i]);
+		// }
+		// console.log(dbscan.get_full_similarity_matrix())
 		dbscan.cluster();
 		colors = dbscan.getAllColors();
 		if (pdaVis) {

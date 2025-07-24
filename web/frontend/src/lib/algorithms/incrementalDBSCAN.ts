@@ -262,6 +262,18 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		const flat_index = (i*(i-1)) / 2 + j;
 		return this.similarity_matrix[flat_index];
 	}
+	
+	get_full_similarity_matrix(): number[][] {
+		const mat: number[][] = [];
+		for (let i = 0; i < this.data.length; i++) {
+			const row: number[] = [];
+			for (let j = 0; j < this.data.length; j++) {
+				row.push(this.access_similarity_entry(i, j))
+			}
+			mat.push(row)
+		}
+		return mat;
+	}
 
 	neighborhoodQuery(query: HyperplaneVector): HyperplaneVector[] {
 		const neighbors: HyperplaneVector[] = [];
