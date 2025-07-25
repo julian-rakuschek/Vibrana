@@ -3,14 +3,12 @@
 	import {Forward, Pause, Play, PlayPause, Trash} from 'svelte-hero-icons';
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import { onMount } from 'svelte';
-	import {useQueryClient} from "@tanstack/svelte-query";
 	import RangeSlider from "svelte-range-slider-pips";
 	import type {HyperplaneVector} from "@lib/types";
 
 	export let dataset: string;
 	export let subset: string;
 	let threads = 0;
-	let client = useQueryClient();
 	export let handleReset: () => void;
 	export let handleSingleItem: (new_item: HyperplaneVector) => void;
 	
@@ -28,7 +26,7 @@
 	}
 
 	async function clearVectors() {
-		await ApiRoutes.clearVectors.fetch({ params: {dataset, subset}});
+		await ApiRoutes.clearFingerprints.fetch({ params: {dataset, subset}});
 		if (handleReset) handleReset();
 	}
 

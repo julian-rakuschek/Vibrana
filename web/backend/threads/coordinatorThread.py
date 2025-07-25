@@ -10,7 +10,7 @@ import socketio
 
 from web.backend.data_loaders.redisLoader import RedisLoader
 from web.backend.threads.computingThread import ComputingThread
-
+import web.backend.helper.database as database
 
 class CoordinatorThread(threading.Thread):
     def __init__(self, max_threads):
@@ -22,6 +22,7 @@ class CoordinatorThread(threading.Thread):
             redis_host = "anoscout_redis"
 
         self.r = redis.Redis(host=redis_host, port=6379, db=1)
+        self.db = database.get_db()
         self.sio = socketio.Client()
         self.sio.connect('http://localhost:5000')
         time.sleep(1)
@@ -34,9 +35,8 @@ class CoordinatorThread(threading.Thread):
             self.loaders[dataset_name] = {}
             self.threads[dataset_name] = {}
             for subset_name, subset_object in dataset_object["subsets"].items():
-                redis_prefix = f"vibrana:{dataset_name}:{subset_name}"
-                loader = RedisLoader(subset_object["file"], redis_prefix)
-                threads = [ComputingThread(self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"], self.sio) for _ in range(max_threads)]
+                loader = RedisLoader(subset_object["file"], dataset_name, subset_name)
+                threads = [ComputingThread(self.db, self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"], self.sio) for _ in range(max_threads)]
                 for t in threads:
                     t.start()
                 self.loaders[dataset_name][subset_name] = loader
@@ -48,7 +48,7 @@ class CoordinatorThread(threading.Thread):
             # print(datetime.datetime.now().isoformat())
             for dataset_name, dataset_object in self.datasets.items():
                 for subset_name, subset_object in dataset_object["subsets"].items():
-                    target_threads = self.loaders[dataset_name][subset_name].get_target_threads()
+                    target_threads = database.get_target_threads(self.db, dataset_name, subset_name)
                     if target_threads is None:
                         target_threads = 0
                     # print(dataset_name, subset_name, target_threads)

@@ -8,9 +8,11 @@ from flask_socketio import SocketIO, join_room, send, leave_room
 from web.backend.modules.database import db_app
 from web.backend.modules.analysis import analysis_app
 from web.backend.modules.computing import computing_app
+import helper.database as database
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"
+app.config['DB'] = database.get_db()
 
 app.register_blueprint(db_app, url_prefix="/api/db")
 app.register_blueprint(analysis_app, url_prefix="/api/analysis")
@@ -19,16 +21,18 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 SATIC_FILE_EXTENSIONS = ["js", "css", "html", "png", "jpg", "mp4"]
 
+
 @app.route("/")
 def index_route():
     dist_path = os.path.join(Path(__file__).parents[1], "frontend", "build")
     return flask.send_from_directory(dist_path, 'index.html')
 
+
 @app.route("/api/config")
 def flask_get_config():
     with open("datasets.json", "r") as f:
         return json.load(f)
-    
+
 
 @app.route("/<path:path>")
 def static_files(path):

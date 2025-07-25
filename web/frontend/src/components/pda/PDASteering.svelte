@@ -128,7 +128,7 @@
 				controlPoints: circles,
 				curve: sampledPoints
 			};
-			await ApiRoutes.storeWeights.fetch({ data: data, params: { dataset, subset } });
+			await ApiRoutes.storeParameters.fetch({ data: { weights: data }, params: { dataset, subset } });
 		}
 
 	const reset = async () => {
@@ -138,9 +138,9 @@
 	};
 
 	onMount(async () => {
-		const data = await ApiRoutes.getWeights.fetch({ params: {dataset, subset}})
+		const data = await ApiRoutes.getParameters.fetch({ params: {dataset, subset}})
 			context = canvas.getContext('2d');
-		circles = data.controlPoints.length > 0 ? data.controlPoints : d3.range(numberPoints).map(i => ({
+		circles = data.weights.controlPoints.length > 0 ? data.weights.controlPoints : d3.range(numberPoints).map(i => ({
 			x: i / numberPoints * width + radius,
 			y: height - 10,
 			active: false,

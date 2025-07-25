@@ -1,5 +1,5 @@
 import {ApiRoute} from "./ApiRoute";
-import type { DefaultAppResponse, HyperplaneVector, Config, DistributionWeights } from '@lib/types';
+import type { DefaultAppResponse, HyperplaneVector, Config, DistributionWeights, ParameterSettings } from '@lib/types';
 
 // ApiRoute types:
 // TRequestData, TRequestParams, TQueryParams, TResponse
@@ -15,11 +15,10 @@ export const genericRoutes = {
 
 export const dbRoutes = {
   getSlice: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index?: number; end_index?: number }, number[]>("GET", "/db/:dataset/:subset/slice"),
-  getVectors: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, HyperplaneVector[]>("GET", "/db/:dataset/:subset/vectors"),
-  getVector: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index: number; slice_index: number }, HyperplaneVector>("GET", "/db/:dataset/:subset/vector"),
-  clearVectors: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/clear"),
-  getWeights: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DistributionWeights>("GET", "/db/:dataset/:subset/weights"),
-  storeWeights: new ApiRoute<DistributionWeights, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/weights"),
+  getFingerprints: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, HyperplaneVector[]>("GET", "/db/:dataset/:subset/fingerprints"),
+  clearFingerprints: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/clear"),
+  getParameters: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, ParameterSettings>("GET", "/db/:dataset/:subset/parameters"),
+  storeParameters: new ApiRoute<ParameterSettings, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/parameters"),
 };
 
 export const computingRoutes = {

@@ -111,6 +111,15 @@ export type DistributionWeights = {
     curve: Point[];
 }
 
+export type ParameterSettings = {
+    eps: number;
+    minPoints: number;
+    samplingAlgorithm: string;
+    threads: number;
+    maxThreads: number;
+    weights: DistributionWeights;
+}
+
 
 export type ThreeChartsSettingsType = {
     window: WindowMode;

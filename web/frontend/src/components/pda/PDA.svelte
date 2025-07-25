@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import PDAThreadsControl from '@components/pda/PDAThreadsControl.svelte';
-	import PDAVis from "@components/pda/PDAVis.svelte";
+	import PDAVis from '@components/pda/PDAVis.svelte';
 	import { io } from 'socket.io-client';
 	import type { ClusterHistogram, HyperplaneVector } from '@lib/types';
-	import {onMount} from "svelte";
-	import {DBSCAN_VibrationFingerprints} from "@lib/algorithms/incrementalDBSCAN";
+	import { onMount } from 'svelte';
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
@@ -14,7 +13,6 @@
 	let vectors: HyperplaneVector[] = [];
 	let colors: string[] = [];
 	let pdaVis: PDAVis;
-	let dbscan: DBSCAN_VibrationFingerprints;
 	let cluster_histogram: ClusterHistogram = [];
 
 	socket.on('connect', () => {
@@ -24,45 +22,22 @@
 
 	socket.on('message', (data) => {
 		addNewItem(data);
-		cluster_histogram = dbscan.get_cluster_distribution();
 	});
 
 	function addNewItem(data: HyperplaneVector) {
-		const new_index = vectors.length;
-		data["index"] = new_index;
+		data["index"] = vectors.length;
 		vectors = [...vectors, data];
-		const changes = dbscan.insert(data);
-		colors = [...colors, dbscan.getColor(new_index)];
-		if (pdaVis) {
-			if (changes === 1) {
-				pdaVis.addVector(data, dbscan.getColor(new_index));
-			}
-			else {
-				console.log("redraw all", changes, new_index);
-				colors = dbscan.getAllColors();
-				pdaVis.drawVectors(vectors, colors);
-			}
-		}
-		cluster_histogram = dbscan.get_cluster_distribution();
+		colors = [...colors, "gray"];
+		pdaVis.drawVectors(vectors, colors);
 	}
 
 	async function fetchAndDrawAll() {
-		let vectors_query = await ApiRoutes.getVectors.fetch({ params: { dataset, subset } })
+		let vectors_query = await ApiRoutes.getFingerprints.fetch({ params: { dataset, subset } })
 		for (let i = 0; i < vectors_query.length; i++) {
 			vectors_query[i]["index"] = i;
 		}
 		vectors = [...vectors_query]
-		dbscan = new DBSCAN_VibrationFingerprints(0.2, 5, vectors);
-		// for (let i = 0; i < vectors.length; i++) {
-		// 	dbscan.insert(vectors[i]);
-		// }
-		// console.log(dbscan.get_full_similarity_matrix())
-		dbscan.cluster();
-		colors = dbscan.getAllColors();
-		if (pdaVis) {
-			pdaVis.drawVectors(vectors, colors);
-		}
-		cluster_histogram = dbscan.get_cluster_distribution();
+		pdaVis.drawVectors(vectors, colors);
 	}
 
 	onMount(async () => {
