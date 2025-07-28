@@ -1,17 +1,17 @@
 <script lang="ts">
-    import type {HyperplaneVector} from "@lib/types";
+    import type {Fingerprint} from "@lib/types";
     import {onMount} from "svelte";
     import {DataProvider} from "@lib/dataProvider/dataProvider";
     import {interpolateTurbo} from "d3";
 
 
     export let dataProvider: DataProvider;
-    export let hyperplane: HyperplaneVector | null;
+    export let hyperplane: Fingerprint | null;
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null
     const size = 200;
 
-    export function visualizeFingerprint(vec: HyperplaneVector) {
+    export function visualizeFingerprint(vec: Fingerprint) {
         const projected = dataProvider.get_fingerprint_data_javascript(vec);
 
         const min_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[0]

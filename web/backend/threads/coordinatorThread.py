@@ -25,20 +25,24 @@ class CoordinatorThread(threading.Thread):
 
         self.r = redis.Redis(host=redis_host, port=6379, db=1)
         self.db = database.get_db()
+        print("Connecting to socket ...")
         self.sio = socketio.Client()
         self.sio.connect('http://localhost:5000')
         time.sleep(1)
+        print("Connected to socket")
 
         with open(os.path.join(Path(__file__).parents[1], "datasets.json")) as f:
             self.datasets = json.load(f)
         self.loaders = {}
         self.threads = {}
         self.locks = {}
+        print("Initiating threads:")
         for dataset_name, dataset_object in self.datasets.items():
             self.loaders[dataset_name] = {}
             self.threads[dataset_name] = {}
             self.locks[dataset_name] = {}
             for subset_name, subset_object in dataset_object["subsets"].items():
+                print(dataset_name, subset_name)
                 loader = RedisLoader(subset_object["file"], dataset_name, subset_name)
                 threads = [ComputingThread(self.db, self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"],  self.insert_fingerprint, self.sio) for _ in range(max_threads)]
                 for t in threads:
@@ -50,17 +54,9 @@ class CoordinatorThread(threading.Thread):
 
     def insert_fingerprint(self, dataset, subset, data):
         self.locks[dataset][subset].acquire()
-        print(dataset, subset, data)
-        parameters = database.get_parameters(self.db, dataset, subset)
-        labels, features, _ = database.get_fingerprints_for_clustering(self.db, dataset, subset)
-        dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
-        dbscan.load(features, labels)
-        dbscan.insert(data["feature_descriptors"]["radii_distribution"]["counts"])
-        new_label = dbscan.get_cluster_labels(data["feature_descriptors"]["radii_distribution"]["counts"])
-        data["label"] = new_label
-        database.store_fingerprint(self.db, data)
-        # time.sleep(2)
+        data = database.store_fingerprint(self.db, data, dataset, subset)
         self.locks[dataset][subset].release()
+        return data
 
     def run(self):
         while True:

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ClusterHistogram, HyperplaneVector } from '@lib/types';
+	import type { ClusterHistogram, Fingerprint } from '@lib/types';
 	import { onMount } from 'svelte';
 	import { DataProvider } from '@lib/dataProvider/dataProvider';
 	import { page } from '$app/stores';
@@ -8,7 +8,7 @@
 	import PDASteering from '@components/pda/PDASteering.svelte';
 	import { fillGaps } from '@lib/algorithms/gapFill';
 
-	export let vectors: HyperplaneVector[] = [];
+	export let vectors: Fingerprint[] = [];
 	export let cluster_histogram: ClusterHistogram = [];
 	export let colors: string[] = [];
 	export let dataset: string;
@@ -29,7 +29,7 @@
 	const res = fillGaps(dummy_data, 0);
 	console.log(res);
 
-	export function addVector(vec: HyperplaneVector, color?: string) {
+	export function addVector(vec: Fingerprint, color?: string) {
 		if (!context) return;
 		const start = Math.floor((vec.start_index / vec.max_index) * width);
 		const rectangle_width = Math.floor((vec.slice_length / vec.max_index) * width);
@@ -38,7 +38,7 @@
 		for (let j = 0; j < rectangle_width; j++) index_allocation[start + j] = vec.index;
 	}
 
-	export function drawVectors(vectors_to_draw: HyperplaneVector[], colors?: string[]) {
+	export function drawVectors(vectors_to_draw: Fingerprint[], colors?: string[]) {
 		if (!context) return;
 		context.fillStyle = '#eeeeee';
 		context.fillRect(0, 0, width, height);

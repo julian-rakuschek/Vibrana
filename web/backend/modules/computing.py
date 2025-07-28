@@ -38,6 +38,7 @@ def flask_make_single_step(dataset, subset, path):
     slice_size = int(flask.request.args.get("slice_size", 10_000))
     loader = RedisLoader(path, dataset, subset)
     loader.load_numpy_file(False)
-    thread = ComputingThread(db, loader.r, loader, sliding_window_size, slice_size)
+    insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
+    thread = ComputingThread(db, loader.r, loader, sliding_window_size, slice_size, insert_func)
     data = thread.compute_plane()
     return data

@@ -4,13 +4,13 @@
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import { onMount } from 'svelte';
 	import RangeSlider from "svelte-range-slider-pips";
-	import type {HyperplaneVector} from "@lib/types";
+	import type {Fingerprint} from "@lib/types";
 
 	export let dataset: string;
 	export let subset: string;
 	let threads = 0;
 	export let handleReset: () => void;
-	export let handleSingleItem: (new_item: HyperplaneVector) => void;
+	export let handleSingleItem: (new_item: Fingerprint) => void;
 	
 	async function setThreads(new_threads: number) {
 		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads: new_threads}});

@@ -1,5 +1,5 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
-import type {HyperplaneVector} from "@lib/types";
+import type {Fingerprint} from "@lib/types";
 
 export class DataProvider {
     private dataset: string;
@@ -23,7 +23,7 @@ export class DataProvider {
     }
 
 
-    get_fingerprint_data_javascript(hyperplane: HyperplaneVector) {
+    get_fingerprint_data_javascript(hyperplane: Fingerprint) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
         if (!this.vibration_signal) {
             console.warn("Vibration signal has not been loaded, returning empty projection.")
@@ -42,7 +42,7 @@ export class DataProvider {
         return projected;
     }
 
-    async get_fingerprint_image(hyperplane: HyperplaneVector) {
+    async get_fingerprint_image(hyperplane: Fingerprint) {
 
     }
 

@@ -90,7 +90,7 @@ export type ClusterHistogram = {
     relative_size: number;
 }[]
 
-export type HyperplaneVector = {
+export type Fingerprint = {
     index: number;
     slice_length: number;
     start_index: number;

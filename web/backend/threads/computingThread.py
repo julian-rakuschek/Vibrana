@@ -93,9 +93,10 @@ class ComputingThread(threading.Thread):
             "timestamp": datetime.datetime.now().timestamp(),
             "feature_descriptors": feature_descriptors
         }
-        self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
+        label_delta = self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
+        print(label_delta)
         if self.sio is not None:
-            self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': database.serialize_mongodb(to_insert)})
+            self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta})
         end = time.time()
         print(f"Computed vectors at {next_index} in {end - start} seconds")
         return database.serialize_mongodb(to_insert)
@@ -118,11 +119,14 @@ class ComputingThread(threading.Thread):
 
 
 if __name__ == '__main__':
+    dataset = "hydro"
+    subset = "x"
     file_path = os.path.join(Path(__file__).parents[2], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
-    loader = RedisLoader(file_path, "hydro", "x")
+    loader = RedisLoader(file_path, dataset, subset)
     loader.load_numpy_file(False)
     db = database.get_db()
-    thread = ComputingThread(db, loader.r, loader, 1000, 10_000)
+    insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
+    thread = ComputingThread(db, loader.r, loader, 1000, 10_000, insert_func)
     thread.compute_plane()
     # thread.start()
     # print("after run")

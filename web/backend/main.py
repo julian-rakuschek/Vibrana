@@ -54,7 +54,7 @@ def on_leave(data):
 
 @socketio.on('share_computation_result')
 def handle_share_computation_result(data):
-    send(data['result'], to=data['room'])
+    send(data, to=data['room'])
 
 
 if __name__ == '__main__':

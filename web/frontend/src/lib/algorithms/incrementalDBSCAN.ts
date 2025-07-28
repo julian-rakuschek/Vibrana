@@ -1,4 +1,4 @@
-import type {ClusterHistogram, HyperplaneVector, ScatterPoint} from '@lib/types';
+import type {ClusterHistogram, Fingerprint, ScatterPoint} from '@lib/types';
 import {DummyClusterRBush} from '@lib/helper/brushHelper';
 import {createColorsArray} from '@lib/helper/colorHelper';
 import { interpolateRainbow, interpolateSinebow, interpolateTurbo } from 'd3';
@@ -225,10 +225,10 @@ export class DBSCAN_Scatter extends DBSCAN<ScatterPoint> {
 	}
 }
 
-export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
+export class DBSCAN_VibrationFingerprints extends DBSCAN<Fingerprint> {
 	private similarity_matrix: Float32Array = new Float32Array(1000);
 
-	constructor(eps: number, minPts: number, data: HyperplaneVector[]) {
+	constructor(eps: number, minPts: number, data: Fingerprint[]) {
 		super(eps, minPts, data);
 		this.compute_similarity_matrix();
 	}
@@ -275,8 +275,8 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		return mat;
 	}
 
-	neighborhoodQuery(query: HyperplaneVector): HyperplaneVector[] {
-		const neighbors: HyperplaneVector[] = [];
+	neighborhoodQuery(query: Fingerprint): Fingerprint[] {
+		const neighbors: Fingerprint[] = [];
 		for (let i = 0; i < this.data.length; i++) {
 			if (query.index === i) continue;
 			const dist = this.access_similarity_entry(query.index, i);
@@ -287,7 +287,7 @@ export class DBSCAN_VibrationFingerprints extends DBSCAN<HyperplaneVector> {
 		return neighbors;
 	}
 
-	insert(new_point: HyperplaneVector): number {
+	insert(new_point: Fingerprint): number {
 		const N = this.data.length;
 		const required_slots = (N*N - N) / 2;
 		if (required_slots > this.similarity_matrix.length) this.resizeFloat32Array(required_slots + 1000);
