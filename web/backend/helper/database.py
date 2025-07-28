@@ -7,6 +7,7 @@ import pymongo
 from bson import json_util
 from pymongo.synchronous.database import Database
 
+from algorithms.incdbscan import IncrementalDBSCAN
 from web.backend.helper.config import get_config
 
 conf = get_config()
@@ -38,6 +39,24 @@ def get_fingerprints(db: Database, dataset: str, subset: str):
     return list(db["fingerprints"].find({"dataset": dataset, "subset": subset}))
 
 
+def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str):
+    fingerprints = list(db["fingerprints"].find({"dataset": dataset, "subset": subset}, {"_id": 1, "label": 1, "feature_descriptors": 1}))
+    labels = [f.get("label", -1) for f in fingerprints]
+    feature_descriptors = [f["feature_descriptors"]["radii_distribution"]["counts"] for f in fingerprints]
+    ids = [f["_id"] for f in fingerprints]
+    return labels, feature_descriptors, ids
+
+
+def cluster_all_fingerprints(db: Database, dataset: str, subset: str):
+    parameters = get_parameters(db, dataset, subset)
+    _, features, ids = get_fingerprints_for_clustering(db, dataset, subset)
+    dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
+    dbscan.insert(features)
+    labels = dbscan.get_cluster_labels(features)
+    for _id, label in zip(ids, labels):
+        db["fingerprints"].update_one({"_id": _id}, {"$set": {"label": label}})
+
+
 def clear_fingerprints(db: Database, dataset: str, subset: str):
     db["fingerprints"].delete_many({"dataset": dataset, "subset": subset})
 
@@ -65,3 +84,8 @@ def get_parameters(db: Database, dataset: str, subset: str):
 def get_target_threads(db: Database, dataset: str, subset: str):
     params = get_parameters(db, dataset, subset)
     return params["threads"]
+
+
+if __name__ == '__main__':
+    db = get_db()
+    cluster_all_fingerprints(db, "hydro", "x")

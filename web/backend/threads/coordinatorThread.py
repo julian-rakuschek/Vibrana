@@ -8,9 +8,11 @@ from pathlib import Path
 import redis
 import socketio
 
+from algorithms.incdbscan import IncrementalDBSCAN
 from web.backend.data_loaders.redisLoader import RedisLoader
 from web.backend.threads.computingThread import ComputingThread
 import web.backend.helper.database as database
+
 
 class CoordinatorThread(threading.Thread):
     def __init__(self, max_threads):
@@ -31,17 +33,34 @@ class CoordinatorThread(threading.Thread):
             self.datasets = json.load(f)
         self.loaders = {}
         self.threads = {}
+        self.locks = {}
         for dataset_name, dataset_object in self.datasets.items():
             self.loaders[dataset_name] = {}
             self.threads[dataset_name] = {}
+            self.locks[dataset_name] = {}
             for subset_name, subset_object in dataset_object["subsets"].items():
                 loader = RedisLoader(subset_object["file"], dataset_name, subset_name)
-                threads = [ComputingThread(self.db, self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"], self.sio) for _ in range(max_threads)]
+                threads = [ComputingThread(self.db, self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"],  self.insert_fingerprint, self.sio) for _ in range(max_threads)]
                 for t in threads:
                     t.start()
                 self.loaders[dataset_name][subset_name] = loader
                 self.threads[dataset_name][subset_name] = threads
+                self.locks[dataset_name][subset_name] = threading.Lock()
         print("Coordinator initialized!")
+
+    def insert_fingerprint(self, dataset, subset, data):
+        self.locks[dataset][subset].acquire()
+        print(dataset, subset, data)
+        parameters = database.get_parameters(self.db, dataset, subset)
+        labels, features, _ = database.get_fingerprints_for_clustering(self.db, dataset, subset)
+        dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
+        dbscan.load(features, labels)
+        dbscan.insert(data["feature_descriptors"]["radii_distribution"]["counts"])
+        new_label = dbscan.get_cluster_labels(data["feature_descriptors"]["radii_distribution"]["counts"])
+        data["label"] = new_label
+        database.store_fingerprint(self.db, data)
+        # time.sleep(2)
+        self.locks[dataset][subset].release()
 
     def run(self):
         while True:

@@ -59,6 +59,14 @@ class IncrementalDBSCAN:
         self._inserter = Inserter(self.eps, self.min_pts, self._objects)
         self._deleter = Deleter(self.eps, self.min_pts, self._objects)
 
+    def load(self, X, labels):
+        X = input_check(X)
+        assert len(X) == len(labels)
+
+        for value, label in zip(X, labels):
+            object_inserted = self._objects.insert_object(value)
+            self._objects.set_label(object_inserted, label)
+
     def insert(self, X):
         """Insert objects into the object set, then update clustering.
 

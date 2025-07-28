@@ -3,6 +3,7 @@ import os
 import threading
 import time
 import random
+from collections.abc import Callable
 from math import floor
 from pathlib import Path
 
@@ -35,7 +36,7 @@ def compute_feature_descriptors(data, projected):
 
 
 class ComputingThread(threading.Thread):
-    def __init__(self, db: Database, redis_instance: redis.Redis, dataLoader: RedisLoader, sliding_window_size: int, slice_size: int, socket_client=None):
+    def __init__(self, db: Database, redis_instance: redis.Redis, dataLoader: RedisLoader, sliding_window_size: int, slice_size: int, insert_func: Callable, socket_client=None):
         threading.Thread.__init__(self)
         self.redis = redis_instance
         self.loader = dataLoader
@@ -47,6 +48,7 @@ class ComputingThread(threading.Thread):
             self.sio.emit('join', {'room': dataLoader.redis_prefix})
         self.stop_request = False
         self.active = False
+        self.insert_func = insert_func
 
     def compute_next_index(self):
         distribution = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["weights"]
@@ -91,7 +93,7 @@ class ComputingThread(threading.Thread):
             "timestamp": datetime.datetime.now().timestamp(),
             "feature_descriptors": feature_descriptors
         }
-        database.store_fingerprint(self.db, to_insert)
+        self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'result': database.serialize_mongodb(to_insert)})
         end = time.time()
