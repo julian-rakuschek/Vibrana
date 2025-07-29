@@ -11,7 +11,7 @@
 	let threads = 0;
 	export let handleReset: () => void;
 	export let handleSingleItem: (new_item: Fingerprint) => void;
-	
+
 	async function setThreads(new_threads: number) {
 		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads: new_threads}});
 	}

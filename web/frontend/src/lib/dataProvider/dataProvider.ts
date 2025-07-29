@@ -2,10 +2,11 @@ import {ApiRoutes} from "@lib/api/ApiRoutes";
 import type {Fingerprint} from "@lib/types";
 
 export class DataProvider {
-    private dataset: string;
-    private subset: string;
-    private w: number;
-    private in_memory: boolean;
+    private readonly dataset: string;
+    private readonly subset: string;
+    private readonly w: number;
+    private readonly in_memory: boolean;
+    private loading: boolean = false;
     // only used if in_memory is true
     private vibration_signal: number[] | undefined;
 
@@ -18,9 +19,15 @@ export class DataProvider {
 
     async load() {
         if (!this.in_memory) throw "only allowed when dataset is configured as in memory";
+        this.loading = true;
         this.vibration_signal = await ApiRoutes.getSlice.fetch({params: {dataset: this.dataset, subset: this.subset}});
         console.log("Load complete")
+        this.loading = false;
+        return true;
     }
+
+    isLoading(): boolean {return this.loading};
+    isInMemory(): boolean {return this.in_memory};
 
 
     get_fingerprint_data_javascript(hyperplane: Fingerprint) {
