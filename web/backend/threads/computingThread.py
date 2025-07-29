@@ -79,6 +79,8 @@ class ComputingThread(threading.Thread):
         self.loader.load_numpy_file()
         next_index = self.compute_next_index()
         data = self.loader.get_slice(next_index, next_index + self.slice_size)
+        if self.sliding_window_size >= len(data):
+            return
         windows = sliding_window_view(data, window_shape=self.sliding_window_size)
         windows = StandardScaler().fit_transform(windows)
         pca = PCA(n_components=2)
@@ -94,7 +96,6 @@ class ComputingThread(threading.Thread):
             "feature_descriptors": feature_descriptors
         }
         label_delta = self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
-        print(label_delta)
         if self.sio is not None:
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta})
         end = time.time()

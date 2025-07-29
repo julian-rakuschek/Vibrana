@@ -101,7 +101,8 @@ export type Fingerprint = {
     feature_descriptors: {
         radii_distribution: Histogram;
         freq_distribution: Histogram;
-    }
+    };
+    label: number;
 }
 
 export type DistributionControlPoints = { x: number; y: number; active: boolean; index: number }

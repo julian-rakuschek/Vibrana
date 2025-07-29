@@ -38,15 +38,15 @@ def store_fingerprint(db: Database, data, dataset, subset, compute_cluster_label
 
     parameters = get_parameters(db, dataset, subset)
     labels, features, ids = get_fingerprints_for_clustering(db, dataset, subset)
-    print("Existing", labels, features)
     dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
     if len(features) > 0:
         dbscan.load(features, labels)
     radius_histogram = data["feature_descriptors"]["radii_distribution"]["counts"]
-    print(radius_histogram)
     dbscan.insert(np.array(radius_histogram).reshape(1, -1))
     new_label = dbscan.get_cluster_labels(np.array(radius_histogram).reshape(1, -1))
-    updated_labels = dbscan.get_cluster_labels(features)
+    updated_labels = []
+    if len(features) > 0:
+        updated_labels = dbscan.get_cluster_labels(features)
     data["label"] = int(new_label[0])
     delta = [{"index": len(ids), "new_label": data["label"]}]
     for old_label, new_label, _id, idx in zip(labels, updated_labels, ids, range(len(ids))):

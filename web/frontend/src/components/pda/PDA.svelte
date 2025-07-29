@@ -5,10 +5,13 @@
 	import { io } from 'socket.io-client';
 	import type { ClusterHistogram, Fingerprint } from '@lib/types';
 	import { onMount } from 'svelte';
+	import { ColorGenerator } from '@lib/algorithms/colorGenerator';
 
 	export let dataset = 'hydro';
 	export let subset = 'x';
 	const socket = io('http://localhost:5000');
+
+	const colorGenerator = new ColorGenerator();
 
 	let fingerprints: Fingerprint[] = [];
 	let colors: string[] = [];
@@ -21,22 +24,32 @@
 	});
 
 	socket.on('message', (data) => {
-		console.log(data)
 		addNewItem(data["new_fingerprint"], data["label_delta"]);
 	});
 
 	function addNewItem(new_fingerprint: Fingerprint, label_delta: {index: number; new_label: number}[]) {
-		console.log(label_delta)
 		new_fingerprint["index"] = fingerprints.length;
 		fingerprints = [...fingerprints, new_fingerprint];
-		colors = [...colors, "gray"];
+
+		for (const labelDeltaElement of label_delta) {
+			const color = colorGenerator.getColor(labelDeltaElement.new_label);
+			if (labelDeltaElement.index >= colors.length) {
+				colors.push(color)
+			}
+			else {
+				colors[labelDeltaElement.index] = color;
+			}
+		}
 		pdaVis.drawVectors(fingerprints, colors);
 	}
 
 	async function fetchAndDrawAll() {
 		let vectors_query = await ApiRoutes.getFingerprints.fetch({ params: { dataset, subset } })
+		colors = [];
 		for (let i = 0; i < vectors_query.length; i++) {
 			vectors_query[i]["index"] = i;
+			const color = colorGenerator.getColor(vectors_query[i].label);
+			colors.push(color)
 		}
 		fingerprints = [...vectors_query]
 		pdaVis.drawVectors(fingerprints, colors);
