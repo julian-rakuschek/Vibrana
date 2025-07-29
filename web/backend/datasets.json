@@ -14,6 +14,12 @@
         "slice_size": 10000,
         "sliding_window_size": 1000
       },
+      "x-short": {
+        "name": "Vibrations in X-Direction (Short)",
+        "file": "parsed/hydro/hydro-1/values-hydro-1-x-short.npy",
+        "slice_size": 10000,
+        "sliding_window_size": 1000
+      },
       "y": {
         "name": "Vibrations in Y-Direction",
         "file": "parsed/hydro/hydro-1/values-hydro-1-y.npy",

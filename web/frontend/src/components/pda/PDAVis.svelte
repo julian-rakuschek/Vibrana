@@ -7,27 +7,26 @@
 	import PDAAging from '@components/pda/PDAAging.svelte';
 	import PDASteering from '@components/pda/PDASteering.svelte';
 	import { fillGaps } from '@lib/algorithms/gapFill';
+	import PDAOverview from '@components/pda/PDAOverview.svelte';
 
-	export let vectors: Fingerprint[] = [];
+	export let fingerprints: Fingerprint[] = [];
 	export let cluster_histogram: ClusterHistogram = [];
 	export let colors: string[] = [];
 	export let dataset: string;
 	export let subset: string;
 
-	console.log(vectors);
+	console.log(fingerprints);
 
 	let canvas: HTMLCanvasElement;
 	let context: CanvasRenderingContext2D | null;
 	const width = 1000;
 	const height = 100;
 	const index_allocation: number[] = new Array(width).fill(-1);
+	const label_allocation: number[] = new Array(width).fill(null);
 	let currently_hovering = -1;
 	let fingerprint_position = -1;
 	let dataProvider: DataProvider;
 
-	const dummy_data = [2, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 2, 2, 0, 0, 1, 0, 2, 2, 2, 0];
-	const res = fillGaps(dummy_data, 0);
-	console.log(res);
 
 	export function addVector(vec: Fingerprint, color?: string) {
 		if (!context) return;
@@ -35,7 +34,10 @@
 		const rectangle_width = Math.floor((vec.slice_length / vec.max_index) * width);
 		context.fillStyle = color ?? 'red';
 		context.fillRect(start, 0, rectangle_width, height);
-		for (let j = 0; j < rectangle_width; j++) index_allocation[start + j] = vec.index;
+		for (let j = 0; j < rectangle_width; j++) {
+			index_allocation[start + j] = vec.index;
+			label_allocation[start + j] = vec.label;
+		}
 	}
 
 	export function drawVectors(vectors_to_draw: Fingerprint[], colors?: string[]) {
@@ -78,12 +80,15 @@
 				step++;
 			}
 		};
-		drawVectors(vectors, colors);
+		drawVectors(fingerprints, colors);
 	});
 </script>
 
 <div class="grid grid-cols-2">
 	<div class="flex flex-col p-4">
+		<div>
+			<PDAOverview fingerprints={fingerprints} label_allocation={label_allocation} />
+		</div>
 		<div on:mouseleave={() => currently_hovering = -1}>
 			<canvas height={height} width={width} bind:this={canvas}></canvas>
 		</div>
@@ -93,7 +98,7 @@
 						 style={`left: ${fingerprint_position}px`}></div>
 				<div class="absolute mt-3 p-3 bg-white rounded-xl shadow-xl -translate-x-1/2 border-2 border-solid border-indigo-800"
 						 style={`left: ${fingerprint_position}px`}>
-					<FingerprintVis dataProvider={dataProvider} hyperplane={vectors[currently_hovering]} />
+					<FingerprintVis dataProvider={dataProvider} hyperplane={fingerprints[currently_hovering]} />
 				</div>
 			{/if}
 		</div>

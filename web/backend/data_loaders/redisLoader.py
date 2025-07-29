@@ -62,15 +62,6 @@ class RedisLoader(DataLoaderBase):
 
 
 if __name__ == '__main__':
-    file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
-    loader = RedisLoader(file_path, "hydro", "x")
-    loader.load_numpy_file()
-    slice = loader.get_slice(0, 3_000)
-    tde = sliding_window_view(slice, 300)
-    points = PCA(n_components=2).fit_transform(tde)
-    # plt.scatter(points[:, 0], points[:, 1], color="black")
-    # plt.show()
-    # print(points)
-    with open("../../frontend/src/components/pages/landingPagePointCloud.ts", "w") as f:
-        f.write("export const points: number[][] = " + str(points.tolist()))
-    # loader.clear()
+    file_path = os.path.join(Path(__file__).parents[3], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x-short.npy")
+    loader = RedisLoader(file_path, "hydro", "x-short")
+    loader.clear(only_vectors=False)
