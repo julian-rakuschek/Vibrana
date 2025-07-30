@@ -3,12 +3,14 @@
     import {onMount} from 'svelte';
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import FingerprintRendering from "@components/atoms/FingerprintRendering.svelte";
+    import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
 
     export let dataset: string;
     export let subset: string;
     export let fingerprints: Fingerprint[] = [];
     export let colors: string[] = [];
     export let dataProvider: DataProvider;
+    let loading = dataProvider.loading;
 
     let container: HTMLDivElement;
     let canvas: HTMLCanvasElement;
@@ -82,7 +84,11 @@
              style={`left: ${fingerprint_position}px`}></div>
         <div class="absolute mt-3 p-3 bg-white rounded-xl shadow-xl -translate-x-1/2 border-2 border-solid border-indigo-800"
              style={`left: ${fingerprint_position}px`}>
-            <FingerprintRendering {dataProvider} fingerprint={fingerprints[currently_hovering]}/>
+            {#if $loading}
+                <CenteredLoadingSpinner/>
+            {:else}
+                <FingerprintRendering {dataProvider} fingerprint={fingerprints[currently_hovering]}/>
+            {/if}
         </div>
     {/if}
 </div>

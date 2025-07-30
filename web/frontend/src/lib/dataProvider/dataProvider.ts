@@ -1,12 +1,13 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
 import type {Fingerprint} from "@lib/types";
+import {type Writable, writable} from "svelte/store";
 
 export class DataProvider {
     private readonly dataset: string;
     private readonly subset: string;
     private readonly w: number;
     private readonly in_memory: boolean;
-    private loading: boolean = false;
+    public loading: Writable<boolean> = writable(false);
     // only used if in_memory is true
     private vibration_signal: number[] | undefined;
 
@@ -19,14 +20,13 @@ export class DataProvider {
 
     async load() {
         if (!this.in_memory) throw "only allowed when dataset is configured as in memory";
-        this.loading = true;
+        this.loading.set(true);
         this.vibration_signal = await ApiRoutes.getSlice.fetch({params: {dataset: this.dataset, subset: this.subset}});
         console.log("Load complete")
-        this.loading = false;
+        this.loading.set(false);
         return true;
     }
 
-    isLoading(): boolean {return this.loading};
     isInMemory(): boolean {return this.in_memory};
 
 
@@ -60,5 +60,9 @@ export class DataProvider {
         else {
             return await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }, queryParams: { start_index, end_index }})
         }
+    }
+
+    get_length() {
+        return this.vibration_signal?.length ?? 0;
     }
 }

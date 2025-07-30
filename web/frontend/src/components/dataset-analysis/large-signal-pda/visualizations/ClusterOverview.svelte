@@ -12,6 +12,7 @@
     export let fingerprints: Fingerprint[] = [];
     export let colorMapping: ClusterColorMapping;
     export let dataProvider: DataProvider;
+    let loading = dataProvider.loading;
 
     let container: HTMLDivElement;
     let canvas: HTMLCanvasElement;
@@ -40,7 +41,10 @@
 	}
 
     function render() {
-        if (labelAllocation.length !== width || !context) return;
+        if (!context) return;
+        context.fillStyle = '#eeeeee';
+        context.fillRect(0, 0, width, height);
+        if (labelAllocation.length !== width) return;
         const filledGaps = fillGaps(labelAllocation, null);
         if (filledGaps[0] === null) return;
         const sectors: ClusterOverviewSector[] = [];
@@ -74,17 +78,23 @@
 
     }
 
-    onMount(async () => {
-        context = canvas.getContext('2d');
+    function updateProcedure() {
         indexAllocation = computeIndexAllocationArray(fingerprints, width, -1, false);
         labelAllocation = computeIndexAllocationArray(fingerprints, width, null, true);
         render();
+    }
+
+    onMount(async () => {
+        context = canvas.getContext('2d');
+        updateProcedure()
+    })
+
+    loading.subscribe(() => {
+        updateProcedure()
     })
 
     $: {
-        indexAllocation = computeIndexAllocationArray(fingerprints, width, -1, false);
-        labelAllocation = computeIndexAllocationArray(fingerprints, width, null, true);
-        render();
+        updateProcedure()
     }
 </script>
 
