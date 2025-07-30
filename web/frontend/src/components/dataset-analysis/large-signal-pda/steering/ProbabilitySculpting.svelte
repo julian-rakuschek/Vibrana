@@ -14,7 +14,7 @@
 
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    const width = 1000;
+    export let width = 1000;
     const height = 200;
     const radius = 3;
     const selectRadius = radius * 2;

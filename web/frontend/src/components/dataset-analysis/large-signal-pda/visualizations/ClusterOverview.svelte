@@ -6,6 +6,7 @@
     import {computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
     import {fillGaps} from "@lib/algorithms/gapFill";
     import {interpolateTurbo} from "d3";
+    import {reduceSaturation} from "@lib/helper/colorHelper";
 
     export let dataset: string;
     export let subset: string;
@@ -17,12 +18,12 @@
     let container: HTMLDivElement;
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    let width = 1000;
+    export let width = 1000;
     const height = 100;
     let labelAllocation: number[] = [];
     let indexAllocation: number[] = [];
 
-    export function visualizeFingerprint(fp: Fingerprint, x_offset: number) {
+    export function visualizeFingerprint(fp: Fingerprint, x_offset: number, color: string) {
 		const projected = dataProvider.get_fingerprint_data_javascript(fp);
 
 		const min_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[0];
@@ -35,7 +36,7 @@
 		for (let i = 0; i < projected.length; i++) {
 			const x = (projected[i][0] - min_x_value) / (max_x_value - min_x_value);
 			const y = (projected[i][1] - min_y_value) / (max_y_value - min_y_value);
-            context.fillStyle = "white";
+            context.fillStyle = color;
 			context.fillRect(x * height + x_offset, y * height, 1, 1);
 		}
 	}
@@ -48,30 +49,30 @@
         const filledGaps = fillGaps(labelAllocation, null);
         if (filledGaps[0] === null) return;
         const sectors: ClusterOverviewSector[] = [];
-        let currentSector: ClusterOverviewSector = {fingerprintIndices: [], indices: [], clusterLabel: filledGaps[0]}
+        let currentSector: ClusterOverviewSector = {fingerprintIndices: new Set(), indices: [], clusterLabel: filledGaps[0]}
         for (let i = 0; i < width; i++) {
             const label = filledGaps[i];
 
             if (label !== currentSector.clusterLabel) {
                 sectors.push(currentSector);
-                currentSector = {fingerprintIndices: [], indices: [], clusterLabel: label};
+                currentSector = {fingerprintIndices: new Set(), indices: [], clusterLabel: label};
             }
 
-            context.fillStyle = label === null ? "lightgray" : colorMapping[label];
+            context.fillStyle = label === null ? "lightgray" : reduceSaturation(colorMapping[label]);
             context.fillRect(i, 0, 1, height);
             currentSector.indices.push(i);
-            if (indexAllocation[i] !== -1) currentSector.fingerprintIndices.push(indexAllocation[i]);
+            if (indexAllocation[i] !== -1) currentSector.fingerprintIndices.add(indexAllocation[i]);
         }
         sectors.push(currentSector);
         for (const sector of sectors) {
             const maxFingerprints = Math.floor(sector.indices.length / height);
             for (let i = 0; i < maxFingerprints; i++) {
-                if (i >= sector.fingerprintIndices.length) break;
-                const index = Math.floor(sector.fingerprintIndices.length / maxFingerprints * i);
-                const fingerprint = fingerprints[sector.fingerprintIndices[index]];
+                if (i >= sector.fingerprintIndices.size) break;
+                const index = Math.floor(sector.fingerprintIndices.size / maxFingerprints * i);
+                const fpIndices = sector.fingerprintIndices.values().toArray()
+                const fingerprint = fingerprints[fpIndices[index]];
                 const x_offset = sector.indices[0] + i * height;
-                visualizeFingerprint(fingerprint, x_offset)
-                console.log(fingerprint)
+                visualizeFingerprint(fingerprint, x_offset, colorMapping[fingerprint.label])
             }
         }
 

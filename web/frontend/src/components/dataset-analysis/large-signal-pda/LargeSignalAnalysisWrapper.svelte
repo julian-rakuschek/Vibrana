@@ -26,6 +26,7 @@
     let dataProvider = new DataProvider(dataset, subset, w, in_memory);
     let fingerprints: Fingerprint[] = [];
     let colors: string[] = [];
+    let width;
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -63,12 +64,14 @@
 
 </script>
 
-<div class="flex flex-col w-full md:w-1/2 mx-auto gap-5">
+<div class="flex flex-col w-full md:w-1/2 mx-auto gap-5" bind:clientWidth={width}>
     <p class="self-center text-center text-xl font-bold">Long Signal Analysis</p>
-    <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
+    <div class="w-full flex flex-row justify-between">
+        <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={addNewItem}/>
+        <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
+    </div>
     <DataProviderStatus {dataProvider}/>
-    <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={addNewItem}/>
-    <ClusterOverview {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
-    <FingerprintLocations {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
-    <ProbabilitySculpting {dataset} {subset} {fingerprints}/>
+    <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
+    <FingerprintLocations {width} {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
+    <ProbabilitySculpting {width} {dataset} {subset} {fingerprints}/>
 </div>

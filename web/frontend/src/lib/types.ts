@@ -111,7 +111,7 @@ export type ClusterColorMapping = {
 
 export type ClusterOverviewSector = {
     indices: number[];
-    fingerprintIndices: number[];
+    fingerprintIndices: Set<number>;
     clusterLabel: number | null;
 };
 

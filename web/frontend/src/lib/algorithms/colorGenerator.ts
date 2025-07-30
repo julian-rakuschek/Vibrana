@@ -1,7 +1,7 @@
 import { interpolateSinebow } from 'd3';
 
 export class ColorGenerator {
-	protected colors: { [key: number]: string } = {};
+	protected colors: { [key: number]: string } = {"-1": "gray"};
 	protected color_stops: number[] = [0];
 
 	getColor(label: number): string {

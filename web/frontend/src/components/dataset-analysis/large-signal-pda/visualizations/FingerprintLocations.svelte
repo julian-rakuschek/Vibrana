@@ -15,9 +15,9 @@
     let container: HTMLDivElement;
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    let width = 1000;
+    export let width = 1000;
     const height = 100;
-    const index_allocation: number[] = new Array(width).fill(-1);
+    let index_allocation: number[] = new Array(width).fill(-1);
     let currently_hovering = -1;
     let fingerprint_position = -1;
 
@@ -72,7 +72,10 @@
         drawVectors(fingerprints, colors);
     });
 
-    $: drawVectors(fingerprints, colors);
+    $: {
+        if (fingerprints.length === 0) index_allocation = new Array(width).fill(-1);
+        drawVectors(fingerprints, colors);
+    }
 </script>
 
 <div bind:this={container} class="w-full" on:mouseleave={() => currently_hovering = -1}>

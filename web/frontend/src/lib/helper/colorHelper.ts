@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import Color from "colorjs.io";
 
 export type ColorInterpolateParams = {
   start: number;
@@ -77,4 +78,11 @@ export function hexToRGBA(hex: string, alpha: number) {
           b = parseInt(hex.slice(5, 7), 16);
 
     return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+
+export function reduceSaturation(color: string): string {
+  const c = new Color(color);
+  c.lch.c *= 0.3;
+  c.lch.l *= 1.4;
+  return c.toString({format: "rgb"});
 }
