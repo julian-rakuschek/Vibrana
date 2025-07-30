@@ -78,7 +78,7 @@
 
     }
 
-    function updateProcedure() {
+    function updateProcedure(fingerprints: Fingerprint[]) {
         indexAllocation = computeIndexAllocationArray(fingerprints, width, -1, false);
         labelAllocation = computeIndexAllocationArray(fingerprints, width, null, true);
         render();
@@ -86,15 +86,15 @@
 
     onMount(async () => {
         context = canvas.getContext('2d');
-        updateProcedure()
+        updateProcedure(fingerprints)
     })
 
     loading.subscribe(() => {
-        updateProcedure()
+        updateProcedure(fingerprints)
     })
 
     $: {
-        updateProcedure()
+        updateProcedure(fingerprints)
     }
 </script>
 

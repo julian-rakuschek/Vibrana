@@ -100,7 +100,7 @@ class ComputingThread(threading.Thread):
             self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta})
         end = time.time()
         print(f"Computed vectors at {next_index} in {end - start} seconds")
-        return database.serialize_mongodb(to_insert)
+        return {'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta}
 
     def stop(self):
         self.stop_request = True

@@ -115,6 +115,8 @@ export type ClusterOverviewSector = {
     clusterLabel: number | null;
 };
 
+export type ClusterDelta = { index: number; new_label: number }[];
+
 export type DistributionControlPoints = { x: number; y: number; active: boolean; index: number }
 
 export type DistributionWeights = {

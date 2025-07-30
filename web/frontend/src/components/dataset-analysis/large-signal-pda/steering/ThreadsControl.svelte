@@ -4,13 +4,13 @@
 	import { ApiRoutes } from '@lib/api/ApiRoutes';
 	import { onMount } from 'svelte';
 	import RangeSlider from "svelte-range-slider-pips";
-	import type {Fingerprint} from "@lib/types";
+	import type {ClusterDelta, Fingerprint} from "@lib/types";
 
 	export let dataset: string;
 	export let subset: string;
 	let threads = 0;
 	export let handleReset: () => void;
-	export let handleSingleItem: (new_item: Fingerprint) => void;
+	export let handleSingleItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
 
 	async function setThreads(new_threads: number) {
 		await ApiRoutes.setTargetThreads.fetch({ params: {dataset, subset}, data: {threads: new_threads}});
@@ -22,7 +22,7 @@
 
 	async function oneStep() {
 		const data = await ApiRoutes.computeSingleStep.fetch({ params: {dataset, subset}});
-		if (handleSingleItem) handleSingleItem(data);
+		if (handleSingleItem) handleSingleItem(data.new_fingerprint, data.label_delta);
 	}
 
 	async function clearVectors() {
