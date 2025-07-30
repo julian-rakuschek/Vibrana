@@ -81,6 +81,7 @@ export function hexToRGBA(hex: string, alpha: number) {
 }
 
 export function reduceSaturation(color: string): string {
+  if (color === "gray") return "#e0e0e0"
   const c = new Color(color);
   c.lch.c *= 0.3;
   c.lch.l *= 1.4;

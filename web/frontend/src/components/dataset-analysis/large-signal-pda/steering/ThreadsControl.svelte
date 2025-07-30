@@ -52,6 +52,6 @@
 		<FancyButton icon="{Forward}" button_color="primary" />
 	</button>
 	<div class="w-52 z-50">
-		<RangeSlider min={0} max={10} bind:value={threads} on:stop={(e) => setThreads(e.detail.value)} pips first last float suffix=" threads" />
+		<RangeSlider min={0} max={10} bind:value={threads} on:stop={(e) => setThreads(e.detail.value)} pips first last float suffix=" threads" springValues={{stiffness: 1, damping: 1}} />
 	</div>
 </div>

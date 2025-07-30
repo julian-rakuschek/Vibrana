@@ -117,20 +117,13 @@ export type ClusterOverviewSector = {
 
 export type ClusterDelta = { index: number; new_label: number }[];
 
-export type DistributionControlPoints = { x: number; y: number; active: boolean; index: number }
-
-export type DistributionWeights = {
-    controlPoints: DistributionControlPoints[];
-    curve: Point[];
-}
-
 export type ParameterSettings = {
     eps: number;
     minPoints: number;
     samplingAlgorithm: string;
     threads: number;
     maxThreads: number;
-    weights: DistributionWeights;
+    weights: number[];
 }
 
 

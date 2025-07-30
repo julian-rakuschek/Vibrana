@@ -15,7 +15,6 @@
     export let dataProvider: DataProvider;
     let loading = dataProvider.loading;
 
-    let container: HTMLDivElement;
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
     export let width = 1000;
@@ -63,6 +62,7 @@
             currentSector.indices.push(i);
             if (indexAllocation[i] !== -1) currentSector.fingerprintIndices.add(indexAllocation[i]);
         }
+        return;
         sectors.push(currentSector);
         for (const sector of sectors) {
             const maxFingerprints = Math.floor(sector.indices.length / height);
@@ -99,6 +99,6 @@
     }
 </script>
 
-<div bind:this={container} class="w-full">
+<div class="w-full">
     <canvas {height} {width} bind:this={canvas}></canvas>
 </div>

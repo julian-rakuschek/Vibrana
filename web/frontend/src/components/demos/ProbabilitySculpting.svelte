@@ -14,11 +14,11 @@
 
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    export let width = 1000;
+    export let width = 0;
     const height = 200;
     const radius = 3;
-    const selectRadius = radius * 2;
-    const numberPoints = 60;
+    const selectRadius = radius * 5;
+    let numberPoints = 10;
     let aging: number[] = [];
 
     type Circle = { x: number; y: number; active: boolean; index: number }
@@ -125,7 +125,7 @@
 
     async function handleUpdate() {
         const lineGenerator = d3.line<Circle>().curve(d3.curveBumpX).x(d => d.x).y(d => d.y);
-        const sampledPoints = samplePath(lineGenerator(circles)!, 1000);
+        const sampledPoints = samplePath(lineGenerator(circles)!, width);
         const data: DistributionWeights = {
             controlPoints: circles,
             curve: sampledPoints
@@ -142,8 +142,12 @@
     onMount(async () => {
         const data = await ApiRoutes.getParameters.fetch({params: {dataset, subset}})
         context = canvas.getContext('2d');
-        circles = data.weights.controlPoints.length > 0 ? data.weights.controlPoints : d3.range(numberPoints).map(i => ({
-            x: i / numberPoints * width + radius,
+        // circles = data.weights.controlPoints.length > 0 ? data.weights.controlPoints : d3.range(numberPoints).map(i => ({
+
+
+
+        circles = d3.range(numberPoints).map(i => ({
+            x: i / (numberPoints - 1) * (width - radius * 2) + radius,
             y: height - 10,
             active: false,
             index: i
@@ -159,7 +163,10 @@
     }
 
 </script>
-<div>
+<div class="w-full">
+    <div class="h-[30px] bg-purple-900 text-white" style={`width: ${width}px`}>
+    <p>{width}</p>
+    </div>
     <canvas bind:this={canvas} width={width} height={height}></canvas>
     <button on:click={() => reset()} class="text-indigo-600 px-4 pt-1 hover:text-indigo-800">Reset Curve</button>
     <p class="italic text-wrap p-4"><b>Steering</b> Adjust the curve by dragging points up or down to change the

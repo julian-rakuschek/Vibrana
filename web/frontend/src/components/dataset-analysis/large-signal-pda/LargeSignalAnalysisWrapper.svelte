@@ -7,14 +7,11 @@
     import ClusterOverview from "@components/dataset-analysis/large-signal-pda/visualizations/ClusterOverview.svelte";
     import FingerprintLocations
         from "@components/dataset-analysis/large-signal-pda/visualizations/FingerprintLocations.svelte";
-    import ProbabilitySculpting
-        from "@components/dataset-analysis/large-signal-pda/steering/ProbabilitySculpting.svelte";
-    import ClusterDistribution
-        from "@components/dataset-analysis/large-signal-pda/visualizations/ClusterDistribution.svelte";
     import ThreadsControl from "@components/dataset-analysis/large-signal-pda/steering/ThreadsControl.svelte";
     import {DataProvider} from "@lib/dataProvider/dataProvider";
     import {page} from '$app/stores';
     import DataProviderStatus from "@components/dataset-analysis/large-signal-pda/DataProviderStatus.svelte";
+    import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -26,6 +23,7 @@
     let dataProvider = new DataProvider(dataset, subset, w, in_memory);
     let fingerprints: Fingerprint[] = [];
     let colors: string[] = [];
+    let init_load = true;
     let width;
 
     const socket = io('http://localhost:5000');
@@ -60,18 +58,22 @@
 
     onMount(async () => {
         await fetchAndDrawAll();
+        init_load = false;
     })
 
 </script>
 
-<div class="flex flex-col w-full md:w-1/2 mx-auto gap-5" bind:clientWidth={width}>
+<div class="flex flex-col w-full md:w-2/3 mx-auto gap-5" bind:clientWidth={width}>
     <p class="self-center text-center text-xl font-bold">Long Signal Analysis</p>
-    <div class="w-full flex flex-row justify-between">
-        <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={addNewItem}/>
-        <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
-    </div>
-    <DataProviderStatus {dataProvider}/>
-    <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
-    <FingerprintLocations {width} {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
-    <ProbabilitySculpting {width} {dataset} {subset} {fingerprints}/>
+    {#if init_load}
+        <CenteredLoadingSpinner />
+    {:else}
+        <div class="w-full flex flex-row justify-between">
+            <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={addNewItem}/>
+            <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
+        </div>
+        <DataProviderStatus {dataProvider}/>
+        <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
+        <FingerprintLocations {width} {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
+    {/if}
 </div>
