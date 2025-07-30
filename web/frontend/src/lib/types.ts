@@ -105,6 +105,16 @@ export type Fingerprint = {
     label: number;
 }
 
+export type ClusterColorMapping = {
+    [key: number]: string;
+}
+
+export type ClusterOverviewSector = {
+    indices: number[];
+    fingerprintIndices: number[];
+    clusterLabel: number | null;
+};
+
 export type DistributionControlPoints = { x: number; y: number; active: boolean; index: number }
 
 export type DistributionWeights = {

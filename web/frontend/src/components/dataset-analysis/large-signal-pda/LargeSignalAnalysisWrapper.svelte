@@ -63,7 +63,7 @@
     <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
     <DataProviderStatus {dataProvider} />
     <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={(data) => addNewItem(data)} />
-<!--    <ClusterOverview bind:this={clusterOverviewVisualization} />-->
+    <ClusterOverview {dataset} {subset} {fingerprints} {dataProvider} colorMapping={colorGenerator.getColorDictionary()} />
 <!--    <ClusterDistribution {fingerprints} />-->
     <FingerprintLocations {dataset} {subset} {fingerprints} {colors} {dataProvider} />
     <ProbabilitySculpting {dataset} {subset} {fingerprints} />

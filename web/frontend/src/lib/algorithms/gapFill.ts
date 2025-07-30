@@ -1,6 +1,6 @@
-export function fillGaps(values: number[], empty_marker: number): number[] {
-	const forward: number[] = values.slice();
-	const backward: number[] = values.slice();
+export function fillGaps(values: number[], empty_marker: number | null): (number | null)[] {
+	const forward: (number | null)[] = values.slice();
+	const backward: (number | null)[] = values.slice();
 	const distances_forward: number[] = new Array(values.length).fill(Infinity);
 	const distances_backward: number[] = new Array(values.length).fill(Infinity);
 
@@ -25,7 +25,7 @@ export function fillGaps(values: number[], empty_marker: number): number[] {
 		else if (distances_backward_memory !== Infinity) distances_backward[inverse_i] =  distances_backward_memory - inverse_i;
 	}
 
-	const result: number[] = values.slice();
+	const result: (number | null)[] = values.slice();
 	for (let i = 0; i < values.length; i++) {
 		if (values[i] === empty_marker) {
 			result[i] = distances_forward[i] < distances_backward[i] ? forward[i] : backward[i];

@@ -6,6 +6,7 @@
     import type {DistributionWeights, Fingerprint} from '@lib/types';
     import {ColorMode} from "@lib/types";
     import ColorLegend from '@components/atoms/ColorLegend.svelte';
+    import {computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
 
     export let dataset: string;
     export let subset: string;
@@ -20,22 +21,9 @@
     const numberPoints = 60;
     let aging: number[] = [];
 
-
-
-
     type Circle = { x: number; y: number; active: boolean; index: number }
     type DragEvenet = D3DragEvent<HTMLCanvasElement, unknown, Circle>;
     let circles: Circle[] = [];
-
-    function computeAgingArray(fingerprints: Fingerprint[]) {
-        const index_allocation: number[] = new Array(width).fill(-1);
-        for (const fp of fingerprints) {
-            const start = Math.floor((fp.start_index / fp.max_index) * width);
-            const rectangle_width = Math.floor((fp.slice_length / fp.max_index) * width);
-            for (let j = 0; j < rectangle_width; j++) index_allocation[start + j] = fp.index;
-        }
-        aging = [...index_allocation];
-    }
 
     function render() {
         if (!context) return;
@@ -161,12 +149,12 @@
             index: i
         }));
         d3.select(canvas).call(drag(circles, context));
-        computeAgingArray(fingerprints);
+        aging = computeIndexAllocationArray(fingerprints, width, -1);
         render();
     });
 
     $: {
-        computeAgingArray(fingerprints);
+        aging = computeIndexAllocationArray(fingerprints, width, -1);
         render();
     }
 
