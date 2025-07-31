@@ -2,11 +2,8 @@
     import type {ClusterColorMapping, ClusterOverviewSector, Fingerprint} from '@lib/types';
     import {onMount} from 'svelte';
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
-    import FingerprintRendering from "@components/atoms/FingerprintRendering.svelte";
     import {computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
     import {fillGaps} from "@lib/algorithms/gapFill";
-    import {interpolateTurbo} from "d3";
-    import {reduceSaturation} from "@lib/helper/colorHelper";
 
     export let dataset: string;
     export let subset: string;
@@ -40,30 +37,28 @@
 		}
 	}
 
-    function render() {
-        if (!context) return;
-        context.fillStyle = '#eeeeee';
-        context.fillRect(0, 0, width, height);
-        if (labelAllocation.length !== width) return;
+    function getSectors() {
         const filledGaps = fillGaps(labelAllocation, null);
-        if (filledGaps[0] === null) return;
+        if (filledGaps[0] === null) return [];
         const sectors: ClusterOverviewSector[] = [];
         let currentSector: ClusterOverviewSector = {fingerprintIndices: new Set(), indices: [], clusterLabel: filledGaps[0]}
         for (let i = 0; i < width; i++) {
             const label = filledGaps[i];
-
             if (label !== currentSector.clusterLabel) {
                 sectors.push(currentSector);
                 currentSector = {fingerprintIndices: new Set(), indices: [], clusterLabel: label};
             }
-
-            context.fillStyle = label === null ? "lightgray" : reduceSaturation(colorMapping[label]);
-            context.fillRect(i, 0, 1, height);
             currentSector.indices.push(i);
             if (indexAllocation[i] !== -1) currentSector.fingerprintIndices.add(indexAllocation[i]);
         }
-        return;
         sectors.push(currentSector);
+        return sectors;
+    }
+
+    function render() {
+        if (!context) return;
+        context.clearRect(0, 0, width, height);
+        const sectors = getSectors();
         for (const sector of sectors) {
             const maxFingerprints = Math.floor(sector.indices.length / height);
             for (let i = 0; i < maxFingerprints; i++) {

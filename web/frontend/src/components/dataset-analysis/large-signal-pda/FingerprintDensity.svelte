@@ -22,13 +22,11 @@
         const max = aging.toSorted((a, b) => a - b)[aging.length - 1];
         const min = -1;
         const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([min, max === -1 ? 1 : max]);
-
-
-
         const density = density1d(indices, {bins: width, extent: [0, width], bandwidth: 10})
         let densities = density.grid();
         let max_density = densities.toSorted((a, b) => a - b)[densities.length - 1];
         densities = densities.map(d => d / max_density)
+         console.log(densities)
         for (let i = 0; i < width; i++) {
             context.fillStyle = colorScale(aging[i]);
             context.fillRect(i, height, 1, -height * densities[i]);
@@ -49,6 +47,4 @@
     $: updateProcedure(fingerprints, width);
 </script>
 
-<div>
-     <canvas bind:this={canvas} width={width} height={height}></canvas>
-</div>
+<canvas bind:this={canvas} width={width} height={height}></canvas>

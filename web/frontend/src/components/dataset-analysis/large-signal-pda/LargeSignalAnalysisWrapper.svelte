@@ -1,19 +1,19 @@
 <script lang="ts">
     import {ApiRoutes} from '@lib/api/ApiRoutes';
     import {io} from 'socket.io-client';
-    import type {ClusterDelta, ClusterHistogram, Fingerprint} from '@lib/types';
+    import type {ClusterDelta, Fingerprint} from '@lib/types';
     import {onMount} from 'svelte';
     import {ColorGenerator} from '@lib/algorithms/colorGenerator';
-    import ClusterOverview from "@components/dataset-analysis/large-signal-pda/visualizations/ClusterOverview.svelte";
-    import FingerprintLocations
-        from "@components/dataset-analysis/large-signal-pda/visualizations/FingerprintLocations.svelte";
-    import ThreadsControl from "@components/dataset-analysis/large-signal-pda/steering/ThreadsControl.svelte";
+    import ThreadsControl from "@components/dataset-analysis/large-signal-pda/ThreadsControl.svelte";
     import {DataProvider} from "@lib/dataProvider/dataProvider";
     import {page} from '$app/stores';
     import DataProviderStatus from "@components/dataset-analysis/large-signal-pda/DataProviderStatus.svelte";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
-    import FingerprintDensity
-        from "@components/dataset-analysis/large-signal-pda/visualizations/FingerprintDensity.svelte";
+    import FingerprintDensity from "@components/dataset-analysis/large-signal-pda/FingerprintDensity.svelte";
+    import {computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
+    import FingerprintsWrapper
+        from "@components/dataset-analysis/large-signal-pda/locations/FingerprintsWrapper.svelte";
+    import ClusterOverview from "@components/dataset-analysis/large-signal-pda/overview/ClusterOverview.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -26,7 +26,9 @@
     let fingerprints: Fingerprint[] = [];
     let colors: string[] = [];
     let init_load = true;
-    let width;
+    let width = 1000;
+
+    let index_allocation: number[] = new Array(width).fill(-1);
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -35,14 +37,25 @@
     function addNewItem(new_fingerprint: Fingerprint, label_delta: ClusterDelta) {
         new_fingerprint["index"] = fingerprints.length;
         fingerprints = [...fingerprints, new_fingerprint];
+
+        const start = Math.floor((new_fingerprint.start_index / new_fingerprint.max_index) * width);
+        const rectangle_width = Math.floor((new_fingerprint.slice_length / new_fingerprint.max_index) * width);
+
+        for (let j = 0; j < rectangle_width; j++) {
+            index_allocation[start + j] = new_fingerprint.index;
+        }
+
         for (const labelDeltaElement of label_delta) {
             const color = colorGenerator.getColor(labelDeltaElement.new_label);
-            if (labelDeltaElement.index >= colors.length) colors = [...colors, color];
+            if (labelDeltaElement.index >= colors.length) {
+                colors = [...colors, color];
+            }
             else {
                 colors[labelDeltaElement.index] = color;
                 fingerprints[labelDeltaElement.index].label = labelDeltaElement.new_label;
             }
         }
+
         colorMapping = colorGenerator.getColorDictionary();
     }
 
@@ -56,6 +69,7 @@
         }
         fingerprints = [...vectors_query]
         colorMapping = colorGenerator.getColorDictionary();
+        index_allocation = computeIndexAllocationArray(fingerprints, width, -1, false);
     }
 
     onMount(async () => {
@@ -75,8 +89,8 @@
             <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
         </div>
         <DataProviderStatus {dataProvider}/>
-        <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
-        <FingerprintLocations {width} {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
-        <FingerprintDensity {width} {dataset} {subset} {fingerprints} />
+        <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping} />
+        <FingerprintsWrapper {width} {dataset} {subset} {fingerprints} {colors} {dataProvider} {index_allocation} />
+        <div><FingerprintDensity {width} {dataset} {subset} {fingerprints} /></div>
     {/if}
 </div>
