@@ -26,6 +26,8 @@ export const dbRoutes = {
   clearFingerprints: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/clear"),
   getParameters: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, ParameterSettings>("GET", "/db/:dataset/:subset/parameters"),
   storeParameters: new ApiRoute<ParameterSettings, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/parameters"),
+  getIntervals: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, [number, number][]>("GET", "/db/:dataset/:subset/intervals"),
+  storeIntervals: new ApiRoute<[number, number][], { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/intervals"),
 };
 
 export const computingRoutes = {

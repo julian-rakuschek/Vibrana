@@ -49,3 +49,23 @@ def flask_clear_store_parameters(dataset, subset, path):
 def flask_clear_get_parameters(dataset, subset, path):
     db = flask.current_app.config["DB"]
     return database.serialize_mongodb(database.get_parameters(db, dataset, subset))
+
+
+@db_app.post("<dataset>/<subset>/intervals")
+@validate_subset
+def flask_clear_store_intervals(dataset, subset, path):
+    db = flask.current_app.config["DB"]
+    intervals = json.loads(flask.request.data)
+    current_params = database.get_parameters(db, dataset, subset)
+    current_params["intervals"] = intervals
+    database.update_parameters(db, dataset, subset, current_params)
+    return "OK", 200
+
+
+@db_app.get("<dataset>/<subset>/intervals")
+@validate_subset
+def flask_clear_get_intervals(dataset, subset, path):
+    db = flask.current_app.config["DB"]
+    current_params = database.get_parameters(db, dataset, subset)
+    intervals = current_params.get("intervals", [])
+    return database.serialize_mongodb(intervals)

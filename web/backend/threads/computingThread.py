@@ -51,28 +51,19 @@ class ComputingThread(threading.Thread):
         self.insert_func = insert_func
 
     def compute_next_index(self):
-        distribution = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["weights"]
-        if len(distribution["curve"]) == 0:
-            return random.randint(0, self.loader.data_size - self.slice_size)
-
-        x_values = np.array([e["x"] for e in distribution["curve"]])
-        x_values = (x_values - np.min(x_values)) / (np.max(x_values) - np.min(x_values))
-        y_values = np.array([e["y"] for e in distribution["curve"]])
-        y_values = y_values / np.sum(y_values)
-        cdf_values = np.cumsum(y_values)
-
-        u = random.random()
-        diffs = cdf_values - u
-        left_side = np.copy(diffs)
-        left_side[left_side > 0] = -np.inf
-        left_idx = np.argmax(left_side)
-        right_side = np.copy(diffs)
-        right_side[right_side <= 0] = np.inf
-        right_idx = np.argmin(right_side)
-
-        random_index = x_values[left_idx] + (-left_side[left_idx] / (right_side[right_idx] - left_side[left_idx])) * (x_values[right_idx] - x_values[left_idx])
-        random_index = floor(random_index * self.loader.data_size)
-        return random_index
+        params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
+        intervals = params.get("intervals", [])
+        if len(intervals) == 0:
+            return floor(random.random() * self.loader.data_size)
+        lengths = [abs(end - start) for start, end in intervals]
+        total_length = sum(lengths)
+        r = random.uniform(0, total_length)
+        cumulative = 0
+        for (start, end), length in zip(intervals, lengths):
+            if cumulative + length >= r:
+                return floor((start + (r - cumulative)) * self.loader.data_size)
+            cumulative += length
+        return 0
 
     def compute_plane(self):
         start = time.time()

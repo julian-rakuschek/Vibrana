@@ -12,6 +12,8 @@
     import {page} from '$app/stores';
     import DataProviderStatus from "@components/dataset-analysis/large-signal-pda/DataProviderStatus.svelte";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
+    import FingerprintDensity
+        from "@components/dataset-analysis/large-signal-pda/visualizations/FingerprintDensity.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -75,5 +77,6 @@
         <DataProviderStatus {dataProvider}/>
         <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
         <FingerprintLocations {width} {dataset} {subset} {fingerprints} {colors} {dataProvider}/>
+        <FingerprintDensity {width} {dataset} {subset} {fingerprints} />
     {/if}
 </div>

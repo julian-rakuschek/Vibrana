@@ -3,7 +3,7 @@
     import * as d3 from 'd3';
     import type {D3DragEvent} from 'd3';
     import {ApiRoutes} from '@lib/api/ApiRoutes';
-    import type {DistributionWeights, Fingerprint} from '@lib/types';
+    import type {Fingerprint} from '@lib/types';
     import {ColorMode} from "@lib/types";
     import ColorLegend from '@components/atoms/ColorLegend.svelte';
     import {computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
@@ -123,20 +123,9 @@
         return points;
     }
 
-    async function handleUpdate() {
-        const lineGenerator = d3.line<Circle>().curve(d3.curveBumpX).x(d => d.x).y(d => d.y);
-        const sampledPoints = samplePath(lineGenerator(circles)!, width);
-        const data: DistributionWeights = {
-            controlPoints: circles,
-            curve: sampledPoints
-        };
-        await ApiRoutes.storeParameters.fetch({data: {weights: data}, params: {dataset, subset}});
-    }
-
     const reset = async () => {
         circles.forEach(c => c.y = height - 10);
         render();
-        await handleUpdate();
     };
 
     onMount(async () => {
