@@ -98,7 +98,7 @@
         </div>
         <DataProviderStatus {dataProvider}/>
         <ClusterOverview {width} {fingerprints} {dataProvider} {colorMapping} {index_allocation} {label_allocation} />
-        <FingerprintsWrapper {width} {dataset} {subset} {fingerprints} {colors} {dataProvider} {index_allocation} />
+        <FingerprintsWrapper {width} {dataset} {subset} {fingerprints} {colors} {dataProvider} {index_allocation} {colorMapping} {label_allocation} />
         <div><FingerprintDensity {width} {dataset} {subset} {fingerprints} /></div>
     {/if}
 </div>

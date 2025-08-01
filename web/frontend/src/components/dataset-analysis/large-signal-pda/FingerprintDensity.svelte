@@ -18,7 +18,7 @@
 
     function render() {
         if (!context) return;
-
+				context.clearRect(0, 0, width, height);
         const max = aging.toSorted((a, b) => a - b)[aging.length - 1];
         const min = -1;
         const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([min, max === -1 ? 1 : max]);

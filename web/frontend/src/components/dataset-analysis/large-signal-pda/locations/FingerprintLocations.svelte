@@ -13,16 +13,14 @@
 
     export function render(index_allocation: number[], colors?: string[]) {
         if (!context) return;
-        context.fillStyle = '#eeeeee';
-        context.fillRect(0, 0, width, height);
+        context.clearRect(0, 0, width, height);
         for (let i = 0; i < width; i++) {
             const allocated = index_allocation[i]
-            if (allocated === -1) {
-                context.fillStyle = "#eeeeee";
-            } else {
+            if (allocated !== -1) {
                 context.fillStyle = colors && colors.length > allocated ? colors[allocated] : "red";
+								context.fillRect(i, 0, 1, height);
             }
-            context.fillRect(i, 0, 1, height);
+
         }
     }
 
