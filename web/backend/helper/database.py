@@ -105,9 +105,9 @@ def get_parameters(db: Database, dataset: str, subset: str):
     return existing
 
 
-def get_target_threads(db: Database, dataset: str, subset: str):
+def get_running(db: Database, dataset: str, subset: str):
     params = get_parameters(db, dataset, subset)
-    return params["threads"]
+    return params.get("running", False)
 
 
 if __name__ == '__main__':

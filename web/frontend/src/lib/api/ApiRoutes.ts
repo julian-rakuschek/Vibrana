@@ -3,7 +3,6 @@ import type {
   DefaultAppResponse,
   Fingerprint,
   Config,
-  DistributionWeights,
   ParameterSettings,
   ClusterDelta
 } from '@lib/types';
@@ -32,8 +31,9 @@ export const dbRoutes = {
 
 export const computingRoutes = {
   computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, {new_fingerprint: Fingerprint; label_delta: ClusterDelta}>("POST", "/computing/:dataset/:subset/single_step"),
-  setTargetThreads: new ApiRoute<{ threads: number }, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/set_target_threads"),
-  getTargetThreads: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, number>("GET", "/computing/:dataset/:subset/get_target_threads"),
+  activateComputing: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/activate"),
+  pauseComputing: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/pause"),
+  computingStatus: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, boolean>("GET", "/computing/:dataset/:subset/status"),
 }
 
 

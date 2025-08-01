@@ -10,23 +10,27 @@ import web.backend.helper.database as database
 computing_app = flask.Blueprint("computing", __name__)
 
 
-@computing_app.get("<dataset>/<subset>/get_target_threads")
+@computing_app.get("<dataset>/<subset>/status")
 @validate_subset
-def flask_get_target_threads(dataset, subset, path):
+def flask_get_computing_status(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    return str(database.get_parameters(db, dataset, subset)["threads"])
+    status = database.get_parameters(db, dataset, subset).get("running", False)
+    return flask.jsonify(status)
 
 
-@computing_app.post("<dataset>/<subset>/set_target_threads")
+@computing_app.post("<dataset>/<subset>/activate")
 @validate_subset
-def flask_set_target_threads(dataset, subset, path):
+def flask_activate_computation(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    target_threads = json.loads(flask.request.data).get("threads", 0)
-    if target_threads < 0:
-        return 400, "Threads must be >= 0"
-    elif target_threads > 10:
-        return 400, "Don't fry your computer please"
-    database.update_parameters(db, dataset, subset, {"threads": target_threads})
+    database.update_parameters(db, dataset, subset, {"running": True})
+    return {"success": True}
+
+
+@computing_app.post("<dataset>/<subset>/pause")
+@validate_subset
+def flask_pause_computation(dataset, subset, path):
+    db = flask.current_app.config["DB"]
+    database.update_parameters(db, dataset, subset, {"running": False})
     return {"success": True}
 
 

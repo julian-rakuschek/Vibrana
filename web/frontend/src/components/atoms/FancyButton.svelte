@@ -27,5 +27,5 @@
 
 <div class={button_color === "primary" ? primary_class_string : danger_class_string}>
 	{#if icon}<Icon src="{icon}" class="w-7 h-7 text-white" solid/>{/if}
-	<span class='flex flex-col justify-center items-center h-full text-white font-bold text-lg'>{text}</span>
+	{#if text !== ""}<span class='flex flex-col justify-center items-center h-full text-white font-semibold text-lg mx-3'>{text}</span>{/if}
 </div>

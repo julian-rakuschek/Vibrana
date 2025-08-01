@@ -13,8 +13,6 @@
     "eps": 0.5,
     "minPoints": 5,
     "samplingAlgorithm": "random",
-    "threads": 0,
-    "maxThreads": 10,
-    "weights": {"controlPoints": [], "curve": []}
+    "running": false
   }
 }
