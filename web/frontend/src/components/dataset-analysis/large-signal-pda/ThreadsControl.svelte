@@ -8,7 +8,7 @@
 
 	export let dataset: string;
 	export let subset: string;
-	let running = false;
+	export let running = false;
 	export let handleReset: () => void;
 	export let handleSingleItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
 
@@ -41,7 +41,7 @@
 	});
 </script>
 
-<div class="flex flex-row gap-2 items-center justify-center">
+<div class="flex flex-row w-full gap-2 items-center justify-center">
 	<button class="h-10 w-10" on:click={async () => {await pauseComputing(); await clearVectors()}}>
 		<FancyButton icon="{Trash}" button_color="danger" />
 	</button>
@@ -55,9 +55,4 @@
 	<button class="h-10 w-10" on:click={async () => {await activateComputing();}}>
 		<FancyButton icon="{Play}" button_color="primary" />
 	</button>
-	{#if running}
-		<div class="bg-green-500 text-white px-4 pb-1 mt-2 pt-0.5 rounded-full">Computation is running.</div>
-	{:else}
-		<div class="bg-gray-600 text-white px-4 pb-1 mt-2 pt-0.5 rounded-full">Computation is paused.</div>
-	{/if}
 </div>

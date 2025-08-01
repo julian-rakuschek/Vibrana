@@ -21,14 +21,9 @@
         <p class="text-white">Loading Dataset</p>
     </div>
 {:else}
-    <div class="bg-teal-100 w-full rounded-lg flex flex-row gap-5 p-3 justify-between items-center">
-        <div class="flex flex-row items-center justify-center gap-2">
-            <Icon src="{CheckCircle}" class="w-7 h-7 text-teal-600"/>
-            <p class="text-teal-600">The signal has been loaded into browser memory.</p>
-        </div>
-        <div>
-            <p class="text-teal-600">{dataProvider.get_length().toLocaleString()} data points</p>
-        </div>
+    <div class="bg-teal-100 w-full rounded-lg flex flex-col p-3 justify-center items-center">
+        <Icon src="{CheckCircle}" class="w-7 h-7 text-teal-600"/>
+        <p class="text-teal-600">The signal has been loaded into browser memory with {dataProvider.get_length().toLocaleString()} data points.</p>
     </div>
 {/if}
 
