@@ -121,9 +121,16 @@ export type ParameterSettings = {
     eps: number;
     minPoints: number;
     samplingAlgorithm: string;
-    threads: number;
-    maxThreads: number;
-    weights: number[];
+    intervals: number[][];
+    running: boolean;
+}
+
+export type ParameterSettingsUpdate = {
+    eps?: number;
+    minPoints?: number;
+    samplingAlgorithm?: string;
+    intervals?: number[][];
+    running?: boolean;
 }
 
 

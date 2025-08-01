@@ -22,10 +22,11 @@
 
 	export let icon: IconSource | undefined = undefined
 	export let text = ""
+	export let text_size = "text-lg"
 </script>
 
 
 <div class={button_color === "primary" ? primary_class_string : danger_class_string}>
 	{#if icon}<Icon src="{icon}" class="w-7 h-7 text-white" solid/>{/if}
-	{#if text !== ""}<span class='flex flex-col justify-center items-center h-full text-white font-semibold text-lg mx-3'>{text}</span>{/if}
+	{#if text !== ""}<span class={`flex flex-col justify-center items-center h-full text-white font-semibold ${text_size} mx-3`}>{text}</span>{/if}
 </div>

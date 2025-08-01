@@ -31,7 +31,7 @@
     <nav class="mx-auto flex items-center justify-between py-4 px-6 lg:px-8" aria-label="Global">
         <div class="flex lg:flex-1">
             <a href="/" class="-m-1.5 p-1.5 flex flex-row flex-nowrap gap-4 items-center">
-                <span class={`averia text-2xl`}>Vibrana</span>
+                <span class={`averia text-2xl`}>Neo Vibrana</span>
             </a>
         </div>
 

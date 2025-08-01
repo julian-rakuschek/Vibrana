@@ -1,13 +1,17 @@
 import os.path
 import os.path
+from calendar import day_abbr
 
 import numpy as np
 import scipy.cluster.hierarchy as hierarchy
+from pymongo.synchronous.database import Database
 
+from algorithms.incdbscan import IncrementalDBSCAN
 from web.backend.settings import chunks_folder
+import web.backend.helper.database as database
 
 
-def compute_clusters(dataset, subset):
+def compute_clusters_hierarchical(dataset, subset):
     def convert_tree(node, labels):
         if node.left is None and node.right is None:
             return {"id": labels[node.id]}
@@ -35,6 +39,18 @@ def compute_clusters(dataset, subset):
     json_tree = convert_tree(linkage_tree, chunks)
     return json_tree
 
+def compute_clusters_inc_dbscan(db: Database, dataset, subset):
+    parameters = database.get_parameters(db, dataset, subset)
+    _, features, ids = database.get_fingerprints_for_clustering(db, dataset, subset)
+    if len(features) == 0:
+        return
+    dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
+    dbscan.insert(np.array(features))
+    labels = dbscan.get_cluster_labels(np.array(features))
+    for label, _id in zip(labels, ids):
+        db["fingerprints"].update_one({"_id": _id}, {"$set": {"label": label}})
+
 
 if __name__ == '__main__':
-    compute_clusters("nasa-bearings", "test2")
+    db = database.get_db()
+    compute_clusters_inc_dbscan(db, "hydro", "x")
