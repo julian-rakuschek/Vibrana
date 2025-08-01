@@ -29,6 +29,7 @@
     let width = 1000;
 
     let index_allocation: number[] = new Array(width).fill(-1);
+    let label_allocation: number[] = new Array(width).fill(null);
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -56,6 +57,12 @@
             }
         }
 
+        for (let i = 0; i < width; i++) {
+            if (index_allocation[i] !== -1) {
+                label_allocation[i] = fingerprints[index_allocation[i]].label;
+            }
+        }
+
         colorMapping = colorGenerator.getColorDictionary();
     }
 
@@ -70,6 +77,7 @@
         fingerprints = [...vectors_query]
         colorMapping = colorGenerator.getColorDictionary();
         index_allocation = computeIndexAllocationArray(fingerprints, width, -1, false);
+        label_allocation = computeIndexAllocationArray(fingerprints, width, null, true);
     }
 
     onMount(async () => {
@@ -89,7 +97,7 @@
             <p class="self-center text-right">{fingerprints.length} Fingerprints</p>
         </div>
         <DataProviderStatus {dataProvider}/>
-        <ClusterOverview {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping} />
+        <ClusterOverview {width} {fingerprints} {dataProvider} {colorMapping} {index_allocation} {label_allocation} />
         <FingerprintsWrapper {width} {dataset} {subset} {fingerprints} {colors} {dataProvider} {index_allocation} />
         <div><FingerprintDensity {width} {dataset} {subset} {fingerprints} /></div>
     {/if}

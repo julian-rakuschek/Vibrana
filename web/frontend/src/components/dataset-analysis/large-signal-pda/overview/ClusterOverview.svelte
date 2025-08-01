@@ -7,19 +7,20 @@
     import ClusterOverviewRepresentatives
         from "@components/dataset-analysis/large-signal-pda/overview/ClusterOverviewRepresentatives.svelte";
 
-    export let dataset: string;
-    export let subset: string;
     export let fingerprints: Fingerprint[] = [];
     export let colorMapping: ClusterColorMapping;
     export let dataProvider: DataProvider;
     export let width: number = 1000;
+
+    export let index_allocation: number[] = [];
+    export let label_allocation: number[] = [];
 </script>
 
 <div class="w-full relative h-[100px]">
     <div class="w-full absolute top-0 left-0">
-        <ClusterOverviewBackground {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
+        <ClusterOverviewBackground {width} {colorMapping} {label_allocation} />
     </div>
     <div class="w-full absolute top-0 left-0">
-        <ClusterOverviewRepresentatives {width} {dataset} {subset} {fingerprints} {dataProvider} {colorMapping}/>
+        <ClusterOverviewRepresentatives {width} {fingerprints} {dataProvider} {colorMapping} {index_allocation} {label_allocation}/>
     </div>
 </div>
