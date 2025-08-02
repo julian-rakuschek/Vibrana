@@ -87,9 +87,16 @@
         init_load = false;
     });
 
+    function reactToChangingWidth(width: number) {
+        index_allocation = computeIndexAllocationArray(fingerprints, width, -1, false);
+        label_allocation = computeIndexAllocationArray(fingerprints, width, null, true);
+    }
+
+    $: reactToChangingWidth(width);
+
 </script>
 
-<div class="flex flex-row w-full gap-10 h-full" bind:clientWidth={width}>
+<div class="flex flex-row w-full gap-10 h-full pr-10">
     {#if init_load}
         <CenteredLoadingSpinner/>
     {:else}
@@ -120,13 +127,18 @@
                 <ClusteringSettings {dataset} {subset} onRecomputeComplete={fetchAndDrawAll}/>
             </div>
         </div>
-        <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-5 grow overflow-hidden" bind:clientWidth={width}>
             <!--			<ClusterOverview {width} {fingerprints} {dataProvider} {colorMapping} {index_allocation} {label_allocation} />-->
-            <FingerprintsWrapper {width} {dataset} {subset} {fingerprints} {colors} {dataProvider} {index_allocation}
-                                 {colorMapping} {label_allocation}/>
-            <div>
-                <FingerprintDensity {width} {dataset} {subset} {fingerprints}/>
-            </div>
+            {#key width}
+                <FingerprintsWrapper
+                        {width} {dataset} {subset} {fingerprints}
+                        {colors} {dataProvider} {index_allocation}
+                        {colorMapping} {label_allocation}
+                />
+                <div>
+                    <FingerprintDensity {width} {dataset} {subset} {fingerprints}/>
+                </div>
+            {/key}
         </div>
     {/if}
 </div>
