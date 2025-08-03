@@ -14,7 +14,7 @@
 	let canvas: HTMLCanvasElement;
 	let context: CanvasRenderingContext2D | null;
 
-	export function visualizeFingerprint(fp: Fingerprint) {
+	function visualizeFingerprint(fp: Fingerprint) {
 		const projected = dataProvider.get_fingerprint_data_javascript(fp);
 
 		const min_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[0];

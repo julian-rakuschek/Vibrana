@@ -13,9 +13,10 @@
     import {computeIndexAllocationArray} from '@lib/helper/fingerprintHelper';
     import FingerprintsWrapper
         from '@components/dataset-analysis/large-signal-pda/locations/FingerprintsWrapper.svelte';
-    import ClusterOverview from '@components/dataset-analysis/large-signal-pda/overview/ClusterOverview.svelte';
     import ClusteringSettings
         from "@components/dataset-analysis/large-signal-pda/settings-bar/ClusteringSettings.svelte";
+    import TimelineFingerprintRepresentatives
+        from "@components/dataset-analysis/large-signal-pda/TimelineFingerprintRepresentatives.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -128,8 +129,8 @@
             </div>
         </div>
         <div class="flex flex-col gap-5 grow overflow-hidden" bind:clientWidth={width}>
-            <!--			<ClusterOverview {width} {fingerprints} {dataProvider} {colorMapping} {index_allocation} {label_allocation} />-->
             {#key width}
+                <TimelineFingerprintRepresentatives {width} {index_allocation} {fingerprints} {dataProvider} {colorMapping} />
                 <FingerprintsWrapper
                         {width} {dataset} {subset} {fingerprints}
                         {colors} {dataProvider} {index_allocation}

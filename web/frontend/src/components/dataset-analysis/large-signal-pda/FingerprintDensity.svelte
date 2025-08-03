@@ -26,7 +26,6 @@
         let densities = density.grid();
         let max_density = densities.toSorted((a, b) => a - b)[densities.length - 1];
         densities = densities.map(d => d / max_density)
-         console.log(densities)
         for (let i = 0; i < width; i++) {
             context.fillStyle = colorScale(aging[i]);
             context.fillRect(i, height, 1, -height * densities[i]);

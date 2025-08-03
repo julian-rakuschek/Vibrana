@@ -6,7 +6,7 @@
         from "@components/dataset-analysis/large-signal-pda/locations/FingerprintLocations.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import type { ClusterColorMapping, Fingerprint } from '@lib/types';
-    import ClusterOverviewBackground from '@components/dataset-analysis/large-signal-pda/overview/ClusterOverviewBackground.svelte';
+    import ClusterBackground from '@components/dataset-analysis/large-signal-pda/locations/ClusterBackground.svelte';
 
     export let dataset: string;
     export let subset: string;
@@ -22,7 +22,7 @@
 
 <div class="w-full relative h-[100px]">
     <div class="w-full absolute top-0 left-0">
-        <ClusterOverviewBackground {width} {colorMapping} {label_allocation} />
+        <ClusterBackground {width} {colorMapping} {label_allocation} />
     </div>
     <div class="w-full absolute top-0 left-0">
         <FingerprintLocations {width} {dataset} {subset} {index_allocation} {colors}/>
