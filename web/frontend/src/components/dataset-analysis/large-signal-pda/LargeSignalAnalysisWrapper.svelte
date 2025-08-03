@@ -128,7 +128,7 @@
                 <ClusteringSettings {dataset} {subset} onRecomputeComplete={fetchAndDrawAll}/>
             </div>
         </div>
-        <div class="flex flex-col gap-5 grow overflow-hidden" bind:clientWidth={width}>
+        <div class="flex flex-col grow overflow-hidden" bind:clientWidth={width}>
             {#key width}
                 <TimelineFingerprintRepresentatives {width} {index_allocation} {fingerprints} {dataProvider} {colorMapping} />
                 <FingerprintsWrapper

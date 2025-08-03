@@ -1,9 +1,10 @@
 <script lang="ts">
-    import type {ClusterColorMapping, Fingerprint} from "@lib/types";
+    import type {ClusterColorMapping, Fingerprint, Point} from "@lib/types";
     import {onMount} from "svelte";
     import FingerprintRendering from "@components/atoms/FingerprintRendering.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
+    import * as d3 from 'd3';
 
     export let width: number;
     export let index_allocation: number[];
@@ -13,11 +14,11 @@
     let loading = dataProvider.loading;
 
     const size: number = 100;
+    const connectorHeight: number = 30;
     const fingerprints_count: number = Math.max(0, Math.floor(width / size));
 
     let divRefs: HTMLDivElement[] = Array(fingerprints_count);
     let parentDiv: HTMLDivElement;
-    let xPositions: number[] = [];
     let fingerprint_index_allocation: number[] = Array(fingerprints_count).fill(-1);
 
     function get_nearest_fingerprint(x_position: number, lower_bound: number, upper_bound: number, index_allocation: number[]) {
@@ -34,10 +35,14 @@
         return -1;
     }
 
+    function getDivPositions() {
+        const base_left = parentDiv.getBoundingClientRect().left
+        return divRefs.map(div => div.getBoundingClientRect().left - base_left);
+    }
+
     function choose_fingerprint_indices(index_allocation: number[]) {
         if (!parentDiv) return;
-        const base_left = parentDiv.getBoundingClientRect().left
-        xPositions = divRefs.map(div => div.getBoundingClientRect().left - base_left);
+        const xPositions = getDivPositions();
         for (let i = 0; i < fingerprints_count; i++) {
             if (fingerprint_index_allocation[i] === -1) {
                 const x_position = Math.floor(xPositions[i] + size / 2);
@@ -48,6 +53,26 @@
         }
     }
 
+    function generateConnectionLines(fingerprint_index_allocation: number[]) {
+        if (!parentDiv) return [];
+        const xPositions = getDivPositions();
+        const lines = [];
+        const linkGenerator = d3.linkVertical().x((d: Point) => d.x).y((d: Point) => d.y);
+        for (let i = 0; i < fingerprints_count; i++) {
+            if (fingerprint_index_allocation[i] !== -1) {
+                const fp = fingerprints[fingerprint_index_allocation[i]];
+                const source: Point = {x: Math.floor(xPositions[i] + size / 2), y: 0};
+                const fp_x_start = (fp.start_index / fp.max_index) * width;
+                const fp_x_end = fp_x_start + (fp.slice_length / fp.max_index) * width;
+                const target: Point = {x: Math.floor((fp_x_start + fp_x_end) / 2), y: connectorHeight};
+                lines.push({
+                    d: linkGenerator({ source, target }),
+                    color: colorMapping[fp.label]
+                })
+            }
+        }
+        return lines;
+    }
 
 
     onMount(() => {
@@ -85,4 +110,12 @@
             {/if}
         </div>
     {/each}
+</div>
+
+<div class="w-full">
+    <svg width={width} height={connectorHeight}>
+        {#each generateConnectionLines(fingerprint_index_allocation) as path}
+            <path d={path.d} fill="none" stroke={path.color} stroke-width={2}/>
+        {/each}
+    </svg>
 </div>
