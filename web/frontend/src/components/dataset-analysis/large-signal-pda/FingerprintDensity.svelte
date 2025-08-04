@@ -1,7 +1,7 @@
 <script lang="ts">
     import {onMount} from 'svelte';
     import type {Fingerprint} from '@lib/types';
-    import {allocatedIndexList, computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
+    import {indexListForDensityPlot, computeIndexAllocationArray} from "@lib/helper/fingerprintHelper";
     import { density1d } from 'fast-kde';
     import * as d3 from "d3";
 
@@ -33,8 +33,8 @@
     }
 
     function updateProcedure(fingerprints: Fingerprint[], width: number) {
-        indices = allocatedIndexList(fingerprints, width);
-        aging = computeIndexAllocationArray(fingerprints, width, -1);
+        indices = indexListForDensityPlot(fingerprints, width);
+        aging = computeIndexAllocationArray(fingerprints, width, [0, 1]);
         render();
     }
 

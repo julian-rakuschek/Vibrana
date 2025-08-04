@@ -12,11 +12,11 @@
     export let subset: string;
     export let index_allocation: number[] = [];
     export let label_allocation: number[] = [];
-    export let colors: string[] = [];
     export let width = 1000;
     export let dataProvider: DataProvider;
     export let fingerprints: Fingerprint[] = [];
     export let colorMapping: ClusterColorMapping;
+    export let zoom_interval: [number, number] = [0, 1];
     let intervalSelector: IntervalSelection;
     let mouse_x = -1;
 
@@ -31,10 +31,10 @@
         <ClusterBackground {width} {colorMapping} {label_allocation} />
     </div>
     <div class="w-full absolute top-0 left-0">
-        <FingerprintLocations {width} {dataset} {subset} {index_allocation} {colors} />
+        <FingerprintLocations {width} {dataset} {subset} {label_allocation} {colorMapping} />
     </div>
     <div class="w-full absolute top-0 left-0">
-        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} />
+        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval />
     </div>
     <div class="w-full absolute top-[100px] left-0">
         <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x} />

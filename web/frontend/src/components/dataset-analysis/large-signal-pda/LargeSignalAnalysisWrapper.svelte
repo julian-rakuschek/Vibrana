@@ -10,7 +10,11 @@
     import DataProviderStatus from '@components/dataset-analysis/large-signal-pda/DataProviderStatus.svelte';
     import CenteredLoadingSpinner from '@components/atoms/CenteredLoadingSpinner.svelte';
     import FingerprintDensity from '@components/dataset-analysis/large-signal-pda/FingerprintDensity.svelte';
-    import {computeIndexAllocationArray} from '@lib/helper/fingerprintHelper';
+    import {
+        computeIndexAllocationArray,
+        computeLabelAllocationArray,
+        updateIndexAllocationArray
+    } from '@lib/helper/fingerprintHelper';
     import FingerprintsWrapper
         from '@components/dataset-analysis/large-signal-pda/locations/FingerprintsWrapper.svelte';
     import ClusteringSettings
@@ -20,6 +24,7 @@
     import MouseButtonLeft from "@components/icons/MouseButtonLeft.svelte";
     import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
+    import MouseScroll from "@components/icons/MouseScroll.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -30,10 +35,10 @@
     let colorMapping = colorGenerator.getColorDictionary();
     let dataProvider = new DataProvider(dataset, subset, w, in_memory);
     let fingerprints: Fingerprint[] = [];
-    let colors: string[] = [];
     let init_load = true;
     let width = 1000;
     let running = false;
+    let zoom_interval: [number, number] = [0, 1];
 
     let index_allocation: number[] = new Array(width).fill(-1);
     let label_allocation: number[] = new Array(width).fill(null);
@@ -46,21 +51,11 @@
         new_fingerprint['index'] = fingerprints.length;
         fingerprints = [...fingerprints, new_fingerprint];
 
-        const start = Math.floor((new_fingerprint.start_index / new_fingerprint.max_index) * width);
-        const rectangle_width = Math.floor((new_fingerprint.slice_length / new_fingerprint.max_index) * width);
-
-        for (let j = 0; j < rectangle_width; j++) {
-            index_allocation[start + j] = new_fingerprint.index;
-        }
+        index_allocation = updateIndexAllocationArray(index_allocation, new_fingerprint, zoom_interval);
 
         for (const labelDeltaElement of label_delta) {
-            const color = colorGenerator.getColor(labelDeltaElement.new_label);
-            if (labelDeltaElement.index >= colors.length) {
-                colors = [...colors, color];
-            } else {
-                colors[labelDeltaElement.index] = color;
-                fingerprints[labelDeltaElement.index].label = labelDeltaElement.new_label;
-            }
+            colorGenerator.getColor(labelDeltaElement.new_label);
+            fingerprints[labelDeltaElement.index].label = labelDeltaElement.new_label;
         }
 
         for (let i = 0; i < width; i++) {
@@ -74,16 +69,14 @@
 
     async function fetchAndDrawAll() {
         let vectors_query = await ApiRoutes.getFingerprints.fetch({params: {dataset, subset}});
-        colors = [];
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
-            const color = colorGenerator.getColor(vectors_query[i].label);
-            colors = [...colors, color];
+            colorGenerator.getColor(vectors_query[i].label);
         }
         fingerprints = [...vectors_query];
         colorMapping = colorGenerator.getColorDictionary();
-        index_allocation = computeIndexAllocationArray(fingerprints, width, -1, false);
-        label_allocation = computeIndexAllocationArray(fingerprints, width, null, true);
+        index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
+        label_allocation = computeLabelAllocationArray(fingerprints, width, zoom_interval);
     }
 
     onMount(async () => {
@@ -91,12 +84,12 @@
         init_load = false;
     });
 
-    function reactToChangingWidth(width: number) {
-        index_allocation = computeIndexAllocationArray(fingerprints, width, -1, false);
-        label_allocation = computeIndexAllocationArray(fingerprints, width, null, true);
+    function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
+        index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
+        label_allocation = computeLabelAllocationArray(fingerprints, width, zoom_interval);
     }
 
-    $: reactToChangingWidth(width);
+    $: updateAllocationArrays(width, zoom_interval);
 
 </script>
 
@@ -152,6 +145,10 @@
                         <MouseButtonRight/>
                         & drag: Remove (Partial) Interval
                     </div>
+                    <div class="flex flex-row items-center text-black/70 text-md">
+                        <MouseScroll/>
+                        : Zoom
+                    </div>
                 </div>
 
             </div>
@@ -159,18 +156,19 @@
             {#key width}
                 <TimelineFingerprintRepresentatives
                         {width} {index_allocation} {fingerprints}
-                        {dataProvider} {colorMapping}
+                        {dataProvider} {colorMapping} {zoom_interval}
                 />
                 <FingerprintsWrapper
                         {width} {dataset} {subset} {fingerprints}
-                        {colors} {dataProvider} {index_allocation}
+                        {dataProvider} {index_allocation}
                         {colorMapping} {label_allocation}
+                        bind:zoom_interval
                 />
                 <div>
                     <p class="font-semibold mt-5 mb-2">Fingerprint Aging and Density</p>
                     <FingerprintDensity {width} {dataset} {subset} {fingerprints}/>
                     <div class="w-[500px]">
-                        <ColorLegend colorMode={ColorMode.Age} />
+                        <ColorLegend colorMode={ColorMode.Age}/>
                     </div>
                 </div>
             {/key}

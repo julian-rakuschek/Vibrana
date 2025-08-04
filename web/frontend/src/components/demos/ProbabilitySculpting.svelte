@@ -89,7 +89,6 @@
 
         async function dragended(event: DragEvenet) {
             event.subject.active = false;
-            await handleUpdate();
         }
 
         return d3.drag()
@@ -142,12 +141,12 @@
             index: i
         }));
         d3.select(canvas).call(drag(circles, context));
-        aging = computeIndexAllocationArray(fingerprints, width, -1);
+        aging = computeIndexAllocationArray(fingerprints, width);
         render();
     });
 
     $: {
-        aging = computeIndexAllocationArray(fingerprints, width, -1);
+        aging = computeIndexAllocationArray(fingerprints, width);
         render();
     }
 

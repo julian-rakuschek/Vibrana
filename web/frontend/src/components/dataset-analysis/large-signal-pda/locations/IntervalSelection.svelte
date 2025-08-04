@@ -17,6 +17,12 @@
     let mouse_active = false;
     let mouse_mode: MouseModes = MouseModes.ADD;
     let intervals: [number, number][] = [];
+    export let zoom_interval: [number, number] = [0, 1];
+
+    function pixelToIntervalPosition(pixel: number) {
+        const relative_pixel = pixel / width;
+        return Math.abs(zoom_interval[0] - zoom_interval[1]) * relative_pixel + zoom_interval[0];
+    }
 
     function visualizeSelectedIntervals() {
         if (!context) return;
@@ -25,7 +31,9 @@
         context.fillStyle = '#1a237e';
         context.globalAlpha = 0.3
         for (const interval of intervals) {
-            context.fillRect(interval[0] * width, 0, (interval[1] - interval[0]) * width, height);
+            const interval_start = (interval[0] - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+            const interval_end = (interval[1] - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+            context.fillRect(interval_start * width, 0, Math.abs(interval_start - interval_end) * width, height);
         }
 
         if (mouse_active) {
@@ -51,6 +59,33 @@
         intervals = [];
         await ApiRoutes.storeIntervals.fetch({ params: { dataset, subset }, data: [] })
         visualizeSelectedIntervals();
+    }
+
+    function zoomIntensity(interval_width: number) {
+        return 0.01 * Math.pow(10, interval_width);
+    }
+
+    function zoomIn(mouse_x: number) {
+        const split = mouse_x / width;
+        const current_width = Math.abs(zoom_interval[1] - zoom_interval[0]);
+        const intensity = zoomIntensity(current_width);
+
+        const new_start = zoom_interval[0] + split * intensity;
+        const new_end = zoom_interval[1] - (1 - split) * intensity;
+        const new_width = Math.abs(new_end - new_start);
+
+        if (new_width < 0.005) return;
+        zoom_interval = [new_start, new_end];
+    }
+
+
+    function zoomOut(mouse_x: number) {
+        const split = mouse_x / width;
+        const current_width = Math.abs(zoom_interval[0] - zoom_interval[1])
+        zoom_interval = [
+            Math.max(0, zoom_interval[0] - (1 - split) * zoomIntensity(current_width)),
+            Math.min(1, zoom_interval[1] + split * zoomIntensity(current_width))
+        ]
     }
 
     async function getIntervals() {
@@ -80,6 +115,14 @@
             mouse_active = false;
             saveIntervals();
         };
+        canvas.onwheel = (e) => {
+            if (e.deltaY < 0) {
+                zoomIn(mouse_x)
+            } else {
+                zoomOut(mouse_x)
+            }
+            visualizeSelectedIntervals();
+        }
         canvas.oncontextmenu = function (e) {
             e.preventDefault();
             e.stopPropagation();

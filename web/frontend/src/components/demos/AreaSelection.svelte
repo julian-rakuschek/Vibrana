@@ -2,7 +2,7 @@
     import {onMount} from "svelte";
     import * as d3 from 'd3';
     import AreaSelectionZoomIndicator from "@components/demos/AreaSelectionZoomIndicator.svelte";
-	import { zoom } from "d3fc";
+    import {zoom} from "d3fc";
 
     enum MouseModes { ADD, DELETE }
 
@@ -91,20 +91,30 @@
         context.fillRect(mouse_x, 0, 1, height);
     }
 
+    function zoomIntensity(interval_width: number) {
+        return 0.01 * Math.pow(10, interval_width);
+    }
+
     function zoomIn(mouse_x: number) {
         const split = mouse_x / width;
-        if (Math.abs(zoom_interval[0] - zoom_interval[1]) <= 0.1) return;
-        zoom_interval = [
-            zoom_interval[0] + split * 0.05,
-            zoom_interval[1] - (1 - split) * 0.05
-        ]
+        const current_width = Math.abs(zoom_interval[1] - zoom_interval[0]);
+        const intensity = zoomIntensity(current_width);
+
+        const new_start = zoom_interval[0] + split * intensity;
+        const new_end = zoom_interval[1] - (1 - split) * intensity;
+        const new_width = Math.abs(new_end - new_start);
+
+        if (new_width < 0.005) return;
+        zoom_interval = [new_start, new_end];
     }
+
 
     function zoomOut(mouse_x: number) {
         const split = mouse_x / width;
+        const current_width = Math.abs(zoom_interval[0] - zoom_interval[1])
         zoom_interval = [
-            Math.max(0, zoom_interval[0] - (1 - split) * 0.05),
-            Math.min(1, zoom_interval[1] + split * 0.05)
+            Math.max(0, zoom_interval[0] - (1 - split) * zoomIntensity(current_width)),
+            Math.min(1, zoom_interval[1] + split * zoomIntensity(current_width))
         ]
     }
 
@@ -135,8 +145,11 @@
 
         };
         canvas.onwheel = (e) => {
-            if (e.deltaY < 0) {zoomIn(mouse_x)}
-            else {zoomOut(mouse_x)}
+            if (e.deltaY < 0) {
+                zoomIn(mouse_x)
+            } else {
+                zoomOut(mouse_x)
+            }
             render();
         }
         canvas.oncontextmenu = function (e) {

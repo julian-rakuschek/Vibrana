@@ -8,6 +8,7 @@
 
     export let width: number;
     export let index_allocation: number[];
+    export let zoom_interval: [number, number] = [0, 1];
     export let fingerprints: Fingerprint[];
     export let colorMapping: ClusterColorMapping;
     export let dataProvider: DataProvider;
@@ -20,6 +21,16 @@
     let divRefs: HTMLDivElement[] = Array(fingerprints_count);
     let parentDiv: HTMLDivElement;
     let fingerprint_index_allocation: number[] = Array(fingerprints_count).fill(-1);
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    function handleZoom(zoom_interval: [number, number]) {
+        clearTimeout(timeoutId);
+        fingerprint_index_allocation = Array(fingerprints_count).fill(-1);
+        timeoutId = setTimeout(() => {
+            choose_fingerprint_indices(index_allocation, true);
+        }, 500);
+    }
 
     function get_nearest_fingerprint(x_position: number, lower_bound: number, upper_bound: number, index_allocation: number[]) {
         if (x_position >= index_allocation.length || x_position < 0) return -1;
@@ -40,11 +51,11 @@
         return divRefs.map(div => div.getBoundingClientRect().left - base_left);
     }
 
-    function choose_fingerprint_indices(index_allocation: number[]) {
+    function choose_fingerprint_indices(index_allocation: number[], updateAllFingerprints: boolean) {
         if (!parentDiv) return;
         const xPositions = getDivPositions();
         for (let i = 0; i < fingerprints_count; i++) {
-            if (fingerprint_index_allocation[i] === -1) {
+            if (fingerprint_index_allocation[i] === -1 || updateAllFingerprints) {
                 const x_position = Math.floor(xPositions[i] + size / 2);
                 const x_lower = Math.floor(xPositions[i]);
                 const x_upper = Math.floor(xPositions[i] + size);
@@ -62,11 +73,13 @@
             if (fingerprint_index_allocation[i] !== -1) {
                 const fp = fingerprints[fingerprint_index_allocation[i]];
                 const source: Point = {x: Math.floor(xPositions[i] + size / 2), y: 0};
-                const fp_x_start = (fp.start_index / fp.max_index) * width;
-                const fp_x_end = fp_x_start + (fp.slice_length / fp.max_index) * width;
-                const target: Point = {x: Math.floor((fp_x_start + fp_x_end) / 2), y: connectorHeight};
+                const fp_x_start = (fp.start_index / fp.max_index);
+                const fp_x_end = fp_x_start + (fp.slice_length / fp.max_index);
+                const fp_target = (fp_x_start + fp_x_end) / 2;
+                const zoomed = (fp_target - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+                const target: Point = {x: Math.floor(zoomed * width), y: connectorHeight};
                 lines.push({
-                    d: linkGenerator({ source, target }),
+                    d: linkGenerator({source, target}),
                     color: colorMapping[fp.label]
                 })
             }
@@ -76,10 +89,12 @@
 
 
     onMount(() => {
-        choose_fingerprint_indices(index_allocation);
+        choose_fingerprint_indices(index_allocation, true);
     });
 
-    $: choose_fingerprint_indices(index_allocation);
+    $: choose_fingerprint_indices(index_allocation, false);
+
+    $: handleZoom(zoom_interval);
 
 
 </script>
