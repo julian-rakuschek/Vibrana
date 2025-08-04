@@ -8,6 +8,7 @@
     export let dataset: string;
     export let subset: string;
     export let fingerprints: Fingerprint[];
+    export let zoom_interval: [number, number] = [0, 1];
 
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
@@ -27,12 +28,13 @@
         let max_density = densities.toSorted((a, b) => a - b)[densities.length - 1];
         densities = densities.map(d => d / max_density)
         for (let i = 0; i < width; i++) {
-            context.fillStyle = colorScale(aging[i]);
+            const pos = i / width;
+            context.fillStyle = (zoom_interval[0] <= pos && zoom_interval[1] >= pos) ? colorScale(aging[i]) : "#eeeeee";
             context.fillRect(i, height, 1, -height * densities[i]);
         }
     }
 
-    function updateProcedure(fingerprints: Fingerprint[], width: number) {
+    function updateProcedure(fingerprints: Fingerprint[], width: number, zoom_interval: [number, number]) {
         indices = indexListForDensityPlot(fingerprints, width);
         aging = computeIndexAllocationArray(fingerprints, width, [0, 1]);
         render();
@@ -40,10 +42,10 @@
 
     onMount(() => {
         context = canvas.getContext('2d');
-        updateProcedure(fingerprints, width);
+        updateProcedure(fingerprints, width, zoom_interval);
     })
 
-    $: updateProcedure(fingerprints, width);
+    $: updateProcedure(fingerprints, width, zoom_interval);
 </script>
 
 <canvas bind:this={canvas} width={width} height={height}></canvas>

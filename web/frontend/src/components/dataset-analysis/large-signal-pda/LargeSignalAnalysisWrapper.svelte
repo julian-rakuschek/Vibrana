@@ -25,6 +25,7 @@
     import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
     import MouseScroll from "@components/icons/MouseScroll.svelte";
+    import ZoomIndicator from "@components/dataset-analysis/large-signal-pda/locations/ZoomIndicator.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -164,9 +165,14 @@
                         {colorMapping} {label_allocation}
                         bind:zoom_interval
                 />
+                <p class="font-semibold mt-5">Zooming Location</p>
+                <ZoomIndicator {width} {fingerprints} {colorMapping} {zoom_interval} />
+                <div class="flex">
+    <p on:click={() => zoom_interval = [0, 1]} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</p>
+</div>
                 <div>
                     <p class="font-semibold mt-5 mb-2">Fingerprint Aging and Density</p>
-                    <FingerprintDensity {width} {dataset} {subset} {fingerprints}/>
+                    <FingerprintDensity {width} {dataset} {subset} {fingerprints} {zoom_interval}/>
                     <div class="w-[500px]">
                         <ColorLegend colorMode={ColorMode.Age}/>
                     </div>
