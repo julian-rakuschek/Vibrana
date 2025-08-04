@@ -7,12 +7,12 @@
 
     export let dataset: string;
     export let subset: string;
+    export let width = 1000;
+    export let mouse_x = 0;
+
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    export let width = 1000;
     const height = 100;
-
-    export let mouse_x = 0;
     let mouse_x_anchor = 0;
     let mouse_active = false;
     let mouse_mode: MouseModes = MouseModes.ADD;
@@ -45,6 +45,12 @@
 
     async function saveIntervals() {
         await ApiRoutes.storeIntervals.fetch({ params: { dataset, subset }, data: intervals })
+    }
+
+    export async function resetIntervals() {
+        intervals = [];
+        await ApiRoutes.storeIntervals.fetch({ params: { dataset, subset }, data: [] })
+        visualizeSelectedIntervals();
     }
 
     async function getIntervals() {

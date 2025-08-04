@@ -1,7 +1,7 @@
 <script lang="ts">
     import {ApiRoutes} from '@lib/api/ApiRoutes';
     import {io} from 'socket.io-client';
-    import type {ClusterDelta, Fingerprint} from '@lib/types';
+    import {type ClusterDelta, ColorMode, type Fingerprint} from '@lib/types';
     import {onMount} from 'svelte';
     import {ColorGenerator} from '@lib/algorithms/colorGenerator';
     import ThreadsControl from '@components/dataset-analysis/large-signal-pda/settings-bar/ThreadsControl.svelte';
@@ -17,6 +17,9 @@
         from "@components/dataset-analysis/large-signal-pda/settings-bar/ClusteringSettings.svelte";
     import TimelineFingerprintRepresentatives
         from "@components/dataset-analysis/large-signal-pda/TimelineFingerprintRepresentatives.svelte";
+    import MouseButtonLeft from "@components/icons/MouseButtonLeft.svelte";
+    import MouseButtonRight from "@components/icons/MouseButtonRight.svelte";
+    import ColorLegend from "@components/atoms/ColorLegend.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -129,15 +132,46 @@
             </div>
         </div>
         <div class="flex flex-col grow overflow-hidden" bind:clientWidth={width}>
+            <div class="gap-2 flex flex-col pb-3">
+                <p class="font-semibold">Fingerprint Locations and Clusters</p>
+                <p class="text-sm">
+                    The visualization shows the location of computed fingerprints across the signal.
+                    Each fingerprint is assigned to a cluster, which is shown through the colors.
+                    Since the algorithm computes one fingerprint at a time, users may steer the algorithm by defining
+                    intervals.
+                    The algorithm will subsequently only compute fingerprints in defined intervals.
+                    If no interval is defined, a random index is sampled.
+                    For large signals, users may zoom into the signal.
+                </p>
+                <div class="flex flex-col px-3">
+                    <div class="flex flex-row items-center text-black/70 text-md">
+                        <MouseButtonLeft/>
+                        & drag: Add Interval
+                    </div>
+                    <div class="flex flex-row items-center text-black/70 text-md">
+                        <MouseButtonRight/>
+                        & drag: Remove (Partial) Interval
+                    </div>
+                </div>
+
+            </div>
+
             {#key width}
-                <TimelineFingerprintRepresentatives {width} {index_allocation} {fingerprints} {dataProvider} {colorMapping} />
+                <TimelineFingerprintRepresentatives
+                        {width} {index_allocation} {fingerprints}
+                        {dataProvider} {colorMapping}
+                />
                 <FingerprintsWrapper
                         {width} {dataset} {subset} {fingerprints}
                         {colors} {dataProvider} {index_allocation}
                         {colorMapping} {label_allocation}
                 />
                 <div>
+                    <p class="font-semibold mt-5 mb-2">Fingerprint Aging and Density</p>
                     <FingerprintDensity {width} {dataset} {subset} {fingerprints}/>
+                    <div class="w-[500px]">
+                        <ColorLegend colorMode={ColorMode.Age} />
+                    </div>
                 </div>
             {/key}
         </div>
