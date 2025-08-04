@@ -1,6 +1,8 @@
 <script lang="ts">
-
     import {onMount} from "svelte";
+    import * as d3 from 'd3';
+    import AreaSelectionZoomIndicator from "@components/demos/AreaSelectionZoomIndicator.svelte";
+	import { zoom } from "d3fc";
 
     enum MouseModes { ADD, DELETE }
 
@@ -13,7 +15,8 @@
     let mouse_active = false;
     let mouse_mode: MouseModes = MouseModes.ADD;
 
-    let intervals: [number, number][] = [];
+    export let intervals: [number, number][] = [];
+    export let zoom_interval: [number, number] = [0, 1];
 
 
     function mergeIntervals(intervals_to_merge: [number, number][]): [number, number][] {
@@ -49,16 +52,28 @@
         return filtered_intervals;
     }
 
+    function pixelToIntervalPosition(pixel: number) {
+        const relative_pixel = pixel / width;
+        return Math.abs(zoom_interval[0] - zoom_interval[1]) * relative_pixel + zoom_interval[0];
+    }
+
 
     function render() {
         if (!context) return;
         context.fillStyle = '#eeeeee';
         context.fillRect(0, 0, width, height);
+        for (let i = 0; i < width; i++) {
+            context.fillStyle = d3.interpolateTurbo(pixelToIntervalPosition(i));
+            context.fillRect(i, 0, 1, height);
+        }
 
 
         context.fillStyle = '#1a237e';
+        context.globalAlpha = 0.6
         for (const interval of intervals) {
-            context.fillRect(interval[0], 0, interval[1] - interval[0], height);
+            const interval_start = (interval[0] - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+            const interval_end = (interval[1] - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+            context.fillRect(interval_start * width, 0, Math.abs(interval_start - interval_end) * width, height);
         }
 
         if (mouse_active) {
@@ -76,6 +91,23 @@
         context.fillRect(mouse_x, 0, 1, height);
     }
 
+    function zoomIn(mouse_x: number) {
+        const split = mouse_x / width;
+        if (Math.abs(zoom_interval[0] - zoom_interval[1]) <= 0.1) return;
+        zoom_interval = [
+            zoom_interval[0] + split * 0.05,
+            zoom_interval[1] - (1 - split) * 0.05
+        ]
+    }
+
+    function zoomOut(mouse_x: number) {
+        const split = mouse_x / width;
+        zoom_interval = [
+            Math.max(0, zoom_interval[0] - (1 - split) * 0.05),
+            Math.min(1, zoom_interval[1] + split * 0.05)
+        ]
+    }
+
     function initMouse() {
         canvas.onmousemove = (e) => {
             mouse_x = e.clientX - canvas.getBoundingClientRect().left;
@@ -89,7 +121,10 @@
         };
         canvas.onmouseup = (e) => {
             mouse_active = false;
-            const selected = [Math.min(mouse_x, mouse_x_anchor), Math.max(mouse_x, mouse_x_anchor)];
+            const selected = [
+                Math.min(pixelToIntervalPosition(mouse_x), pixelToIntervalPosition(mouse_x_anchor)),
+                Math.max(pixelToIntervalPosition(mouse_x), pixelToIntervalPosition(mouse_x_anchor))
+            ];
             if (mouse_mode === MouseModes.ADD) {
                 intervals.push(selected as [number, number])
                 intervals = mergeIntervals(intervals);
@@ -99,6 +134,11 @@
             }
 
         };
+        canvas.onwheel = (e) => {
+            if (e.deltaY < 0) {zoomIn(mouse_x)}
+            else {zoomOut(mouse_x)}
+            render();
+        }
         canvas.oncontextmenu = function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -112,7 +152,7 @@
     })
 </script>
 
-<div class="w-full p-10">
+<div class="w-full">
     <canvas {height} {width} bind:this={canvas} class="noselect"></canvas>
 </div>
 
