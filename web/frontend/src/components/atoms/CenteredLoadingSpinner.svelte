@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { Wave } from 'svelte-loading-spinners';
+    import {Jumper} from 'svelte-loading-spinners';
+
+    export let color: string = "#304ffe";
 </script>
 <div class="w-full h-full flex align-middle justify-center items-center justify-items-center">
-    <Wave color="#304ffe" />
+    <Jumper {color} />
 </div>

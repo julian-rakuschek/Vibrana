@@ -95,6 +95,7 @@
     function initMouse() {
         canvas.onmousemove = (e) => {
             mouse_x = e.clientX - canvas.getBoundingClientRect().left;
+            if (!mouse_active) mouse_x_anchor = mouse_x;
             visualizeSelectedIntervals();
         };
         canvas.onmousedown = (e) => {
@@ -104,15 +105,18 @@
             if (e.buttons === 2) mouse_mode = MouseModes.DELETE;
         };
         canvas.onmouseup = (e) => {
-            const selected = [Math.min(mouse_x, mouse_x_anchor) / width, Math.max(mouse_x, mouse_x_anchor) / width];
-            if (mouse_mode === MouseModes.ADD && mouse_active) {
+            mouse_active = false;
+            const selected = [
+                Math.min(pixelToIntervalPosition(mouse_x), pixelToIntervalPosition(mouse_x_anchor)),
+                Math.max(pixelToIntervalPosition(mouse_x), pixelToIntervalPosition(mouse_x_anchor))
+            ];
+            if (mouse_mode === MouseModes.ADD) {
                 intervals.push(selected as [number, number])
                 intervals = mergeIntervals(intervals);
             }
-            if (mouse_mode === MouseModes.DELETE && mouse_active) {
+            if (mouse_mode === MouseModes.DELETE) {
                 intervals = deleteInterval(intervals, selected as [number, number]);
             }
-            mouse_active = false;
             saveIntervals();
         };
         canvas.onwheel = (e) => {

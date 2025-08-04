@@ -110,9 +110,9 @@
                 {@const fp = fingerprints[fingerprint_index_allocation[i]]}
                 <div class="absolute opacity-15 w-full h-full  rounded-3xl"
                      style={`background-color: ${colorMapping[fp.label]}`}></div>
-                <div class="absolute">
+                <div class="absolute w-full h-full">
                     {#if $loading}
-                        <CenteredLoadingSpinner/>
+                        <CenteredLoadingSpinner color={colorMapping[fp.label]} />
                     {:else}
                         <FingerprintRendering
                                 {dataProvider} {size}

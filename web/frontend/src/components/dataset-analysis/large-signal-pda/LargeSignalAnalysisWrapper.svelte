@@ -69,6 +69,7 @@
     }
 
     async function fetchAndDrawAll() {
+        zoom_interval = [0, 1];
         let vectors_query = await ApiRoutes.getFingerprints.fetch({params: {dataset, subset}});
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
@@ -113,9 +114,8 @@
             <div class="bg-indigo-100 rounded-xl p-4 gap-2 flex flex-col text-indigo-800">
                 <div class="flex flex-row justify-between">
                     <p class="font-semibold">Computing Control</p>
-                    <p class="bg-indigo-600 text-white rounded-full px-4 pt-0.5 pb-1 text-sm font-semibold">
-                        {#if running}running{:else}paused{/if}
-                    </p>
+                    {#if running}<p class="bg-green-600 text-white rounded-full px-4 pt-0.5 pb-1 text-sm font-semibold">running</p>
+                    {:else}<p class="bg-indigo-600 text-white rounded-full px-4 pt-0.5 pb-1 text-sm font-semibold">paused</p>{/if}
                 </div>
                 <ThreadsControl {dataset} {subset} handleReset={() => fetchAndDrawAll()} handleSingleItem={addNewItem}
                                 bind:running/>
