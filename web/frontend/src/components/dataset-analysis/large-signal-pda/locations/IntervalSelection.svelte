@@ -145,6 +145,8 @@
         visualizeSelectedIntervals();
     });
 
+    $: zoom_interval, visualizeSelectedIntervals();
+
 </script>
 
 <canvas on:mouseleave={resetMouse} class="noselect" {height} {width} bind:this={canvas}></canvas>

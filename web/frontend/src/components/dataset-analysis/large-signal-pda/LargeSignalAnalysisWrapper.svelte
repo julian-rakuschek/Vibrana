@@ -108,7 +108,7 @@
                     <p class="col-span-3">Fingerprints:</p>
                     <p>{fingerprints.length}</p>
                     <p class="col-span-3">Number of Clusters:</p>
-                    <p>{(new Set(label_allocation)).size}</p>
+                    <p>{(new Set(label_allocation)).size - 1}</p>
                 </div>
             </div>
             <div class="bg-indigo-100 rounded-xl p-4 gap-2 flex flex-col text-indigo-800">
