@@ -1,13 +1,8 @@
 import os
-import shutil
 from pathlib import Path
-import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
+
 import numpy as np
-from numpy.lib.stride_tricks import sliding_window_view
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
-from matplotlib import cm
 
 
 def make_gravitational_waves(
@@ -27,7 +22,7 @@ def make_gravitational_waves(
         return out, cut
 
     Npad = 4_000  # number of padding points on either side of the vector
-    file_path = os.path.join(Path(__file__).parents[1], "data", "raw", "grav", "gravitational_wave_signals.npy")
+    file_path = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "signals-to-hide-in-noise", "gravitational_wave_signals.npy")
     gw = np.load(file_path)
     Norig = len(gw["data"][0])
     Ndat = len(gw["signal_present"])
@@ -53,7 +48,7 @@ def make_gravitational_waves(
 
 
 def gen_dataset(n=20, snr=0.15):
-    base_target_path = os.path.join(Path(__file__).parents[1], "data", "parsed", "grav", f"grav-{str(snr).replace('.', '')}")
+    base_target_path = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "chunks", "grav", f"grav-{str(snr).replace('.', '')}")
     Path(base_target_path).mkdir(parents=True, exist_ok=True)
     for i in range(n):
         noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(n_signals=30, snr=snr)
@@ -73,5 +68,3 @@ if __name__ == '__main__':
     gen_dataset(n=20, snr=0.1)
     gen_dataset(n=20, snr=0.15)
     gen_dataset(n=20, snr=0.2)
-    # create_vis(index=24)
-    # hard_dataset(index=24)
