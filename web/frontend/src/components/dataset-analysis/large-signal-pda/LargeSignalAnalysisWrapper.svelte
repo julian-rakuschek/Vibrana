@@ -29,12 +29,11 @@
 
     export let dataset = 'hydro';
     export let subset = 'x';
-    const w = $page.data.config[dataset].subsets[subset].sliding_window_size;
-    const in_memory = $page.data.config[dataset].in_memory;
+    const in_memory = $page.data.config[dataset].loader === "memory";
 
     const colorGenerator = new ColorGenerator();
     let colorMapping = colorGenerator.getColorDictionary();
-    let dataProvider = new DataProvider(dataset, subset, w, in_memory);
+    let dataProvider = new DataProvider(dataset, subset, in_memory);
     let fingerprints: Fingerprint[] = [];
     let init_load = true;
     let width = 1000;

@@ -5,10 +5,10 @@ from pathlib import Path
 
 from flask import jsonify
 
+from web.backend.helper.config import crawl_dataset_folder
 from web.backend.settings import chunks_folder
 
-with open(os.path.join(Path(__file__).parents[1], "datasets.json")) as f:
-    datasets = json.load(f)
+datasets = crawl_dataset_folder()
 
 
 def validate_subset(f):

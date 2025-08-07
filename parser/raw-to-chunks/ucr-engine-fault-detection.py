@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from pathlib import Path
@@ -5,16 +6,26 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
+meta = {
+    "name": "UCR Engine Fault Detection",
+    "description": "Vibrations acquired from an engine, showing multiple runs (with and without damage). The subsets highlight the difference if noise is applied.",
+    "task": "Classification",
+    "source": "https://www.timeseriesclassification.com/description.php?Dataset=FaultDetectionA",
+}
 
 def process_engine_failures(max_ts=100):
     raw_file_path = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "ucr-engine-fault-detection", "FaultDetectionA_TRAIN.ts")
-    file_parsed_folder = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "chunks", "fault-detection", "fault-detection-A")
+    dataset_folder = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "chunks", "fault-detection")
+    file_parsed_folder = os.path.join(dataset_folder, "fault-detection-A")
 
     if not os.path.exists(raw_file_path):
         print(f"Could not find {raw_file_path}")
         return
     shutil.rmtree(file_parsed_folder, ignore_errors=True)
     Path(file_parsed_folder).mkdir(parents=True, exist_ok=True)
+
+    with open(os.path.join(dataset_folder, "meta.json"), "w") as f:
+        f.write(json.dumps(meta, indent=4))
 
     undamaged_count, inner_count, outer_count = 0, 0, 0
 

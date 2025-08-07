@@ -36,13 +36,11 @@ def compute_feature_descriptors(data, projected):
 
 
 class ComputingThread(threading.Thread):
-    def __init__(self, db: Database, redis_instance: redis.Redis, dataLoader: RedisLoader, sliding_window_size: int, slice_size: int, insert_func: Callable, socket_client=None):
+    def __init__(self, db: Database, redis_instance: redis.Redis, dataLoader: RedisLoader, insert_func: Callable, socket_client=None):
         threading.Thread.__init__(self)
         self.redis = redis_instance
         self.loader = dataLoader
         self.db = db
-        self.sliding_window_size = sliding_window_size
-        self.slice_size = slice_size
         self.sio = socket_client
         if self.sio is not None:
             self.sio.emit('join', {'room': dataLoader.redis_prefix})
@@ -69,10 +67,13 @@ class ComputingThread(threading.Thread):
         start = time.time()
         self.loader.load_numpy_file()
         next_index = self.compute_next_index()
-        data = self.loader.get_slice(next_index, next_index + self.slice_size)
-        if self.sliding_window_size >= len(data):
+        params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
+        slice_size = params["slice_size"]
+        sliding_window_size = params["sliding_window_size"]
+        data = self.loader.get_slice(next_index, next_index + slice_size)
+        if sliding_window_size >= len(data):
             return
-        windows = sliding_window_view(data, window_shape=self.sliding_window_size)
+        windows = sliding_window_view(data, window_shape=sliding_window_size)
         windows = StandardScaler().fit_transform(windows)
         pca = PCA(n_components=2)
         pca.fit(windows)
@@ -81,8 +82,8 @@ class ComputingThread(threading.Thread):
         feature_descriptors = compute_feature_descriptors(data, projected)
         to_insert = {
             "dataset": self.loader.dataset, "subset": self.loader.subset,
-            "v1": v1.tolist(), "v2": v2.tolist(),
-            "start_index": next_index, "slice_length": self.slice_size, "max_index": self.loader.data_size,
+            "v1": v1.tolist(), "v2": v2.tolist(), "sliding_window_size": sliding_window_size,
+            "start_index": next_index, "slice_length": slice_size, "max_index": self.loader.data_size,
             "timestamp": datetime.datetime.now().timestamp(),
             "feature_descriptors": feature_descriptors
         }
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     loader.load_numpy_file(False)
     db = database.get_db()
     insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
-    thread = ComputingThread(db, loader.r, loader, 1000, 10_000, insert_func)
+    thread = ComputingThread(db, loader.r, loader, insert_func)
     thread.compute_plane()
     # thread.start()
     # print("after run")

@@ -13,6 +13,8 @@
     "eps": 0.5,
     "minPoints": 5,
     "samplingAlgorithm": "random",
-    "running": false
+    "running": false,
+    "slice_size": 10000,
+    "sliding_window_size": 1000
   }
 }

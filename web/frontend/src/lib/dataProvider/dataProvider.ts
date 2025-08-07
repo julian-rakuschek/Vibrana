@@ -5,16 +5,14 @@ import {type Writable, writable} from "svelte/store";
 export class DataProvider {
     private readonly dataset: string;
     private readonly subset: string;
-    private readonly w: number;
     private readonly in_memory: boolean;
     public loading: Writable<boolean> = writable(false);
     // only used if in_memory is true
     private vibration_signal: number[] | undefined;
 
-    constructor(dataset: string, subset: string, w: number, in_memory: boolean) {
+    constructor(dataset: string, subset: string, in_memory: boolean) {
         this.dataset = dataset;
         this.subset = subset;
-        this.w = w;
         this.in_memory = in_memory;
     }
 
@@ -30,36 +28,23 @@ export class DataProvider {
     isInMemory(): boolean {return this.in_memory};
 
 
-    get_fingerprint_data_javascript(hyperplane: Fingerprint) {
+    get_fingerprint_data_javascript(fp: Fingerprint) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
         if (!this.vibration_signal) {
             console.warn("Vibration signal has not been loaded, returning empty projection.")
             return [];
         }
         const projected: number[][] = []
-        for (let i = 0; i < hyperplane.slice_length - this.w; i++) {
-            const window = this.vibration_signal.slice(hyperplane.start_index + i, hyperplane.start_index + i + this.w);
+        for (let i = 0; i < fp.slice_length - fp.sliding_window_size; i++) {
+            const window = this.vibration_signal.slice(fp.start_index + i, fp.start_index + i + fp.sliding_window_size);
             let x = 0, y = 0;
             for (let j = 0; j < window.length; j++) {
-                x += window[j] * hyperplane.v1[j];
-                y += window[j] * hyperplane.v2[j];
+                x += window[j] * fp.v1[j];
+                y += window[j] * fp.v2[j];
             }
             projected.push([x, y]);
         }
         return projected;
-    }
-
-    async get_fingerprint_image(hyperplane: Fingerprint) {
-
-    }
-
-    async get_slice(start_index: number, end_index: number): Promise<number[]> {
-        if (this.in_memory && this.vibration_signal) {
-            return this.vibration_signal.slice(start_index, end_index);
-        }
-        else {
-            return await ApiRoutes.getSlice.fetch({ params: { dataset: this.dataset, subset: this.subset }, queryParams: { start_index, end_index }})
-        }
     }
 
     get_length() {

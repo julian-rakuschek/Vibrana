@@ -1,3 +1,4 @@
+import json
 import os.path
 import shutil
 from pathlib import Path
@@ -6,7 +7,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-
+meta = {
+    "name": "Hydro Power Plant",
+    "description": "Vibrations measured on the inside of a hydro power plant. The three subsets show a small window of a small accident, which occurred during maintenance operations.",
+    "task": "Change Detection",
+    "source": "Provided by Johanna Schmidt (TU Wien)",
+}
 
 def extract_slice(raw_file_path, start, end):
     df = pd.read_parquet(raw_file_path, engine='fastparquet')
@@ -75,6 +81,9 @@ def parse_hydro(source_file_name, target_folder_name):
     np.save(os.path.join(channel_folder[1], f"values.npy"), values[1])
     np.save(os.path.join(channel_folder[2], f"values.npy"), values[2])
     save_preview_image(values[0], values[1], values[2], os.path.join(clipboard_folder, f"{target_folder_name}.png"))
+
+    with open(os.path.join(file_parsed_folder, "meta.json"), "w") as f:
+        f.write(json.dumps(meta, indent=4))
 
 
 if __name__ == '__main__':

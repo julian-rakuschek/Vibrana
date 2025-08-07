@@ -10,6 +10,7 @@ import socketio
 
 from algorithms.incdbscan import IncrementalDBSCAN
 from web.backend.data_loaders.redisLoader import RedisLoader
+from web.backend.helper.config import crawl_dataset_folder
 from web.backend.threads.computingThread import ComputingThread
 import web.backend.helper.database as database
 
@@ -30,8 +31,7 @@ class CoordinatorThread(threading.Thread):
         time.sleep(1)
         print("Connected to socket")
 
-        with open(os.path.join(Path(__file__).parents[1], "datasets.json")) as f:
-            self.datasets = json.load(f)
+        self.datasets = crawl_dataset_folder()
         self.loaders = {}
         self.threads = {}
         self.locks = {}
@@ -43,7 +43,7 @@ class CoordinatorThread(threading.Thread):
             for subset_name, subset_object in dataset_object["subsets"].items():
                 print(dataset_name, subset_name)
                 loader = RedisLoader(subset_object["file"], dataset_name, subset_name)
-                thread = ComputingThread(self.db, self.r, loader, subset_object["sliding_window_size"], subset_object["slice_size"],  self.insert_fingerprint, self.sio)
+                thread = ComputingThread(self.db, self.r, loader, self.insert_fingerprint, self.sio)
                 thread.start()
                 self.loaders[dataset_name][subset_name] = loader
                 self.threads[dataset_name][subset_name] = thread

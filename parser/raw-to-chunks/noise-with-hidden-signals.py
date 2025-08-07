@@ -1,16 +1,24 @@
+import json
 import os
 from pathlib import Path
 
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
+meta = {
+    "name": "Hidden Gravitational Waves",
+    "description": "Synthetic dataset highlighting hidden patterns in noise.",
+    "task": "Noise vs. Pattern",
+    "source": "https://arxiv.org/abs/1910.08245",
+}
+
 
 def make_gravitational_waves(
-    n_signals: int = 30,
-    downsample_factor: int = 2,
-    snr: float = 0.075,
+        n_signals: int = 30,
+        downsample_factor: int = 2,
+        snr: float = 0.075,
         seed: int = None
-        ):
+):
     if seed:
         np.random.seed(seed=seed)
 
@@ -22,13 +30,14 @@ def make_gravitational_waves(
         return out, cut
 
     Npad = 4_000  # number of padding points on either side of the vector
-    file_path = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "signals-to-hide-in-noise", "gravitational_wave_signals.npy")
+    file_path = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "signals-to-hide-in-noise",
+                             "gravitational_wave_signals.npy")
     gw = np.load(file_path)
     Norig = len(gw["data"][0])
     Ndat = len(gw["signal_present"])
     N = int(Norig / downsample_factor)
 
-    coeff = 10 ** (-19) * (1 /snr)
+    coeff = 10 ** (-19) * (1 / snr)
 
     noisy_signals_plain = []
     noisy_signals_anomalous = []
@@ -48,8 +57,9 @@ def make_gravitational_waves(
 
 
 def gen_dataset(n=20, snr=0.15):
-    base_target_path = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "chunks", "grav", f"grav-{str(snr).replace('.', '')}")
-    Path(base_target_path).mkdir(parents=True, exist_ok=True)
+    dataset_path = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "chunks", "grav")
+    subset_path = os.path.join(dataset_path, f"grav-{str(snr).replace('.', '')}")
+    Path(subset_path).mkdir(parents=True, exist_ok=True)
     for i in range(n):
         noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(n_signals=30, snr=snr)
 
@@ -60,8 +70,11 @@ def gen_dataset(n=20, snr=0.15):
         values_p = noisy_signals_plain[0] * (10 ** 19)
         values_p = MinMaxScaler().fit_transform(values_p.reshape(-1, 1)).reshape(1, -1)[0]
 
-        np.save(os.path.join(base_target_path, f"values-anomalous-{str(i).zfill(3)}.npy"), values_a)
-        np.save(os.path.join(base_target_path, f"values-normal-{str(i).zfill(3)}.npy"), values_p)
+        np.save(os.path.join(subset_path, f"values-anomalous-{str(i).zfill(3)}.npy"), values_a)
+        np.save(os.path.join(subset_path, f"values-normal-{str(i).zfill(3)}.npy"), values_p)
+
+    with open(os.path.join(dataset_path, "meta.json"), "w") as f:
+        f.write(json.dumps(meta, indent=4))
 
 
 if __name__ == '__main__':

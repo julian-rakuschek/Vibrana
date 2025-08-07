@@ -45,23 +45,42 @@ export type Config = {
     [dataset: string]: DatasetConfig;
 }
 
-export type DatasetConfig = {
+// Discriminated union of DatasetConfig
+export type DatasetConfig =
+    | StreamDatasetConfig
+    | ChunkDatasetConfig;
+
+export type BaseDatasetConfig = {
     name: string;
     folder: string;
-    description: string;
-    task: string;
-    source: string;
-    chunks_or_stream_or_large: "chunks" | "stream" | "large";
-    in_memory: boolean;
-    subsets: { [subset: string]: SubsetConfig };
-}
+    description?: string;
+    task?: string;
+    source?: string;
+    loader: string;
+};
 
-export type SubsetConfig = {
+// Stream-specific config
+export type StreamDatasetConfig = BaseDatasetConfig & {
+    dataset_type: "stream";
+    subsets: { [subset: string]: StreamSubsetConfig };
+};
+
+// Chunk-specific config
+export type ChunkDatasetConfig = BaseDatasetConfig & {
+    dataset_type: "chunks";
+    subsets: { [subset: string]: ChunkSubsetConfig };
+};
+
+export type StreamSubsetConfig = {
     name: string;
     file: string;
-    slice_size: number;
-    sliding_window_size: number;
-}
+};
+
+export type ChunkSubsetConfig = {
+    name: string;
+    file_list: string[];
+};
+
 
 export type ObjectId = { $oid: string; };
 
@@ -98,6 +117,7 @@ export type Fingerprint = {
     v1: number[];
     v2: number[];
     timestamp: number;
+    sliding_window_size: number;
     feature_descriptors: {
         radii_distribution: Histogram;
         freq_distribution: Histogram;
