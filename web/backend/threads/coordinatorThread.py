@@ -4,6 +4,7 @@ import os
 import threading
 import time
 from pathlib import Path
+from pprint import pprint
 
 import redis
 import socketio
@@ -37,6 +38,8 @@ class CoordinatorThread(threading.Thread):
         self.locks = {}
         print("Initiating threads:")
         for dataset_name, dataset_object in self.datasets.items():
+            if dataset_object["dataset_type"] != "stream":
+                continue
             self.loaders[dataset_name] = {}
             self.threads[dataset_name] = {}
             self.locks[dataset_name] = {}
@@ -59,6 +62,8 @@ class CoordinatorThread(threading.Thread):
     def run(self):
         while True:
             for dataset_name, dataset_object in self.datasets.items():
+                if dataset_object["dataset_type"] != "stream":
+                    continue
                 for subset_name, subset_object in dataset_object["subsets"].items():
                     is_running = database.get_running(self.db, dataset_name, subset_name)
                     self.threads[dataset_name][subset_name].set_active(is_running)
