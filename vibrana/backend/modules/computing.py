@@ -2,10 +2,10 @@ import json
 
 import flask
 
-from web.backend.data_loaders.redisLoader import RedisLoader
-from web.backend.helper.validators import validate_subset
-from web.backend.threads.computingThread import ComputingThread
-import web.backend.helper.database as database
+from vibrana.backend.data_loaders.redisLoader import RedisLoader
+from vibrana.backend.helper.validators import validate_subset
+from vibrana.backend.threads.computingThread import ComputingThread
+import vibrana.backend.helper.database as database
 
 computing_app = flask.Blueprint("computing", __name__)
 

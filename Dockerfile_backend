@@ -3,9 +3,9 @@
 # ------------------------------
 FROM node:20-alpine as build
 WORKDIR /app
-COPY ./web/frontend/package*.json ./
+COPY ./vibrana/frontend/package*.json ./
 RUN npm i --silent --force
-COPY ./web/frontend .
+COPY ./vibrana/frontend .
 RUN npm run build
 
 
@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install --no-install-suggests --no-install-recomme
 
 ENV PATH="/root/.local/bin:${PATH}"
 ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN pipx install poetry
@@ -28,10 +29,11 @@ COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
 RUN poetry install --no-root
 RUN poetry add gunicorn
+RUN poetry add eventlet
 
-COPY ./web/backend ./web/backend
-COPY vibrana/algorithms ./algorithms
-COPY --from=build /app ./web/frontend
+COPY ./vibrana/backend ./vibrana/backend
+COPY ./vibrana/algorithms ./vibrana/algorithms
+COPY --from=build /app ./vibrana/frontend
 
 EXPOSE 5000
-CMD ["poetry", "run", "gunicorn", "--timeout", "10000", "-w", "4", "-b", "0.0.0.0:5000", "web.backend.main:app"]
+CMD ["poetry", "run", "gunicorn", "-k", "eventlet", "--timeout", "10000", "-w", "1", "-b", "0.0.0.0:5000", "vibrana.backend.main:app"]

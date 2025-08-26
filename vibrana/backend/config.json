@@ -1,12 +1,12 @@
 {
   "mongo": {
     "url": "mongodb://localhost:27017/",
-    "docker_url": "mongodb://anoscout_mongodb:27017/",
+    "docker_url": "mongodb://vibrana_mongodb:27017/",
     "db": "VibranaDB"
   },
   "redis": {
     "host": "localhost",
-    "docker_host": "anoscout_redis",
+    "docker_host": "vibrana_redis",
     "port": 6379
   },
   "default_parameters": {

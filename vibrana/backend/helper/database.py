@@ -7,7 +7,7 @@ from bson import json_util
 from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
-from web.backend.helper.config import get_config
+from vibrana.backend.helper.config import get_config
 
 conf = get_config()
 

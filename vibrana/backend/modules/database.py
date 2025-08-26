@@ -2,9 +2,9 @@ import json
 
 import flask
 
-from web.backend.data_loaders.redisLoader import RedisLoader
-from web.backend.helper.validators import validate_subset
-import web.backend.helper.database as database
+from vibrana.backend.data_loaders.redisLoader import RedisLoader
+from vibrana.backend.helper.validators import validate_subset
+import vibrana.backend.helper.database as database
 
 db_app = flask.Blueprint("db", __name__)
 

@@ -1,17 +1,22 @@
-import datetime
 import os
-import pickle
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import redis
-from numpy.lib._stride_tricks_impl import sliding_window_view
-from sklearn.decomposition import PCA
+from redis import Redis
 from tqdm import tqdm
 
-from web.backend.data_loaders.dataLoaderBase import DataLoaderBase
+from vibrana.backend.data_loaders.dataLoaderBase import DataLoaderBase
+from vibrana.backend.helper.config import get_config
 
+conf = get_config()
+
+def get_redis() -> Redis:
+    host = conf["redis"]["host"]
+    if os.environ.get('DOCKER', "False") == 'True':
+        host = conf["redis"]["docker_host"]
+    port = conf["redis"]["port"]
+    return redis.Redis(host=host, port=port, db=1)
 
 class RedisLoader(DataLoaderBase):
     def __init__(self, path_to_npy, dataset, subset):
@@ -20,10 +25,7 @@ class RedisLoader(DataLoaderBase):
         self.redis_prefix = f"vibrana:{dataset}:{subset}"
         self.dataset = dataset
         self.subset = subset
-        redis_host = "localhost"
-        if os.environ.get('DOCKER', "False") == 'True':
-            redis_host = "anoscout_redis"
-        self.r = redis.Redis(host=redis_host, port=6379, db=1)
+        self.r = get_redis()
 
     def load_numpy_file(self, overwrite_existing=False):
         data_key = f"{self.redis_prefix}:data"

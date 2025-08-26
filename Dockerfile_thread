@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install --no-install-suggests --no-install-recomme
 
 ENV PATH="/root/.local/bin:${PATH}"
 ENV PYTHONPATH="${PYTHONPATH}:/app"
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 RUN pipx install poetry
@@ -11,9 +12,8 @@ RUN pipx inject poetry poetry-plugin-bundle
 
 COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
-RUN poetry install --no-dev
+RUN poetry install --no-root
 
-COPY ./web/backend ./web/backend
+COPY ./vibrana ./vibrana
 
-EXPOSE 5000
-CMD ["poetry", "run", "python3", "./web/backend/threads/coordinatorThread.py"]
+CMD ["poetry", "run", "python3", "/app/vibrana/backend/threads/coordinatorThread.py"]

@@ -5,11 +5,11 @@ from pathlib import Path
 import flask
 from flask_socketio import SocketIO, join_room, send, leave_room
 
-from web.backend.helper.config import crawl_dataset_folder
-from web.backend.modules.database import db_app
-from web.backend.modules.analysis import analysis_app
-from web.backend.modules.computing import computing_app
-import helper.database as database
+from vibrana.backend.helper.config import crawl_dataset_folder
+from vibrana.backend.modules.database import db_app
+from vibrana.backend.modules.analysis import analysis_app
+from vibrana.backend.modules.computing import computing_app
+import vibrana.backend.helper.database as database
 
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"

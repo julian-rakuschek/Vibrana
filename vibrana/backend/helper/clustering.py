@@ -6,8 +6,8 @@ import scipy.cluster.hierarchy as hierarchy
 from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
-from web.backend.settings import chunks_folder
-import web.backend.helper.database as database
+from vibrana.backend.settings import chunks_folder
+import vibrana.backend.helper.database as database
 
 
 def compute_clusters_hierarchical(dataset, subset):

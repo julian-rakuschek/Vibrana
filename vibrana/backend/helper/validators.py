@@ -5,8 +5,8 @@ from pathlib import Path
 
 from flask import jsonify
 
-from web.backend.helper.config import crawl_dataset_folder
-from web.backend.settings import chunks_folder
+from vibrana.backend.helper.config import crawl_dataset_folder
+from vibrana.backend.settings import chunks_folder
 
 datasets = crawl_dataset_folder()
 

@@ -1,7 +1,7 @@
 import flask
 
-from web.backend.helper.clustering import compute_clusters_inc_dbscan
-from web.backend.helper.validators import validate_subset
+from vibrana.backend.helper.clustering import compute_clusters_inc_dbscan
+from vibrana.backend.helper.validators import validate_subset
 
 analysis_app = flask.Blueprint("analysis", __name__)
 

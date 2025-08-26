@@ -2,28 +2,26 @@ import os
 import threading
 import time
 
-import redis
 import socketio
 
-from web.backend.data_loaders.redisLoader import RedisLoader
-from web.backend.helper.config import crawl_dataset_folder
-from web.backend.threads.computingThread import ComputingThread
-import web.backend.helper.database as database
+from vibrana.backend.data_loaders.redisLoader import RedisLoader, get_redis
+from vibrana.backend.helper.config import crawl_dataset_folder
+from vibrana.backend.threads.computingThread import ComputingThread
+import vibrana.backend.helper.database as database
 
 
 class CoordinatorThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-        redis_host = "localhost"
-        if os.environ.get('DOCKER', "False") == 'True':
-            redis_host = "anoscout_redis"
-
-        self.r = redis.Redis(host=redis_host, port=6379, db=1)
+        self.r = get_redis()
         self.db = database.get_db()
         print("Connecting to socket ...")
         self.sio = socketio.Client()
-        self.sio.connect('http://localhost:5000')
+        if os.environ.get('DOCKER', "False") == 'True':
+            self.sio.connect('http://vibrana_app:5000')
+        else:
+            self.sio.connect('http://localhost:5000')
         time.sleep(1)
         print("Connected to socket")
 

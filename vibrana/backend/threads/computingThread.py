@@ -15,9 +15,9 @@ from pymongo.synchronous.database import Database
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-from web.backend.data_loaders.dataLoaderBase import DataLoaderBase
-from web.backend.data_loaders.redisLoader import RedisLoader
-import web.backend.helper.database as database
+from vibrana.backend.data_loaders.dataLoaderBase import DataLoaderBase
+from vibrana.backend.data_loaders.redisLoader import RedisLoader
+import vibrana.backend.helper.database as database
 
 def compute_feature_descriptors(data, projected):
     feature_descriptors = {}
