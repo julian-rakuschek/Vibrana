@@ -56,8 +56,7 @@ Next, follow the subsequent steps to install AnoScout:
 4. Switch back to the project root folder.
 5. Install the Python packages via `poetry install --no-root`.
 6. Set the `PYTHONPATH` environment variable to the project root folder.
-7. Initialize the database via `poetry run python3 vibrana/backend/initDB.py` (Replace `python3` with `py` if on Windows).
-8. Start Vibrana via `poetry run python3 vibrana/backend/main.py` (Replace `python3` with `py` if on Windows).
-9. Open a new terminal window / PowerShell instance within the same folder.
-10. Start the coordinator thread via `poetry run python3 vibrana/backend/threads/coordinatorThread.py` (Replace `python3` with `py` if on Windows).
-11. Your local Vibrana instance is available at [http://localhost:5000](http://localhost:5000).
+7. Start Vibrana via `poetry run python3 vibrana/backend/main.py` (Replace `python3` with `py` if on Windows).
+8. Open a new terminal window / PowerShell instance within the same folder.
+9. Start the coordinator thread via `poetry run python3 vibrana/backend/threads/coordinatorThread.py` (Replace `python3` with `py` if on Windows).
+10. Your local Vibrana instance is available at [http://localhost:5000](http://localhost:5000).
