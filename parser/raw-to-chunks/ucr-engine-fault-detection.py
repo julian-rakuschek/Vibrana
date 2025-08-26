@@ -36,6 +36,7 @@ def process_engine_failures(max_ts=100):
             data, class_ = line.split(":")
             class_ = class_.strip().replace("\n", "")
             print(class_)
+            data = [float(i) for i in data.split(",")]
             data = np.array(data)
             if class_ == "0" and undamaged_count < max_ts:
                 np.save(os.path.join(file_parsed_folder, f"values-undamaged-{str(undamaged_count).zfill(4)}.npy"), data)
