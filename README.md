@@ -48,7 +48,7 @@ In case you do not want to use docker, we provide a manual installation procedur
 * [**Python 3.13**](https://www.python.org/): Required to run the backend. 
 * [**Poetry**](https://python-poetry.org/): Used to manage the Python dependencies within this project.
 
-Next, follow the subsequent steps to install AnoScout:
+Next, follow the subsequent steps to install Vibrana:
 
 1. Start MongoDB and Redis, such that these services are running in the background.
 2. Clone this repository and open a terminal or PowerShell within the project folder.
