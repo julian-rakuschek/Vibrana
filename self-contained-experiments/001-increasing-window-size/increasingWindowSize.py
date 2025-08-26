@@ -4,8 +4,6 @@ from numpy.lib.stride_tricks import sliding_window_view
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from parser.grav_waves import make_gravitational_waves
-
 
 def plot_tde_projection(data, w, ax, monochrome=False):
     windows = sliding_window_view(data, window_shape=w)
@@ -37,37 +35,5 @@ def plot_tdes():
         plt.savefig(f"TDE_{w}.png", dpi=300, transparent=True)
 
 
-def vis_problem():
-    noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(1, snr=0.1)
-
-    plt.clf()
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    fig.set_size_inches(30, 10)
-    ax.plot(noisy_signals_plain[0], color="black")
-    ax.set_xlim(0, len(noisy_signals_plain[0]))
-    ax.set_axis_off()
-    plt.savefig(f"noise_line.png", dpi=300, transparent=True)
-
-    plt.clf()
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    fig.set_size_inches(30, 10)
-    ax.plot(noisy_signals_anomalous[0], color="black")
-    ax.set_xlim(0, len(noisy_signals_anomalous[0]))
-    ax.set_axis_off()
-    plt.savefig(f"secret.png", dpi=300, transparent=True)
-    ax.plot(gw_signals[0], color="#304ffe")
-    plt.savefig(f"secret_line.png", dpi=300, transparent=True)
-
-    plt.clf()
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    plot_tde_projection(noisy_signals_plain[0], 1000, ax)
-    plt.savefig(f"TDE_noise.png", dpi=300, transparent=True)
-
-    plt.clf()
-    fig, ax = plt.subplots(nrows=1, ncols=1)
-    plot_tde_projection(noisy_signals_anomalous[0], 1000, ax)
-    plt.savefig(f"TDE_anomaly.png", dpi=300, transparent=True)
-
-
 if __name__ == '__main__':
-    vis_problem()
+    plot_tdes()

@@ -6,8 +6,6 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 from matplotlib.collections import LineCollection
 
-from parser.grav_waves import make_gravitational_waves
-
 cmap = "jet"
 
 plot_mosaic = [
@@ -34,14 +32,9 @@ projected = PCA(n_components=2).fit_transform(windows)
 ax["cloud1"].scatter(projected[:, 0], projected[:, 1], s=8, c="black")
 ax["cloud1"].axis("off")
 
-noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(1, snr=0.3, seed=42)
-values_a = noisy_signals_anomalous[0] * (10 ** 19)
-values_a = MinMaxScaler().fit_transform(values_a.reshape(-1, 1)).reshape(1, -1)[0]
-values_p = noisy_signals_plain[0] * (10 ** 19)
-values_p = MinMaxScaler().fit_transform(values_p.reshape(-1, 1)).reshape(1, -1)[0]
-values_g = gw_signals[0] * (10 ** 19)
-values_g = MinMaxScaler().fit_transform(values_g.reshape(-1, 1)).reshape(1, -1)[0]
-
+values_a = np.load("values-signal-in-noise.npy")
+values_p = np.load("values-noise.npy")
+values_g = np.load("values-signal-to-embed.npy")
 
 windows = sliding_window_view(values_p, window_shape=1_000)
 projected = PCA(n_components=2).fit_transform(windows)
@@ -57,7 +50,6 @@ for i in range(len(values_p) - 1):
     segments.append([(i, values_p[i]), (i + 1, values_p[i + 1])])
 lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
-# ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line2"].add_collection(lc)
 ax["line2"].set_xlim(0, len(values_p))
 ax["line2"].set_title("Pure noise results in a point cloud \n without structures / patterns", fontsize=title_font_size)
@@ -76,17 +68,15 @@ ax["cloud3"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps[cmap](sc
 ax["cloud3"].axis("off")
 
 segments = []
-for i in range(len(noisy_signals_anomalous[0]) - 1):
-    segments.append([(i, noisy_signals_anomalous[0][i]), (i + 1, noisy_signals_anomalous[0][i + 1])])
+for i in range(len(values_a) - 1):
+    segments.append([(i, values_a[i]), (i + 1, values_a[i + 1])])
 lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
-# ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line3"].add_collection(lc)
 ax["line3"].set_title("The hidden signal (black) in the noise is revealed \n through the time delay embedding. Window Size = 1000", fontsize=title_font_size)
 
-# ax["line3"].plot(noisy_signals_anomalous[0], color="black", linewidth=3)
-ax["line3"].plot(gw_signals[0], color="black", linewidth=3)
-ax["line3"].set_xlim(0, len(noisy_signals_anomalous[0]))
+ax["line3"].plot(values_g, color="black", linewidth=3)
+ax["line3"].set_xlim(0, len(values_a))
 ax["line3"].spines["top"].set_visible(False)
 ax["line3"].spines["right"].set_visible(False)
 
@@ -102,17 +92,15 @@ ax["cloud4"].scatter(projected[:, 0], projected[:, 1], s=8, c=colormaps[cmap](sc
 ax["cloud4"].axis("off")
 
 segments = []
-for i in range(len(noisy_signals_anomalous[0]) - 1):
-    segments.append([(i, noisy_signals_anomalous[0][i]), (i + 1, noisy_signals_anomalous[0][i + 1])])
+for i in range(len(values_a) - 1):
+    segments.append([(i, values_a[i]), (i + 1, values_a[i + 1])])
 lc = LineCollection(segments, cmap=cmap, linewidth=3)
 lc.set_array(np.array(scores_norm))
-# ax["line2"].plot(values_p, color="black", linewidth=3)
 ax["line4"].add_collection(lc)
 ax["line4"].set_title("The hidden signal (black) in the noise is revealed \n through the time delay embedding. Window Size = 70", fontsize=title_font_size)
 
-# ax["line3"].plot(noisy_signals_anomalous[0], color="black", linewidth=3)
-ax["line4"].plot(gw_signals[0], color="black", linewidth=3)
-ax["line4"].set_xlim(0, len(noisy_signals_anomalous[0]))
+ax["line4"].plot(values_g, color="black", linewidth=3)
+ax["line4"].set_xlim(0, len(values_a))
 ax["line4"].spines["top"].set_visible(False)
 ax["line4"].spines["right"].set_visible(False)
 
