@@ -1,0 +1,19 @@
+FROM python:3.13-bookworm
+
+RUN apt-get update && apt-get install --no-install-suggests --no-install-recommends --yes pipx
+
+ENV PATH="/root/.local/bin:${PATH}"
+ENV PYTHONPATH="${PYTHONPATH}:/app"
+WORKDIR /app
+
+RUN pipx install poetry
+RUN pipx inject poetry poetry-plugin-bundle
+
+COPY ./poetry.lock ./poetry.lock
+COPY ./pyproject.toml ./pyproject.toml
+RUN poetry install --no-dev
+
+COPY ./web/backend ./web/backend
+
+EXPOSE 5000
+CMD ["poetry", "run", "python3", "./web/backend/threads/coordinatorThread.py"]

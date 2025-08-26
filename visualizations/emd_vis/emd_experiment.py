@@ -5,8 +5,6 @@ from numpy.lib._stride_tricks_impl import sliding_window_view
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-from parser.grav_waves import make_gravitational_waves
-
 
 def plot_time_series(ax, data: np.ndarray, title: str, color: str = "indigo"):
     ax.plot(data, color=color)
@@ -57,22 +55,6 @@ def hydro_emd_experiment():
     x = np.load("data/hydro-2.npy")
     imf = emd.sift.sift(x)
     plot_emd_result(x, imf, "Hydro Power Plant State 2")
-
-def grav_waves_emd():
-    noisy_signals_plain, noisy_signals_anomalous, gw_signals = make_gravitational_waves(1, snr=0.1, seed=42)
-    signal = noisy_signals_anomalous[0] * (10 ** 19)
-    signal = MinMaxScaler().fit_transform(signal.reshape(-1, 1)).reshape(1, -1)[0]
-    noise = noisy_signals_plain[0] * (10 ** 19)
-    noise = MinMaxScaler().fit_transform(noise.reshape(-1, 1)).reshape(1, -1)[0]
-    hidden = gw_signals[0] * (10 ** 19)
-    hidden = MinMaxScaler().fit_transform(hidden.reshape(-1, 1)).reshape(1, -1)[0]
-    w = 1000
-
-    imf = emd.sift.ensemble_sift(signal)
-    plot_emd_result(signal, imf, "Gaussian Noise with Hidden Signal", w, hidden)
-
-    imf = emd.sift.ensemble_sift(noise)
-    plot_emd_result(noise, imf, "Gaussian Noise", w)
 
 def sine_wave_with_noise():
     num_points = 10000

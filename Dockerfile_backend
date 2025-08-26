@@ -13,7 +13,7 @@ RUN npm run build
 #     Backend Build
 # src: https://stackoverflow.com/a/57886655
 # -------------------------------------------
-FROM python:3.12-bookworm
+FROM python:3.13-bookworm
 
 RUN apt-get update && apt-get install --no-install-suggests --no-install-recommends --yes pipx
 
@@ -26,11 +26,11 @@ RUN pipx inject poetry poetry-plugin-bundle
 
 COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
-RUN poetry install --no-dev
+RUN poetry install --no-root
 RUN poetry add gunicorn
 
-COPY ./parser ./parser
-COPY ./web ./web
+COPY ./web/backend ./web/backend
+COPY vibrana/algorithms ./algorithms
 COPY --from=build /app ./web/frontend
 
 EXPOSE 5000

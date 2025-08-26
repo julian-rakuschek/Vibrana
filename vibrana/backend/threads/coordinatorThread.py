@@ -1,15 +1,10 @@
-import datetime
-import json
 import os
 import threading
 import time
-from pathlib import Path
-from pprint import pprint
 
 import redis
 import socketio
 
-from algorithms.incdbscan import IncrementalDBSCAN
 from web.backend.data_loaders.redisLoader import RedisLoader
 from web.backend.helper.config import crawl_dataset_folder
 from web.backend.threads.computingThread import ComputingThread
