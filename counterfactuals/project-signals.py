@@ -17,6 +17,13 @@ def compute_tde(data, w):
     projected = PCA(n_components=2).fit_transform(windows)
     return projected
 
+def compute_feature_descriptor(data, w):
+    windows = sliding_window_view(data, window_shape=w)
+    radii = np.linalg.norm(windows, axis=1)
+    max_radius = np.max(radii)
+    counts, bins = np.histogram(radii, bins=20, range=(0, max_radius), density=True)
+    return counts
+
 def main():
     time_series, tdes, classes = [], [], []
     N = len(os.listdir(chunk_folder))
@@ -46,6 +53,36 @@ def main():
     projected = TSNE(n_components=2, metric="precomputed", init="random").fit_transform(similarity_matrix)
     plt.scatter(projected[:, 0], projected[:, 1], c=classes, cmap='rainbow')
     plt.savefig("projected.png")
+
+
+def main2():
+    time_series, histograms, classes = [], [], []
+    max_radius = 0
+    N = len(os.listdir(chunk_folder))
+    for file in os.listdir(chunk_folder):
+        values = np.load(os.path.join(chunk_folder, file))
+        time_series.append(values)
+        label = file.split("-")[1]
+        classes.append(1 if label == "undamaged" else 0)
+        windows = sliding_window_view(values, window_shape=1000)
+        radii = np.linalg.norm(windows, axis=1)
+        max_radius = max(max_radius, np.max(radii))
+    for ts in time_series:
+        windows = sliding_window_view(ts, window_shape=1000)
+        radii = np.linalg.norm(windows, axis=1)
+        counts, bins = np.histogram(radii, bins=20, range=(0, max_radius), density=True)
+        histograms.append(counts)
+
+    similarity_matrix = np.zeros((N, N))
+    for i, p in enumerate(histograms):
+        for j, q in enumerate(histograms):
+            similarity_matrix[i, j] = jensenshannon(p, q)
+    print(similarity_matrix)
+
+    # projected = MDS(n_components=2, dissimilarity="precomputed").fit_transform(similarity_matrix)
+    projected = TSNE(n_components=2, metric="precomputed", init="random").fit_transform(similarity_matrix)
+    plt.scatter(projected[:, 0], projected[:, 1], c=classes, cmap='rainbow')
+    plt.savefig("projected2.png")
 
 if __name__ == '__main__':
     main()
