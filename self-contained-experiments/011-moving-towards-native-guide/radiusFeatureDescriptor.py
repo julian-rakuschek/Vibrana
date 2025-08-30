@@ -6,6 +6,8 @@ import emd
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.lib._stride_tricks_impl import sliding_window_view
+from openTSNE import affinity
+from openTSNE import TSNE as TSNE2
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -107,5 +109,49 @@ def main():
     plot_reduction(ax[3], chunks, [source, new_chunk, new_chunk_2, new_chunk_3], False, True, "Step 3")
     plt.savefig(f"projectionExperiment.png", bbox_inches='tight', dpi=200)
 
+def opentsne_trial():
+    chunks = load_chunks(100)
+    plt.clf()
+    fig, ax = plt.subplots(2, 1)
+    fig.set_size_inches(10, 20)
+
+    histograms = []
+    max_radius = get_global_max_radius(chunks, False)
+    labels = []
+    for idx, chunk in enumerate(chunks):
+        histogram = chunk.get_histogram(False, max_radius)
+        histograms.append(histogram)
+        if idx < len(chunks):
+            labels.append(chunk.label)
+    similarity_matrix = np.zeros((len(histograms), len(histograms)))
+
+    for i, p in enumerate(histograms):
+        for j, q in enumerate(histograms):
+            similarity_matrix[i, j] = jensenshannon(p, q)
+
+    tsne = TSNE2(
+        n_components=2,
+        initialization="random",
+        random_state=1,
+        metric=lambda p, q: jensenshannon(p, q),
+        n_iter=1000
+    )
+
+    projected = tsne.fit(X=np.array(histograms))
+    ax[0].scatter(projected[:, 0], projected[:, 1], c=[label_map.index(l) for l in labels],
+                         cmap='rainbow')
+
+    source = chunks[40]
+    target = chunks[0]
+
+    res = source.swap_imf(target.emd[1], 1)
+    new_chunk = Chunk(res, "cf", 100)
+
+    new_embedding = projected.transform(np.array(new_chunk.get_histogram(projected=False, max_radius=max_radius)).reshape(1, -1))
+    ax[1].scatter(projected[:, 0], projected[:, 1], c="red")
+    ax[1].scatter(new_embedding[:, 0], new_embedding[:, 1], c="blue")
+
+    plt.savefig(f"opentsne.png", bbox_inches='tight', dpi=200)
+
 if __name__ == '__main__':
-    main()
+    opentsne_trial()

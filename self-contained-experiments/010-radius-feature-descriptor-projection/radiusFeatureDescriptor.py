@@ -7,6 +7,7 @@ from numpy.lib._stride_tricks_impl import sliding_window_view
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
 
 label_map = ["inner", "outer", "undamaged"]
 
@@ -15,7 +16,8 @@ class Chunk:
         self.data = data
         self.label = label
         self.w = w
-        self.windows = sliding_window_view(data, window_shape=w)
+        win = sliding_window_view(data, window_shape=w)
+        self.windows = StandardScaler().fit_transform(win)
         self.projected = PCA(n_components=2).fit_transform(self.windows)
 
     def get_radii(self, projected=False):
