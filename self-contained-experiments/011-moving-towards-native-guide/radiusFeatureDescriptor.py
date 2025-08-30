@@ -1,18 +1,31 @@
 import copy
 import os
-from typing import List
+from typing import List, Self
 
 import emd
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import numpy as np
 from numpy.lib._stride_tricks_impl import sliding_window_view
-from openTSNE import affinity
-from openTSNE import TSNE as TSNE2
+from openTSNE import TSNE
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 
-label_map = ["inner", "outer", "undamaged"]
+label_color_map = {
+    "inner": "#e91e63",
+    "outer": "#ff9800",
+    "undamaged": "#43a047",
+    "counterfactual": "#304ffe"
+}
+
+label_description_map = {
+    "inner": "Inner Damage",
+    "outer": "Outer Damage",
+    "undamaged": "Undamaged",
+    "counterfactual": "Counterfactual Path"
+}
+
+### ------------------------------------------------------------------------
 
 class Chunk:
     def __init__(self, data, label, w):
@@ -41,6 +54,104 @@ class Chunk:
         imfs[index] = imf
         return np.sum(imfs, axis=0)
 
+    def get_candidates(self, target: Self):
+        candidates = []
+        imf_count = min(self.emd.shape[0], target.emd.shape[0])
+        for i in range(imf_count):
+            target_imf = target.emd[i]
+            swapped = self.swap_imf(target_imf, i)
+            candidates.append(swapped)
+        return candidates
+
+### ------------------------------------------------------------------------
+
+class CounterfactualGenerator:
+    def __init__(self, chunks: List[Chunk], source_idx: int, target_class: str):
+        self.chunks = chunks
+        self.source = chunks[source_idx]
+        self.source_idx = source_idx
+        self.target_class = target_class
+        self.max_radius = get_global_max_radius(self.chunks, False)
+        self.native_guide_idx = self.select_native_guide()
+        self.native_guide = self.chunks[self.native_guide_idx]
+        self.embedding = self.compute_tsne_embedding()
+        self.cf_path: List[Chunk] = [self.source]
+
+    def select_native_guide(self):
+        indices = []
+        distances = []
+        source_hist = self.source.get_histogram(False, self.max_radius)
+        for idx, c in enumerate(self.chunks):
+            if c.label != self.target_class:
+                continue
+            hist = c.get_histogram(False, self.max_radius)
+            dist = jensenshannon(source_hist, hist)
+            indices.append(idx)
+            distances.append(dist)
+        min_idx = np.argmin(distances)
+        return indices[min_idx]
+
+
+    def compute_tsne_embedding(self):
+        histograms = [c.get_histogram(False, self.max_radius) for c in self.chunks]
+        tsne = TSNE(
+            n_components=2,
+            initialization="random",
+            random_state=1,
+            metric=lambda p, q: jensenshannon(p, q),
+            n_iter=1000
+        )
+        return tsne.fit(X=np.array(histograms))
+
+    def plot_chunk_embedding(self, ax, title=""):
+        ax.scatter(
+            self.embedding[:, 0],
+            self.embedding[:, 1],
+            c=[label_color_map[c.label] for c in self.chunks],
+        )
+        # Plot Native Guide as star
+        ax.scatter(
+            self.embedding[self.native_guide_idx, 0],
+            self.embedding[self.native_guide_idx, 1],
+            c=label_color_map["counterfactual"],
+            marker="*",
+            s=100
+        )
+
+        handles = [
+            mpatches.Patch(color=color, label=label)
+            for label, color in label_color_map.items()
+        ]
+        legend1 = ax.legend(handles=handles, labels=label_description_map.values(), loc="lower left")
+        ax.add_artist(legend1)
+        ax.set_title(title)
+        ax.legend()
+
+    def plot_counterfactual_path(self, ax):
+        histograms = [c.get_histogram(False, self.max_radius) for c in self.cf_path]
+        histograms = np.array(histograms)
+        embedded = self.embedding[self.source_idx].reshape(1, -1)
+        print(embedded.shape)
+        if len(self.cf_path) > 1:
+            embedded = np.concat([embedded, self.embedding.transform(histograms[1:])], axis=0)
+        print(embedded.shape)
+        ax.plot(embedded[:, 0], embedded[:, 1], c=label_color_map["counterfactual"], marker="o")
+
+    def select_best_candidate(self, source: Chunk, target: Chunk):
+        candidates = source.get_candidates(target)
+        candidates = [Chunk(c, None, source.w) for c in candidates]
+        histograms = [c.get_histogram(False, self.max_radius) for c in candidates]
+        target_hist = target.get_histogram(False, self.max_radius)
+        distances = [jensenshannon(p, target_hist) for p in histograms]
+        return candidates[np.argmin(distances)]
+
+
+    def cf_step(self):
+        cf = self.select_best_candidate(self.cf_path[-1], self.native_guide)
+        self.cf_path.append(cf)
+
+### ------------------------------------------------------------------------
+
 def load_chunks(w) -> List[Chunk]:
     chunks = []
     for file in sorted(os.listdir("./vis-data")):
@@ -58,100 +169,25 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
     return max_radius
 
 
-def plot_reduction(ax, chunks: List[Chunk], cf_path: List[Chunk], projected: bool, global_max: bool, title: str):
-    histograms = []
-    max_radius = None
-    labels = []
-    merged = [*chunks, *cf_path]
-    if global_max:
-        max_radius = get_global_max_radius(merged, projected)
-    for idx, chunk in enumerate(merged):
-        histogram = chunk.get_histogram(projected, max_radius)
-        histograms.append(histogram)
-        if idx < len(chunks):
-            labels.append(chunk.label)
-    similarity_matrix = np.zeros((len(histograms), len(histograms)))
-
-    for i, p in enumerate(histograms):
-        for j, q in enumerate(histograms):
-            similarity_matrix[i, j] = jensenshannon(p, q)
-    # projected = MDS(n_components=2, dissimilarity="precomputed").fit_transform(similarity_matrix)
-    projected = TSNE(n_components=2, metric="precomputed", init="random", random_state=1).fit_transform(similarity_matrix)
-    scatter = ax.scatter(projected[:len(chunks), 0], projected[:len(chunks), 1], c=[label_map.index(l) for l in labels], cmap='rainbow')
-    ax.plot(projected[len(chunks):, 0], projected[len(chunks):, 1], c="blue", marker="o")
-    handles, legend_labels = scatter.legend_elements()
-    legend1 = ax.legend(handles, label_map, loc="lower left", title="Classes")
-    ax.add_artist(legend1)
-    ax.set_title(title)
-    ax.legend()
 
 def main():
     chunks = load_chunks(100)
-    plt.clf()
-    fig, ax = plt.subplots(4, 1)
-    fig.set_size_inches(10, 40)
+    steps = 4
+    fig, ax = plt.subplots(steps+1, 1)
+    fig.set_size_inches(10, (steps+1) * 10)
 
-    source = chunks[40]
-    target = chunks[0]
+    generator = CounterfactualGenerator(chunks, 0, "undamaged")
+    generator.plot_chunk_embedding(ax[0], "Step 0")
+    generator.plot_counterfactual_path(ax[0])
 
-    res = source.swap_imf(target.emd[0], 0)
-    new_chunk = Chunk(res, "cf", 100)
+    for s in range(1, steps+1):
+        generator.cf_step()
+        generator.plot_chunk_embedding(ax[s], f"Step {s}")
+        generator.plot_counterfactual_path(ax[s])
 
-    res2 = new_chunk.swap_imf(target.emd[0], 0)
-    new_chunk_2 = Chunk(res2, "cf", 100)
 
-    res3 = new_chunk_2.swap_imf(target.emd[0], 0)
-    new_chunk_3 = Chunk(res3, "cf", 100)
+    plt.savefig(f"counterfactualPath.png", bbox_inches='tight', dpi=200)
 
-    plot_reduction(ax[0], chunks, [], False, True, "Step 0")
-    plot_reduction(ax[1], chunks, [source, new_chunk], False, True, "Step 1")
-    plot_reduction(ax[2], chunks, [source, new_chunk, new_chunk_2], False, True, "Step 2")
-    plot_reduction(ax[3], chunks, [source, new_chunk, new_chunk_2, new_chunk_3], False, True, "Step 3")
-    plt.savefig(f"projectionExperiment.png", bbox_inches='tight', dpi=200)
-
-def opentsne_trial():
-    chunks = load_chunks(100)
-    plt.clf()
-    fig, ax = plt.subplots(2, 1)
-    fig.set_size_inches(10, 20)
-
-    histograms = []
-    max_radius = get_global_max_radius(chunks, False)
-    labels = []
-    for idx, chunk in enumerate(chunks):
-        histogram = chunk.get_histogram(False, max_radius)
-        histograms.append(histogram)
-        if idx < len(chunks):
-            labels.append(chunk.label)
-    similarity_matrix = np.zeros((len(histograms), len(histograms)))
-
-    for i, p in enumerate(histograms):
-        for j, q in enumerate(histograms):
-            similarity_matrix[i, j] = jensenshannon(p, q)
-
-    tsne = TSNE2(
-        n_components=2,
-        initialization="random",
-        random_state=1,
-        metric=lambda p, q: jensenshannon(p, q),
-        n_iter=1000
-    )
-
-    projected = tsne.fit(X=np.array(histograms))
-    ax[0].scatter(projected[:, 0], projected[:, 1], c=[label_map.index(l) for l in labels],
-                         cmap='rainbow')
-
-    source = chunks[40]
-    target = chunks[0]
-
-    res = source.swap_imf(target.emd[1], 1)
-    new_chunk = Chunk(res, "cf", 100)
-
-    new_embedding = projected.transform(np.array(new_chunk.get_histogram(projected=False, max_radius=max_radius)).reshape(1, -1))
-    ax[1].scatter(projected[:, 0], projected[:, 1], c="red")
-    ax[1].scatter(new_embedding[:, 0], new_embedding[:, 1], c="blue")
-
-    plt.savefig(f"opentsne.png", bbox_inches='tight', dpi=200)
 
 if __name__ == '__main__':
-    opentsne_trial()
+    main()
