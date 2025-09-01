@@ -10,6 +10,7 @@ from numpy.lib._stride_tricks_impl import sliding_window_view
 from openTSNE import TSNE
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 label_color_map = {
     "inner": "#e91e63",
@@ -25,7 +26,8 @@ label_description_map = {
     "counterfactual": "Counterfactual Path"
 }
 
-### ------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
 
 class Chunk:
     def __init__(self, data, label, w):
@@ -63,7 +65,8 @@ class Chunk:
             candidates.append(swapped)
         return candidates
 
-### ------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------
 
 class CounterfactualGenerator:
     def __init__(self, chunks: List[Chunk], source_idx: int, target_class: str):
@@ -76,6 +79,7 @@ class CounterfactualGenerator:
         self.native_guide = self.chunks[self.native_guide_idx]
         self.embedding = self.compute_tsne_embedding()
         self.cf_path: List[Chunk] = [self.source]
+        self.imf_swaps = []
 
     def select_native_guide(self):
         indices = []
@@ -90,7 +94,6 @@ class CounterfactualGenerator:
             distances.append(dist)
         min_idx = np.argmin(distances)
         return indices[min_idx]
-
 
     def compute_tsne_embedding(self):
         histograms = [c.get_histogram(False, self.max_radius) for c in self.chunks]
@@ -143,14 +146,70 @@ class CounterfactualGenerator:
         histograms = [c.get_histogram(False, self.max_radius) for c in candidates]
         target_hist = target.get_histogram(False, self.max_radius)
         distances = [jensenshannon(p, target_hist) for p in histograms]
-        return candidates[np.argmin(distances)]
-
+        return candidates[np.argmin(distances)], np.argmin(distances)
 
     def cf_step(self):
-        cf = self.select_best_candidate(self.cf_path[-1], self.native_guide)
+        cf, imf_idx = self.select_best_candidate(self.cf_path[-1], self.native_guide)
         self.cf_path.append(cf)
+        self.imf_swaps.append(imf_idx)
 
-### ------------------------------------------------------------------------
+    def visualize_cf_step(self, step: int):
+        if step < 1 or step >= len(self.cf_path):
+            raise ValueError(f"step must be within [1, {len(self.cf_path) - 1}]")
+        step_a = self.cf_path[step - 1]
+        step_b = self.cf_path[step]
+        native_guide = self.native_guide
+
+        max_imf_count = np.max([step_a.emd.shape[0], step_b.emd.shape[0], native_guide.emd.shape[0]])
+
+        plt.clf()
+        fig, ax = plt.subplots(ncols=6, nrows=1 + max_imf_count)
+        fig.set_size_inches(30, (max_imf_count + 1) * 5)
+
+        plot_emd_result(ax, 0, 1, step_a, f"Step {step - 1}" if step - 1 != 0 else "Source", swapped_imf_idx=self.imf_swaps[step - 1])
+        plot_emd_result(ax, 2, 3, step_b, f"Step {step}", swapped_imf_idx=self.imf_swaps[step - 1])
+        plot_emd_result(ax, 4, 5, native_guide, "Native Guide", swapped_imf_idx=self.imf_swaps[step - 1])
+
+        plt.savefig(f"step_{step}.png", bbox_inches='tight', dpi=200)
+        plt.close(fig)
+
+
+# ------------------------------------------------------------------------
+
+def plot_time_series(ax, data: np.ndarray, title: str, color: str = "indigo"):
+    ax.plot(data, color=color)
+    ax.set_title(title, fontsize=20)
+    ax.set_xlim(0, len(data))
+
+
+def plot_tde_projection(ax, data, w, monochrome=None):
+    windows = sliding_window_view(data, window_shape=w)
+    windows = StandardScaler().fit_transform(windows)
+    projected = PCA(n_components=2).fit_transform(windows)
+
+    scores = []
+    for point in projected:
+        scores.append(np.linalg.norm(point))
+    scores_norm = MinMaxScaler().fit_transform(np.array(scores).reshape(-1, 1))[:, 0]
+
+    ax.set_xlim([np.min(projected[:, 0]), np.max(projected[:, 0])])
+    ax.set_ylim([np.min(projected[:, 1]), np.max(projected[:, 1])])
+    ax.scatter(projected[:, 0], projected[:, 1], s=5, c=monochrome if monochrome is not None else plt.colormaps["turbo"](scores_norm))
+    # ax.set_title(f"w = {w}", fontsize=30)
+    ax.axis("off")
+
+
+def plot_emd_result(ax, column_ts, column_projected, chunk: Chunk, title, w=100, swapped_imf_idx=0):
+    plot_time_series(ax[0, column_ts], chunk.data, title, "black")
+    plot_tde_projection(ax[0, column_projected], chunk.data, w)
+    unchanged_color = "#c5cae9"
+    swapped_color = "#3d5afe"
+    for i in range(chunk.emd.shape[0]):
+        plot_time_series(ax[i + 1, column_ts], chunk.emd[i, :], f"IMF {i}", swapped_color if i == swapped_imf_idx else unchanged_color)
+        plot_tde_projection(ax[i + 1, column_projected], chunk.emd[i, :], w)
+
+
+# ------------------------------------------------------------------------
 
 def load_chunks(w) -> List[Chunk]:
     chunks = []
@@ -162,6 +221,7 @@ def load_chunks(w) -> List[Chunk]:
         chunks.append(chunk)
     return chunks
 
+
 def get_global_max_radius(chunks: List[Chunk], projected: bool):
     max_radius = 0
     for chunk in chunks:
@@ -169,24 +229,24 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
     return max_radius
 
 
-
 def main():
     chunks = load_chunks(100)
     steps = 4
-    fig, ax = plt.subplots(steps+1, 1)
-    fig.set_size_inches(10, (steps+1) * 10)
+    fig, ax = plt.subplots(steps + 1, 1)
+    fig.set_size_inches(10, (steps + 1) * 10)
 
     generator = CounterfactualGenerator(chunks, 0, "undamaged")
     generator.plot_chunk_embedding(ax[0], "Step 0")
     generator.plot_counterfactual_path(ax[0])
 
-    for s in range(1, steps+1):
+    for s in range(1, steps + 1):
         generator.cf_step()
         generator.plot_chunk_embedding(ax[s], f"Step {s}")
         generator.plot_counterfactual_path(ax[s])
 
-
     plt.savefig(f"counterfactualPath.png", bbox_inches='tight', dpi=200)
+    for s in range(1, steps + 1):
+        generator.visualize_cf_step(s)
 
 
 if __name__ == '__main__':
