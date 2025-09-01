@@ -25,6 +25,7 @@ pymongo = "^4.13.2"
 emd = "^0.8.1"
 llvmlite = ">=0.42.0"
 numba = ">=0.58.0"
+opentsne = "^1.0.2"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
