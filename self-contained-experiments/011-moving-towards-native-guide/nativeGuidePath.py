@@ -1,5 +1,6 @@
 import copy
 import os
+import random
 from typing import List, Self
 
 import emd
@@ -69,20 +70,22 @@ class Chunk:
 # ------------------------------------------------------------------------
 
 class CounterfactualGenerator:
-    def __init__(self, chunks: List[Chunk], source_idx: int, target_class: str):
+    def __init__(self, chunks: List[Chunk], source_idx: int, target_class: str, strategy: str, native_guides_count: int):
         self.chunks = chunks
         self.source = chunks[source_idx]
         self.source_idx = source_idx
         self.target_class = target_class
+        self.strategy = strategy
+        self.native_guides_count = native_guides_count
         self.max_radius = get_global_max_radius(self.chunks, False)
-        self.native_guide_idx = self.select_native_guide()
-        self.native_guide = self.chunks[self.native_guide_idx]
+        self.native_guide_indices = self.select_native_guides(native_guides_count)
+        self.native_guides = [self.chunks[i] for i in self.native_guide_indices]
         self.embedding = self.compute_tsne_embedding()
         self.cf_path: List[Chunk] = [self.source]
         self.imf_swaps = []
+        self.chosen_native_guides = []
 
-    def select_native_guide(self):
-        indices = []
+    def select_native_guides(self, count):
         distances = []
         source_hist = self.source.get_histogram(False, self.max_radius)
         for idx, c in enumerate(self.chunks):
@@ -90,10 +93,9 @@ class CounterfactualGenerator:
                 continue
             hist = c.get_histogram(False, self.max_radius)
             dist = jensenshannon(source_hist, hist)
-            indices.append(idx)
-            distances.append(dist)
-        min_idx = np.argmin(distances)
-        return indices[min_idx]
+            distances.append((dist, idx))
+        distances.sort(key=lambda s: s[0])
+        return [d[1] for d in distances[:count]]
 
     def compute_tsne_embedding(self):
         histograms = [c.get_histogram(False, self.max_radius) for c in self.chunks]
@@ -113,13 +115,14 @@ class CounterfactualGenerator:
             c=[label_color_map[c.label] for c in self.chunks],
         )
         # Plot Native Guide as star
-        ax.scatter(
-            self.embedding[self.native_guide_idx, 0],
-            self.embedding[self.native_guide_idx, 1],
-            c=label_color_map["counterfactual"],
-            marker="*",
-            s=100
-        )
+        for i in self.native_guide_indices:
+            ax.scatter(
+                self.embedding[i, 0],
+                self.embedding[i, 1],
+                c=label_color_map["counterfactual"],
+                marker="*",
+                s=100
+            )
 
         handles = [
             mpatches.Patch(color=color, label=label)
@@ -128,7 +131,6 @@ class CounterfactualGenerator:
         legend1 = ax.legend(handles=handles, labels=label_description_map.values(), loc="lower left")
         ax.add_artist(legend1)
         ax.set_title(title)
-        ax.legend()
 
     def plot_counterfactual_path(self, ax):
         histograms = [c.get_histogram(False, self.max_radius) for c in self.cf_path]
@@ -149,16 +151,18 @@ class CounterfactualGenerator:
         return candidates[np.argmin(distances)], np.argmin(distances)
 
     def cf_step(self):
-        cf, imf_idx = self.select_best_candidate(self.cf_path[-1], self.native_guide)
+        native_guide = random.choice(self.native_guides)
+        cf, imf_idx = self.select_best_candidate(self.cf_path[-1], native_guide)
         self.cf_path.append(cf)
         self.imf_swaps.append(imf_idx)
+        self.chosen_native_guides.append(native_guide)
 
     def visualize_cf_step(self, step: int):
         if step < 1 or step >= len(self.cf_path):
             raise ValueError(f"step must be within [1, {len(self.cf_path) - 1}]")
         step_a = self.cf_path[step - 1]
         step_b = self.cf_path[step]
-        native_guide = self.native_guide
+        native_guide = self.chosen_native_guides[step - 1]
 
         max_imf_count = np.max([step_a.emd.shape[0], step_b.emd.shape[0], native_guide.emd.shape[0]])
 
@@ -170,9 +174,19 @@ class CounterfactualGenerator:
         plot_emd_result(ax, 2, 3, step_b, f"Step {step}", swapped_imf_idx=self.imf_swaps[step - 1])
         plot_emd_result(ax, 4, 5, native_guide, "Native Guide", swapped_imf_idx=self.imf_swaps[step - 1])
 
-        plt.savefig(f"step_{step}.png", bbox_inches='tight', dpi=200)
+        plt.savefig(f"emd_step_{step}.png", bbox_inches='tight', dpi=200)
         plt.close(fig)
 
+    def visualize_cf_path(self, step: int):
+        plt.clf()
+        fig, ax = plt.subplots(1, 1)
+        fig.set_size_inches(10, 10)
+
+        self.plot_chunk_embedding(ax, f"Step {step}")
+        self.plot_counterfactual_path(ax)
+
+        plt.savefig(f"path_step_{step}.png", bbox_inches='tight', dpi=200)
+        plt.close(fig)
 
 # ------------------------------------------------------------------------
 
@@ -232,20 +246,14 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
 def main():
     chunks = load_chunks(100)
     steps = 4
-    fig, ax = plt.subplots(steps + 1, 1)
-    fig.set_size_inches(10, (steps + 1) * 10)
 
-    generator = CounterfactualGenerator(chunks, 0, "undamaged")
-    generator.plot_chunk_embedding(ax[0], "Step 0")
-    generator.plot_counterfactual_path(ax[0])
+    generator = CounterfactualGenerator(chunks, 0, "undamaged", "random", 3)
+    generator.visualize_cf_path(0)
 
     for s in range(1, steps + 1):
+        print(f"Step {s}")
         generator.cf_step()
-        generator.plot_chunk_embedding(ax[s], f"Step {s}")
-        generator.plot_counterfactual_path(ax[s])
-
-    plt.savefig(f"counterfactualPath.png", bbox_inches='tight', dpi=200)
-    for s in range(1, steps + 1):
+        generator.visualize_cf_path(s)
         generator.visualize_cf_step(s)
 
 
