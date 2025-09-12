@@ -1,4 +1,5 @@
 import copy
+import itertools
 import os
 import random
 from typing import List, Self
@@ -12,6 +13,7 @@ from openTSNE import TSNE
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from tqdm import tqdm
 
 label_color_map = {
     "inner": "#e91e63",
@@ -71,6 +73,21 @@ class Chunk:
 
 class CounterfactualGenerator:
     def __init__(self, chunks: List[Chunk], source_idx: int, target_class: str, strategy: str, native_guides_count: int):
+        count_target_class = len([c for c in chunks if c.label == target_class])
+        valid_strategies = ["first", "middle", "last", "random", "effect"]
+
+        if source_idx < 0 or source_idx >= len(chunks):
+            raise ValueError(f"source_idx must be within [1, {len(chunks) - 1}]")
+
+        if count_target_class == 0:
+            raise ValueError(f"No points in target class found")
+
+        if native_guides_count < 1 or native_guides_count > count_target_class:
+            raise ValueError(f"native_guides_count must be within [1, {count_target_class}]")
+
+        if strategy not in valid_strategies:
+            raise ValueError(f"strategy {strategy} is not an available strategy. Possible values for strategy are: {','.join(valid_strategies)}")
+
         self.chunks = chunks
         self.source = chunks[source_idx]
         self.source_idx = source_idx
@@ -136,15 +153,25 @@ class CounterfactualGenerator:
         histograms = [c.get_histogram(False, self.max_radius) for c in self.cf_path]
         histograms = np.array(histograms)
         embedded = self.embedding[self.source_idx].reshape(1, -1)
-        print(embedded.shape)
         if len(self.cf_path) > 1:
             embedded = np.concat([embedded, self.embedding.transform(histograms[1:])], axis=0)
-        print(embedded.shape)
         ax.plot(embedded[:, 0], embedded[:, 1], c=label_color_map["counterfactual"], marker="o")
 
-    def select_best_candidate(self, source: Chunk, target: Chunk):
+    def generate_cf_candidate(self, source: Chunk, target: Chunk):
         candidates = source.get_candidates(target)
         candidates = [Chunk(c, None, source.w) for c in candidates]
+
+        if self.strategy == "first":
+            return candidates[0], 0
+        if self.strategy == "middle":
+            middle_idx = len(candidates) // 2
+            return candidates[middle_idx], middle_idx
+        if self.strategy == "last":
+            return candidates[-1], -1
+        if self.strategy == "random":
+            i = random.choice(range(len(candidates)))
+            return candidates[i], i
+
         histograms = [c.get_histogram(False, self.max_radius) for c in candidates]
         target_hist = target.get_histogram(False, self.max_radius)
         distances = [jensenshannon(p, target_hist) for p in histograms]
@@ -152,12 +179,12 @@ class CounterfactualGenerator:
 
     def cf_step(self):
         native_guide = random.choice(self.native_guides)
-        cf, imf_idx = self.select_best_candidate(self.cf_path[-1], native_guide)
+        cf, imf_idx = self.generate_cf_candidate(self.cf_path[-1], native_guide)
         self.cf_path.append(cf)
         self.imf_swaps.append(imf_idx)
         self.chosen_native_guides.append(native_guide)
 
-    def visualize_cf_step(self, step: int):
+    def visualize_cf_step(self, step: int, folder: str):
         if step < 1 or step >= len(self.cf_path):
             raise ValueError(f"step must be within [1, {len(self.cf_path) - 1}]")
         step_a = self.cf_path[step - 1]
@@ -174,18 +201,21 @@ class CounterfactualGenerator:
         plot_emd_result(ax, 2, 3, step_b, f"Step {step}", swapped_imf_idx=self.imf_swaps[step - 1])
         plot_emd_result(ax, 4, 5, native_guide, "Native Guide", swapped_imf_idx=self.imf_swaps[step - 1])
 
-        plt.savefig(f"emd_step_{step}.png", bbox_inches='tight', dpi=200)
+        os.makedirs(folder, exist_ok=True)
+        file = os.path.join(folder, f"emd_step_{step}.png")
+        plt.savefig(file, bbox_inches='tight', dpi=200)
         plt.close(fig)
 
-    def visualize_cf_path(self, step: int):
+    def visualize_cf_path(self, step: int, folder: str = "."):
         plt.clf()
         fig, ax = plt.subplots(1, 1)
         fig.set_size_inches(10, 10)
 
         self.plot_chunk_embedding(ax, f"Step {step}")
         self.plot_counterfactual_path(ax)
-
-        plt.savefig(f"path_step_{step}.png", bbox_inches='tight', dpi=200)
+        os.makedirs(folder, exist_ok=True)
+        file = os.path.join(folder, f"path_step_{step}.png")
+        plt.savefig(file, bbox_inches='tight', dpi=200)
         plt.close(fig)
 
 # ------------------------------------------------------------------------
@@ -243,19 +273,24 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
     return max_radius
 
 
-def main():
-    chunks = load_chunks(100)
-    steps = 4
+def main(chunks: List[Chunk] = None, steps: int = 4, strategy: str = "effect", native_guides: int = 1, plot_emd_step: bool = True):
+    print(f"Steps = {steps}, Strategy = {strategy}, Native Guides = {native_guides}")
+    if chunks is None:
+        chunks = load_chunks(100)
+    folder = f"{strategy}-NG{native_guides}"
+    generator = CounterfactualGenerator(chunks, 0, "undamaged", strategy, native_guides)
+    generator.visualize_cf_path(0, folder)
 
-    generator = CounterfactualGenerator(chunks, 0, "undamaged", "random", 3)
-    generator.visualize_cf_path(0)
-
-    for s in range(1, steps + 1):
-        print(f"Step {s}")
+    for s in tqdm(range(1, steps + 1)):
         generator.cf_step()
-        generator.visualize_cf_path(s)
-        generator.visualize_cf_step(s)
+        generator.visualize_cf_path(s, folder)
+        if plot_emd_step:
+            generator.visualize_cf_step(s, folder)
 
 
 if __name__ == '__main__':
-    main()
+    chunks = load_chunks(100)
+    valid_strategies = ["first", "middle", "last", "random", "effect"]
+    native_guides = [1, 2, 3]
+    for strategy, ng in itertools.product(valid_strategies, native_guides):
+        main(chunks=chunks, steps=30, strategy=strategy, native_guides=ng, plot_emd_step=False)
