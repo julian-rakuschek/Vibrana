@@ -218,6 +218,26 @@ class CounterfactualGenerator:
         plt.savefig(file, bbox_inches='tight', dpi=200)
         plt.close(fig)
 
+    def visualize_possible_candidates(self):
+        plt.clf()
+        fig, ax = plt.subplots(1, 1)
+        fig.set_size_inches(10, 10)
+        self.plot_chunk_embedding(ax, f"Possible Candidates")
+        candidates = self.source.get_candidates(self.native_guides[0])
+        candidates = [Chunk(c, None, self.source.w) for c in candidates]
+        histograms = [c.get_histogram(False, self.max_radius) for c in candidates]
+        histograms = np.array(histograms)
+        embedded = self.embedding.transform(histograms)
+
+        ax.scatter(embedded[:, 0], embedded[:, 1], c=label_color_map["counterfactual"], marker="o")
+        s = self.embedding[self.source_idx]
+        for e in embedded:
+            ax.plot([s[0], e[0]], [s[1], e[1]], c=label_color_map["counterfactual"], linewidth=0.8)
+
+        plt.savefig("best_candidate.png", bbox_inches='tight', dpi=200)
+        plt.close(fig)
+
+
 # ------------------------------------------------------------------------
 
 def plot_time_series(ax, data: np.ndarray, title: str, color: str = "indigo"):
@@ -287,10 +307,17 @@ def main(chunks: List[Chunk] = None, steps: int = 4, strategy: str = "effect", n
         if plot_emd_step:
             generator.visualize_cf_step(s, folder)
 
-
-if __name__ == '__main__':
+def experiment_all_strategies():
     chunks = load_chunks(100)
     valid_strategies = ["first", "middle", "last", "random", "effect"]
     native_guides = [1, 2, 3]
     for strategy, ng in itertools.product(valid_strategies, native_guides):
         main(chunks=chunks, steps=30, strategy=strategy, native_guides=ng, plot_emd_step=False)
+
+def plot_best_candidates():
+    chunks = load_chunks(100)
+    generator = CounterfactualGenerator(chunks, 0, "undamaged", "effect", 1)
+    generator.visualize_possible_candidates()
+
+if __name__ == '__main__':
+    plot_best_candidates()

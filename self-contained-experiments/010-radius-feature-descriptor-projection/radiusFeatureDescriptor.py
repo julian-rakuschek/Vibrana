@@ -6,10 +6,21 @@ import numpy as np
 from numpy.lib._stride_tricks_impl import sliding_window_view
 from scipy.spatial.distance import jensenshannon
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+from openTSNE import TSNE
 from sklearn.preprocessing import StandardScaler
+import matplotlib.patches as mpatches
 
-label_map = ["inner", "outer", "undamaged"]
+label_color_map = {
+    "inner": "#e91e63",
+    "outer": "#ff9800",
+    "undamaged": "#43a047",
+}
+
+label_description_map = {
+    "inner": "Inner Damage",
+    "outer": "Outer Damage",
+    "undamaged": "Undamaged",
+}
 
 class Chunk:
     def __init__(self, data, label, w):
@@ -51,27 +62,28 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
 def plot_reduction(ax, chunks: List[Chunk], projected: bool, global_max: bool, title: str):
     histograms = []
     max_radius = None
-    labels = []
     if global_max:
         max_radius = get_global_max_radius(chunks, projected)
     for chunk in chunks:
         histogram = chunk.get_histogram(projected, max_radius)
         histograms.append(histogram)
-        labels.append(chunk.label)
-    similarity_matrix = np.zeros((len(histograms), len(histograms)))
+    tsne = TSNE(
+        n_components=2,
+        initialization="random",
+        random_state=1,
+        metric=lambda p, q: jensenshannon(p, q),
+        n_iter=1000
+    )
+    embedding = tsne.fit(X=np.array(histograms))
+    ax.scatter(embedding[:, 0], embedding[:, 1], c=[label_color_map[c.label] for c in chunks], cmap='rainbow')
 
-    for i, p in enumerate(histograms):
-        for j, q in enumerate(histograms):
-            similarity_matrix[i, j] = jensenshannon(p, q)
-    # projected = MDS(n_components=2, dissimilarity="precomputed").fit_transform(similarity_matrix)
-    projected = TSNE(n_components=2, metric="precomputed", init="random").fit_transform(similarity_matrix)
-    scatter = ax.scatter(projected[:, 0], projected[:, 1], c=[label_map.index(l) for l in labels], cmap='rainbow')
-    handles, legend_labels = scatter.legend_elements()
-    print(legend_labels)
-    legend1 = ax.legend(handles, label_map, loc="lower left", title="Classes")
+    handles = [
+        mpatches.Patch(color=color, label=label)
+        for label, color in label_color_map.items()
+    ]
+    legend1 = ax.legend(handles=handles, labels=label_description_map.values(), loc="lower left")
     ax.add_artist(legend1)
     ax.set_title(title)
-    ax.legend()
 
 def main():
     chunks = load_chunks(100)
