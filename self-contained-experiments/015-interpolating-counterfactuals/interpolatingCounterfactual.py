@@ -36,6 +36,14 @@ label_description_map = {
 
 # ------------------------------------------------------------------------
 
+def compute_fingerprint_histogram(data, w, bins=20):
+    norm = np.max(np.abs(data))
+    data_norm = data / norm
+    windows = sliding_window_view(data_norm, window_shape=w)
+    radii = np.linalg.norm(windows, axis=1)
+    counts, bins = np.histogram(radii, bins=bins, range=(0, np.max(radii)), density=True)
+    return counts
+
 class Chunk:
     def __init__(self, data, label, w):
         self.data = data
@@ -159,11 +167,39 @@ class CounterfactualGenerator:
         interpolate.label = self.label_encoder.inverse_transform(label)[0]
         return interpolate
 
+    def get_imf_level_distances(self):
+        interpolate_imfs = self.get_interpolate().imfs
+        target_imfs = self.native_guide.imfs
+        max_idx = min(len(interpolate_imfs), len(target_imfs))
+        distances = []
+        for idx in range(max_idx):
+            imf1 = interpolate_imfs[idx]
+            imf2 = target_imfs[idx]
+            hist1 = compute_fingerprint_histogram(imf1, self.native_guide.w)
+            hist2 = compute_fingerprint_histogram(imf2, self.native_guide.w)
+            distances.append(jensenshannon(hist1, hist2))
+        distances = np.array(distances)
+        distances = distances / np.max(distances)
+        return distances
+
     def step_interpolation_weigths(self, step=0.05):
         # TODO implement advanced step mechanism based on variation
-        for w in self.interpolation_weights:
-            w["w_target"] = min(1, w["w_target"] + step)
-            w["w_source"] = max(0, w["w_source"] - step)
+        distances = self.get_imf_level_distances()
+        print(distances)
+        for idx, w in enumerate(self.interpolation_weights):
+            weight_step = step * distances[idx]
+            w["w_target"] = min(1, w["w_target"] + weight_step)
+            w["w_source"] = max(0, w["w_source"] - weight_step)
+
+    def step_until_class_flip(self, step=0.05):
+        i = 0
+        while True:
+            print(i)
+            self.step_interpolation_weigths(step=step)
+            interpolate = self.get_interpolate()
+            if interpolate.label == self.native_guide.label:
+                break
+            i += 1
 
     def init_interpolation_weights(self):
         max_imf_index = max(len(self.native_guide.imfs), len(self.source.imfs))
@@ -273,13 +309,13 @@ def get_global_max_radius(chunks: List[Chunk], projected: bool):
 
 
 def main():
-    chunks = load_chunks(100)
+    # chunks = load_chunks(100)
     # with open("temp.pkl", "wb") as f:
     #     pickle.dump(chunks, f)
-    # with open("temp.pkl", "rb") as f:
-    #     chunks = pickle.load(f)
-    gen = CounterfactualGenerator(chunks, 0, "undamaged", 3)
-    gen.step_interpolation_weigths(step=0.95)
+    with open("temp.pkl", "rb") as f:
+        chunks = pickle.load(f)
+    gen = CounterfactualGenerator(chunks, 0, "undamaged", 1)
+    gen.step_until_class_flip()
     gen.visualize_current_step()
 
 
