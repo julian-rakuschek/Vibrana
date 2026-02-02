@@ -23,11 +23,7 @@ Vibrana does not feature uploading data through the UI, instead data is supplied
 The application will automatically recognize valid files and make them available for exploration. There is no need to register them in any way in a database,
 however, to make this level of flexibility possible, a specific folder structure must be adhered.
 
-
-**Shortcut**: Download an example data folder from our [cloud folder](https://cloud.tugraz.at/index.php/s/rM2Lwm33YwJZAnQ), extract the archive and place the data folder in the project root folder.
-This gives you an easy start without setting up the data folder yourself.
-
-[TODO: Precise description of data folder, for now please download the example]
+[TODO: Precise description of data folder]
 
 ### Docker Setup
 
