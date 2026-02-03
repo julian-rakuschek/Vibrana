@@ -30,7 +30,7 @@ const dbRoutes = {
 };
 
 const computingRoutes = {
-  computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, {new_fingerprint: Fingerprint; label_delta: ClusterDelta}>("POST", "/computing/:dataset/:subset/single_step"),
+  computeSingleStep: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, {new_fingerprint: Fingerprint; labels: ClusterDelta}>("POST", "/computing/:dataset/:subset/single_step"),
   activateComputing: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/activate"),
   pauseComputing: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/computing/:dataset/:subset/pause"),
   computingStatus: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, boolean>("GET", "/computing/:dataset/:subset/status"),

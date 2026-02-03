@@ -25,7 +25,7 @@ function computeAllocationArray(fingerprints: Fingerprint[], zoom_interval: [num
 
 export function computeLabelAllocationArray(fingerprints: Fingerprint[], width: number, zoom_interval: [number, number]) {
     let label_allocation: number[] = new Array(width).fill(null);
-    computeAllocationArray(fingerprints, zoom_interval, label_allocation, (fp: Fingerprint) => fp.label);
+    computeAllocationArray(fingerprints, zoom_interval, label_allocation, (fp: Fingerprint) => fp.label.tde);
     return label_allocation;
 }
 

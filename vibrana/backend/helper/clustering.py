@@ -38,9 +38,9 @@ def compute_clusters_hierarchical(dataset, subset):
     json_tree = convert_tree(linkage_tree, chunks)
     return json_tree
 
-def compute_clusters_inc_dbscan(db: Database, dataset, subset):
+def compute_clusters_inc_dbscan(db: Database, dataset, subset, feature_descriptor):
     parameters = database.get_parameters(db, dataset, subset)
-    _, features, ids = database.get_fingerprints_for_clustering(db, dataset, subset)
+    _, features, ids = database.get_fingerprints_for_clustering(db, dataset, subset, feature_descriptor)
     if len(features) == 0:
         return
     dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")

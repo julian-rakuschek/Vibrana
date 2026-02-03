@@ -26,6 +26,7 @@
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
     import MouseScroll from "@components/icons/MouseScroll.svelte";
     import ZoomIndicator from "@components/dataset-analysis/large-signal-pda/locations/ZoomIndicator.svelte";
+    import {fingerprintMode} from "@lib/stores";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -45,22 +46,26 @@
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
-    socket.on('message', data => addNewItem(data['new_fingerprint'], data['label_delta']));
+    socket.on('message', data => addNewItem(data['new_fingerprint'], data['labels']));
 
-    function addNewItem(new_fingerprint: Fingerprint, label_delta: ClusterDelta) {
+    function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
+        console.log(new_fingerprint, labels)
         new_fingerprint['index'] = fingerprints.length;
         fingerprints = [...fingerprints, new_fingerprint];
 
         index_allocation = updateIndexAllocationArray(index_allocation, new_fingerprint, zoom_interval);
-
-        for (const labelDeltaElement of label_delta) {
-            colorGenerator.getColor(labelDeltaElement.new_label);
-            fingerprints[labelDeltaElement.index].label = labelDeltaElement.new_label;
+        for (let i = 0; i < labels.tde.length; i++) {
+            colorGenerator.getColor(labels.tde[i]);
+            fingerprints[i].label.tde = labels.tde[i];
+        }
+        for (let i = 0; i < labels.psd.length; i++) {
+            colorGenerator.getColor(labels.psd[i]);
+            fingerprints[i].label.psd = labels.psd[i];
         }
 
         for (let i = 0; i < width; i++) {
             if (index_allocation[i] !== -1) {
-                label_allocation[i] = fingerprints[index_allocation[i]].label;
+                label_allocation[i] = fingerprints[index_allocation[i]].label.tde;
             }
         }
 
@@ -72,7 +77,7 @@
         let vectors_query = await ApiRoutes.getFingerprints.fetch({params: {dataset, subset}});
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
-            colorGenerator.getColor(vectors_query[i].label);
+            colorGenerator.getColor(vectors_query[i].label.tde);
         }
         fingerprints = [...vectors_query];
         colorMapping = colorGenerator.getColorDictionary();
@@ -108,6 +113,16 @@
                     <p>{fingerprints.length}</p>
                     <p class="col-span-3">Number of Clusters:</p>
                     <p>{(new Set(label_allocation)).size - 1}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'TDE' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("TDE")}>
+                    <img src="/tde.png" />
+                    <p class="text-center text-indigo-800">Projection</p>
+                </div>
+                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'PSD' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("PSD")}>
+                    <img src="/welch.png" />
+                    <p class="text-center text-indigo-800">PSD</p>
                 </div>
             </div>
             <div class="bg-indigo-100 rounded-xl p-4 gap-2 flex flex-col text-indigo-800">

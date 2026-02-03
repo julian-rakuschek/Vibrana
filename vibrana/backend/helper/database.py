@@ -1,5 +1,6 @@
 import json
 import os
+from argparse import ArgumentError
 
 import numpy as np
 import pymongo
@@ -30,58 +31,48 @@ def get_db() -> Database:
 #              Fingerprint Management
 # ----------------------------------------------
 
-def store_fingerprint(db: Database, data, dataset, subset, compute_cluster_label=True):
-    if not compute_cluster_label:
-        db["fingerprints"].insert_one(data)
-        return []
-
-    parameters = get_parameters(db, dataset, subset)
-    labels, features, ids = get_fingerprints_for_clustering(db, dataset, subset)
-    dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
-    if len(features) > 0:
-        dbscan.load(features, labels)
-    radius_histogram = data["feature_descriptors"]["radii_distribution"]["counts"]
-    dbscan.insert(np.array(radius_histogram).reshape(1, -1))
-    new_label = dbscan.get_cluster_labels(np.array(radius_histogram).reshape(1, -1))
-    updated_labels = []
-    if len(features) > 0:
-        updated_labels = dbscan.get_cluster_labels(features)
-    data["label"] = int(new_label[0])
-    delta = [{"index": len(ids), "new_label": data["label"]}]
-    for old_label, new_label, _id, idx in zip(labels, updated_labels, ids, range(len(ids))):
-        if old_label == new_label:
-            continue
-        delta.append({"index": idx, "new_label": new_label})
-        db["fingerprints"].update_one({"_id": _id}, {"$set": {"label": new_label}})
+def store_fingerprint(db: Database, data, dataset, subset):
     db["fingerprints"].insert_one(data)
-    return delta
 
 
 def get_fingerprints(db: Database, dataset: str, subset: str):
     return list(db["fingerprints"].find({"dataset": dataset, "subset": subset}))
 
+def clear_fingerprints(db: Database, dataset: str, subset: str):
+    db["fingerprints"].delete_many({"dataset": dataset, "subset": subset})
 
-def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str):
+
+# ----------------------------------------------
+#              Cluster Management
+# ----------------------------------------------
+
+def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str, feature_descriptor: str):
     fingerprints = list(db["fingerprints"].find({"dataset": dataset, "subset": subset},
                                                 {"_id": 1, "label": 1, "feature_descriptors": 1}))
-    labels = [f.get("label", -1) for f in fingerprints]
-    feature_descriptors = [f["feature_descriptors"]["radii_distribution"]["counts"] for f in fingerprints]
+    labels = [f.get("label", {}).get(feature_descriptor, -1) for f in fingerprints]
+    if feature_descriptor == "tde":
+        feature_descriptors = [f["feature_descriptors"]["tde"]["counts"] for f in fingerprints]
+    elif feature_descriptor == "psd":
+        feature_descriptors = [f["feature_descriptors"]["psd"]["Pxx_spec"] for f in fingerprints]
+    else:
+        raise ValueError("unknown feature descriptor")
     ids = [f["_id"] for f in fingerprints]
     return labels, feature_descriptors, ids
 
-
-def cluster_all_fingerprints(db: Database, dataset: str, subset: str):
+def cluster_all_fingerprints(db: Database, dataset: str, subset: str, feature_descriptor: str):
     parameters = get_parameters(db, dataset, subset)
-    _, features, ids = get_fingerprints_for_clustering(db, dataset, subset)
+    _, features, ids = get_fingerprints_for_clustering(db, dataset, subset, feature_descriptor)
     dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
     dbscan.insert(features)
-    labels = dbscan.get_cluster_labels(features)
+    labels = dbscan.get_cluster_labels(features).tolist()
     for _id, label in zip(ids, labels):
-        db["fingerprints"].update_one({"_id": _id}, {"$set": {"label": label}})
+        db["fingerprints"].update_one({"_id": _id}, {"$set": {f"label.{feature_descriptor}": label}})
+    return labels
 
-
-def clear_fingerprints(db: Database, dataset: str, subset: str):
-    db["fingerprints"].delete_many({"dataset": dataset, "subset": subset})
+def cluster_all_fingerprints_all_feature_descriptors(db: Database, dataset: str, subset: str):
+    tde_labels = cluster_all_fingerprints(db, dataset, subset, "tde")
+    psd_labels = cluster_all_fingerprints(db, dataset, subset, "psd")
+    return {"tde": tde_labels, "psd": psd_labels}
 
 
 # ----------------------------------------------
@@ -111,4 +102,4 @@ def get_running(db: Database, dataset: str, subset: str):
 
 if __name__ == '__main__':
     db = get_db()
-    cluster_all_fingerprints(db, "hydro", "x")
+    cluster_all_fingerprints(db, "hydro", "x", "psd")

@@ -80,7 +80,7 @@
                 const target: Point = {x: Math.floor(zoomed * width), y: connectorHeight};
                 lines.push({
                     d: linkGenerator({source, target}),
-                    color: colorMapping[fp.label]
+                    color: colorMapping[fp.label.tde]
                 })
             }
         }
@@ -109,10 +109,10 @@
             {#if fingerprint_index_allocation[i] !== -1}
                 {@const fp = fingerprints[fingerprint_index_allocation[i]]}
                 <div class="absolute opacity-15 w-full h-full  rounded-3xl"
-                     style={`background-color: ${colorMapping[fp.label]}`}></div>
+                     style={`background-color: ${colorMapping[fp.label.tde]}`}></div>
                 <div class="absolute w-full h-full">
                     {#if $loading}
-                        <CenteredLoadingSpinner color={colorMapping[fp.label]} />
+                        <CenteredLoadingSpinner color={colorMapping[fp.label.tde]} />
                     {:else}
                         <FingerprintRendering
                                 {dataProvider} {size}

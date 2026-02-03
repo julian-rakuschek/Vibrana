@@ -37,10 +37,14 @@ def flask_pause_computation(dataset, subset, path):
 @computing_app.post("<dataset>/<subset>/single_step")
 @validate_subset
 def flask_make_single_step(dataset, subset, path):
+    def insert_fingerprint(dataset, subset, data):
+        database.store_fingerprint(db, data, dataset, subset)
+        labels = database.cluster_all_fingerprints_all_feature_descriptors(db, dataset, subset)
+        return labels
+
     db = flask.current_app.config["DB"]
     loader = RedisLoader(path, dataset, subset)
     loader.load_numpy_file(False)
-    insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
-    thread = ComputingThread(db, loader.r, loader, insert_func)
-    data = thread.compute_plane()
+    thread = ComputingThread(db, loader.r, loader, insert_fingerprint)
+    data = thread.process_slice()
     return data

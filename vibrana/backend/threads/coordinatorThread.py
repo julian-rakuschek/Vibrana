@@ -48,15 +48,14 @@ class CoordinatorThread(threading.Thread):
 
     def insert_fingerprint(self, dataset, subset, data):
         self.locks[dataset][subset].acquire()
-        data = database.store_fingerprint(self.db, data, dataset, subset)
+        database.store_fingerprint(self.db, data, dataset, subset)
+        labels = database.cluster_all_fingerprints_all_feature_descriptors(self.db, dataset, subset)
         self.locks[dataset][subset].release()
-        return data
+        return labels
 
     def run(self):
         while True:
             for dataset_name, dataset_object in self.datasets.items():
-                if dataset_object["dataset_type"] != "stream":
-                    continue
                 for subset_name, subset_object in dataset_object["subsets"].items():
                     is_running = database.get_running(self.db, dataset_name, subset_name)
                     self.threads[dataset_name][subset_name].set_active(is_running)

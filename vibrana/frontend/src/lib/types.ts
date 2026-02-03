@@ -95,20 +95,25 @@ export type Fingerprint = {
         radii_distribution: Histogram;
         freq_distribution: Histogram;
     };
-    label: number;
+    label: {
+        tde: number;
+        psd: number;
+    };
 }
 
 export type ClusterColorMapping = {
     [key: number]: string;
 }
 
-export type ClusterOverviewSector = {
-    indices: number[];
-    fingerprintIndices: Set<number>;
-    clusterLabel: number | null;
-};
+export type Delta = {
+    index: number;
+    new_label: number;
+}
 
-export type ClusterDelta = { index: number; new_label: number }[];
+export type ClusterDelta = {
+    tde: number[];
+    psd: number[];
+}
 
 export type ParameterSettings = {
     eps: number;

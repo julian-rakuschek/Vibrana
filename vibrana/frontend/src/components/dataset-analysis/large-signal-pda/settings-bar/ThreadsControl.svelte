@@ -28,7 +28,7 @@
 
 	async function oneStep() {
 		const data = await ApiRoutes.computeSingleStep.fetch({ params: { dataset, subset } });
-		if (handleSingleItem) handleSingleItem(data.new_fingerprint, data.label_delta);
+		if (handleSingleItem) handleSingleItem(data.new_fingerprint, data.labels);
 	}
 
 	async function clearVectors() {

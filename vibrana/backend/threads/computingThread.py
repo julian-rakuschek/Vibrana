@@ -12,6 +12,7 @@ import socketio
 import redis
 from numpy.lib.stride_tricks import sliding_window_view
 from pymongo.synchronous.database import Database
+from scipy import signal
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -24,15 +25,22 @@ def compute_feature_descriptors(data, projected):
 
     radii = np.linalg.norm(projected, axis=1)
     counts, bins = np.histogram(radii, bins=20, range=(0, np.max(radii)), density=True)
-    feature_descriptors["radii_distribution"] = {"bins": bins.tolist(), "counts": counts.tolist()}
+    feature_descriptors["tde"] = {"bins": bins.tolist(), "counts": counts.tolist()}
 
-    freqs = np.fft.rfftfreq(len(data))
-    fft_values = np.fft.rfft(data)
-    magnitude = np.abs(fft_values)
-    counts, bins = np.histogram(freqs, bins=20, weights=magnitude)
-    feature_descriptors["freq_distribution"] = {"bins": bins.tolist(), "counts": counts.tolist()}
+    f, Pxx_spec = signal.welch(data, scaling='spectrum')
+    feature_descriptors["psd"] = {"f": f.tolist(), "Pxx_spec": Pxx_spec.tolist()}
 
     return feature_descriptors
+
+
+def compute_pca(data, sliding_window_size):
+    windows = sliding_window_view(data, window_shape=sliding_window_size)
+    windows = StandardScaler().fit_transform(windows)
+    pca = PCA(n_components=2)
+    pca.fit(windows)
+    v1, v2 = pca.components_[0, :], pca.components_[1, :]
+    projected = pca.transform(windows)
+    return v1, v2, projected
 
 
 class ComputingThread(threading.Thread):
@@ -48,7 +56,7 @@ class ComputingThread(threading.Thread):
         self.active = False
         self.insert_func = insert_func
 
-    def compute_next_index(self):
+    def sample_next_index(self):
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
         intervals = params.get("intervals", [])
         if len(intervals) == 0:
@@ -63,23 +71,19 @@ class ComputingThread(threading.Thread):
             cumulative += length
         return 0
 
-    def compute_plane(self):
+    def process_slice(self):
         start = time.time()
         self.loader.load_numpy_file()
-        next_index = self.compute_next_index()
+        next_index = self.sample_next_index()
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
         slice_size = params["slice_size"]
         sliding_window_size = params["sliding_window_size"]
         data = self.loader.get_slice(next_index, next_index + slice_size)
         if sliding_window_size >= len(data):
             return
-        windows = sliding_window_view(data, window_shape=sliding_window_size)
-        windows = StandardScaler().fit_transform(windows)
-        pca = PCA(n_components=2)
-        pca.fit(windows)
-        v1, v2 = pca.components_[0, :], pca.components_[1, :]
-        projected = pca.transform(windows)
+        v1, v2, projected = compute_pca(data, sliding_window_size)
         feature_descriptors = compute_feature_descriptors(data, projected)
+
         to_insert = {
             "dataset": self.loader.dataset, "subset": self.loader.subset,
             "v1": v1.tolist(), "v2": v2.tolist(), "sliding_window_size": sliding_window_size,
@@ -87,12 +91,22 @@ class ComputingThread(threading.Thread):
             "timestamp": datetime.datetime.now().timestamp(),
             "feature_descriptors": feature_descriptors
         }
-        label_delta = self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
+
+        labels = self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
+        latest = self.db["fingerprints"].find().sort({"$natural": 1}).limit(1)[0]
+
         if self.sio is not None:
-            self.sio.emit('share_computation_result', {'room': self.loader.redis_prefix, 'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta})
+            self.sio.emit('share_computation_result', {
+                'room': self.loader.redis_prefix,
+                'new_fingerprint': database.serialize_mongodb(latest),
+                'labels': labels
+            })
         end = time.time()
-        print(f"Computed vectors at {next_index} in {end - start} seconds")
-        return {'new_fingerprint': database.serialize_mongodb(to_insert), 'label_delta': label_delta}
+        print(f"Processed slice at {next_index} in {end - start} seconds")
+        return {'new_fingerprint': database.serialize_mongodb(latest), 'labels': labels}
+
+
+
 
     def stop(self):
         self.stop_request = True
@@ -108,7 +122,7 @@ class ComputingThread(threading.Thread):
             if not self.active:
                 time.sleep(1)
                 continue
-            self.compute_plane()
+            self.process_slice()
 
 
 if __name__ == '__main__':
@@ -120,7 +134,7 @@ if __name__ == '__main__':
     db = database.get_db()
     insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
     thread = ComputingThread(db, loader.r, loader, insert_func)
-    thread.compute_plane()
+    thread.process_slice()
     # thread.start()
     # print("after run")
     # print(thread.is_alive())

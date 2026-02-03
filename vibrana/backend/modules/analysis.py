@@ -9,5 +9,6 @@ analysis_app = flask.Blueprint("analysis", __name__)
 @validate_subset
 def flask_compute_clustering(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    compute_clusters_inc_dbscan(db, dataset, subset)
+    feature_descriptor = "tde"
+    compute_clusters_inc_dbscan(db, dataset, subset, feature_descriptor)
     return {"success": True}
