@@ -11,8 +11,8 @@ def inject_meta_file(folder, existing_config):
             existing_config = {**existing_config, **json.load(f)}
     return existing_config
 
-def get_base_dataset_config(dataset_folder, dataset, dataset_type):
-    dataset_conf = {"name": dataset, "folder": dataset, "loader": "memory", "dataset_type": dataset_type}
+def get_base_dataset_config(dataset_folder, dataset):
+    dataset_conf = {"name": dataset, "folder": dataset, "loader": "memory"}
     dataset_conf = inject_meta_file(dataset_folder, dataset_conf)
     dataset_conf["subsets"] = {}
     return dataset_conf
@@ -38,24 +38,19 @@ def create_chunks_config(dataset_folder, subset):
             subset_conf["file_list"].append(os.path.join(str(subset_folder), file))
     return subset_conf
 
-def iterate_dataset_folder(folder, parse_func, dataset_type):
+def iterate_dataset_folder(folder, parse_func):
     datasets = {}
     for dataset in os.listdir(folder):
         dataset_folder = os.path.join(folder, dataset)
-        datasets[dataset] = get_base_dataset_config(dataset_folder, dataset, dataset_type)
+        datasets[dataset] = get_base_dataset_config(dataset_folder, dataset)
         for subset in os.listdir(dataset_folder):
             if os.path.isdir(os.path.join(dataset_folder, subset)):
                 datasets[dataset]["subsets"][subset] = parse_func(dataset_folder, subset)
     return datasets
 
 def crawl_dataset_folder():
-    streams_folder = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", "streams")
-    chunks_folder = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", "chunks")
-    datasets = {
-        **iterate_dataset_folder(streams_folder, create_streams_config, "stream"),
-        **iterate_dataset_folder(chunks_folder, create_chunks_config, "chunks")
-    }
-    return datasets
+    folder = os.path.join(Path(__file__).parents[3], "data", "prepared-signals")
+    return iterate_dataset_folder(folder, create_streams_config)
 
 
 def get_config():

@@ -8,9 +8,9 @@
 
 </script>
 
-<div class="flex flex-col w-full gap-4 p-6 justify-center items-center h-full font-[Poppins] bg-[#faf9f5]">
-    {#each Object.keys(datasets) as stream}
-        <DatasetListItem dataset={datasets[stream]} dataset_key={stream} />
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 w-full gap-4 p-6 justify-center items-start h-full font-[Poppins] bg-[#faf9f5]">
+    {#each Object.keys(datasets) as ds}
+        <DatasetListItem dataset={datasets[ds]} dataset_key={ds} />
     {/each}
 </div>
 

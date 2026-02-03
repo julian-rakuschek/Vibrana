@@ -44,41 +44,14 @@ export enum ProjectionMode {
 export type Config = {
     [dataset: string]: DatasetConfig;
 }
-
-// Discriminated union of DatasetConfig
-export type DatasetConfig =
-    | StreamDatasetConfig
-    | ChunkDatasetConfig;
-
-export type BaseDatasetConfig = {
+export type DatasetConfig = {
     name: string;
     folder: string;
+    subsets: { [subset: string]: { file: string; name: string } };
     description?: string;
     task?: string;
     source?: string;
     loader: string;
-};
-
-// Stream-specific config
-export type StreamDatasetConfig = BaseDatasetConfig & {
-    dataset_type: "stream";
-    subsets: { [subset: string]: StreamSubsetConfig };
-};
-
-// Chunk-specific config
-export type ChunkDatasetConfig = BaseDatasetConfig & {
-    dataset_type: "chunks";
-    subsets: { [subset: string]: ChunkSubsetConfig };
-};
-
-export type StreamSubsetConfig = {
-    name: string;
-    file: string;
-};
-
-export type ChunkSubsetConfig = {
-    name: string;
-    file_list: string[];
 };
 
 

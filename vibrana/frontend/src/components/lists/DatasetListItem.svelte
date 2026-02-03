@@ -7,8 +7,7 @@
 
 </script>
 
-<div class="w-full md:w-2/3 lg:w-1/2 flex px-10 py-3 flex-col rounded-2xl border-2 border-[#1F1E1D20] bg-white h-full">
-    <div><span class="text-xs bg-[#997652] text-white px-2 rounded-full">{dataset.dataset_type}</span></div>
+<div class="flex p-5 w-full flex-col rounded-2xl border-2 border-[#1F1E1D20] bg-white">
     <p class="font-bold underline">{dataset.name}</p>
     {#if dataset.source}
         {#if dataset.source.startsWith("http")}
@@ -19,15 +18,12 @@
         {/if}
     {/if}
     {#if dataset.description}<p class="text-sm italic">{dataset.description}</p>{/if}
-    {#if dataset.dataset_type === "stream"}
-        <ul class="list-inside list-disc mt-2">
-            {#each Object.keys(dataset.subsets) as subset}
-                <li><a class="text-indigo-500 hover:text-indigo-700"
-                       href={`/datasets/${dataset_key}/${subset}/pda`}>{dataset.subsets[subset].name}</a></li>
-            {/each}
-        </ul>
-    {:else}
-        <p>Chunks are WIP</p>
-    {/if}
+    <div class="flex flex-row gap-2 mt-4">
+        {#each Object.keys(dataset.subsets) as subset}
+            <a class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl transition hover:bg-indigo-200" href={`/datasets/${dataset_key}/${subset}/pda`}>
+                {dataset.subsets[subset].name}
+            </a>
+        {/each}
+    </div>
 </div>
 
