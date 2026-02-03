@@ -38,18 +38,4 @@ def compute_clusters_hierarchical(dataset, subset):
     json_tree = convert_tree(linkage_tree, chunks)
     return json_tree
 
-def compute_clusters_inc_dbscan(db: Database, dataset, subset, feature_descriptor):
-    parameters = database.get_parameters(db, dataset, subset)
-    _, features, ids = database.get_fingerprints_for_clustering(db, dataset, subset, feature_descriptor)
-    if len(features) == 0:
-        return
-    dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
-    dbscan.insert(np.array(features))
-    labels = dbscan.get_cluster_labels(np.array(features))
-    for label, _id in zip(labels, ids):
-        db["fingerprints"].update_one({"_id": _id}, {"$set": {"label": label}})
 
-
-if __name__ == '__main__':
-    db = database.get_db()
-    compute_clusters_inc_dbscan(db, "hydro", "x")

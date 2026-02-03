@@ -1,6 +1,6 @@
 import flask
 
-from vibrana.backend.helper.clustering import compute_clusters_inc_dbscan
+from vibrana.backend.helper.database import cluster_all_fingerprints_all_feature_descriptors
 from vibrana.backend.helper.validators import validate_subset
 
 analysis_app = flask.Blueprint("analysis", __name__)
@@ -9,6 +9,5 @@ analysis_app = flask.Blueprint("analysis", __name__)
 @validate_subset
 def flask_compute_clustering(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    feature_descriptor = "tde"
-    compute_clusters_inc_dbscan(db, dataset, subset, feature_descriptor)
+    cluster_all_fingerprints_all_feature_descriptors(db, dataset, subset)
     return {"success": True}

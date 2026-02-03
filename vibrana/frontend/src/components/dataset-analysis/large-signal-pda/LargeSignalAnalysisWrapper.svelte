@@ -54,6 +54,8 @@
         fingerprints = [...fingerprints, new_fingerprint];
 
         index_allocation = updateIndexAllocationArray(index_allocation, new_fingerprint, zoom_interval);
+
+        console.log(index_allocation)
         for (let i = 0; i < labels.tde.length; i++) {
             colorGenerator.getColor(labels.tde[i]);
             fingerprints[i].label.tde = labels.tde[i];

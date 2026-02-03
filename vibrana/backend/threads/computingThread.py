@@ -93,7 +93,7 @@ class ComputingThread(threading.Thread):
         }
 
         labels = self.insert_func(self.loader.dataset, self.loader.subset, to_insert)
-        latest = self.db["fingerprints"].find().sort({"$natural": 1}).limit(1)[0]
+        latest = self.db["fingerprints"].find().sort({"$natural": -1}).limit(1)[0]
 
         if self.sio is not None:
             self.sio.emit('share_computation_result', {
