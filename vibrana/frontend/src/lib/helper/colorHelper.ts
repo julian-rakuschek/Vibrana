@@ -87,3 +87,9 @@ export function reduceSaturation(color: string): string {
   c.lch.l *= 1.4;
   return c.toString({format: "rgb"});
 }
+
+export function withOpacityOnWhite(color: string, opacity: number) {
+    const c = new Color(color);
+    const result: Color = c.mix("white", 1 - opacity)
+    return result.toString({format: "hex"});
+}

@@ -3,6 +3,8 @@
     import FingerprintRendering from "@components/atoms/FingerprintRendering.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import type {Fingerprint} from "@lib/types";
+    import {fingerprintMode} from "@lib/stores";
+    import PSDRendering from "@components/atoms/PSDRendering.svelte";
 
     export let dataProvider: DataProvider;
     let loading = dataProvider.loading;
@@ -48,7 +50,11 @@
             {#if $loading}
                 <CenteredLoadingSpinner/>
             {:else}
-                <FingerprintRendering {dataProvider} fingerprint={fingerprints[hovering_fingerprint_index]}/>
+                {#if $fingerprintMode === "tde"}
+                    <FingerprintRendering {dataProvider} fingerprint={fingerprints[hovering_fingerprint_index]}/>
+                {:else}
+                    <PSDRendering data={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec} />
+                {/if}
             {/if}
         </div>
     {/if}

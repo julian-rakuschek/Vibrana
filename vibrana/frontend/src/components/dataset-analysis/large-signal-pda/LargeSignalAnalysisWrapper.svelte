@@ -118,11 +118,11 @@
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'TDE' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("TDE")}>
+                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'tde' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("tde")}>
                     <img src="/tde.png" />
                     <p class="text-center text-indigo-800">Projection</p>
                 </div>
-                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'PSD' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("PSD")}>
+                <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'psd' ? 'border-indigo-800' : 'border-indigo-100'}" on:click={() => fingerprintMode.set("psd")}>
                     <img src="/welch.png" />
                     <p class="text-center text-indigo-800">PSD</p>
                 </div>

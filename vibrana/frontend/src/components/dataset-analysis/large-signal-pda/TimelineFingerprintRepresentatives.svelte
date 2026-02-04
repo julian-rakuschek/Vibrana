@@ -5,6 +5,8 @@
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
     import * as d3 from 'd3';
+    import {fingerprintMode} from "@lib/stores";
+    import PSDRendering from "@components/atoms/PSDRendering.svelte";
 
     export let width: number;
     export let index_allocation: number[];
@@ -114,12 +116,16 @@
                     {#if $loading}
                         <CenteredLoadingSpinner color={colorMapping[fp.label.tde]} />
                     {:else}
-                        <FingerprintRendering
-                                {dataProvider} {size}
-                                update_on_fp_change={false}
-                                transparent
-                                fingerprint={fp}
-                        />
+                        {#if $fingerprintMode === "tde"}
+                            <FingerprintRendering
+                                    {dataProvider} {size}
+                                    update_on_fp_change={false}
+                                    transparent
+                                    fingerprint={fp}
+                            />
+                        {:else}
+                            <PSDRendering size={size} data={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.tde]} />
+                        {/if}
                     {/if}
                 </div>
             {/if}

@@ -92,8 +92,8 @@ export type Fingerprint = {
     timestamp: number;
     sliding_window_size: number;
     feature_descriptors: {
-        radii_distribution: Histogram;
-        freq_distribution: Histogram;
+        tde: Histogram;
+        psd: { f: number[]; Pxx_spec: number[] };
     };
     label: {
         tde: number;
