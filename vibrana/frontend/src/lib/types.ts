@@ -129,6 +129,7 @@ export type ParameterSettings = {
         samplingAlgorithm: string;
         intervals: number[][];
         running: boolean;
+        slice_size: number;
     };
 }
 
@@ -143,6 +144,7 @@ export type ParameterSettingsUpdate = {
         minPoints?: number;
     };
     sampling?: {
+        slice_size?: number;
         samplingAlgorithm?: string;
         intervals?: number[][];
         running?: boolean;

@@ -9,6 +9,7 @@ from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
 from vibrana.backend.helper.config import get_config
+from vibrana.backend.helper.util import flatten_dict
 
 conf = get_config()
 
@@ -82,9 +83,9 @@ def cluster_all_fingerprints_all_feature_descriptors(db: Database, dataset: str,
 def update_parameters(db: Database, dataset: str, subset: str, update_dict: dict):
     existing = db["parameters"].find_one({"dataset": dataset, "subset": subset})
     if existing:
-        db["parameters"].update_one({"dataset": dataset, "subset": subset}, {"$set": update_dict})
+        db["parameters"].update_one({"dataset": dataset, "subset": subset}, {"$set": flatten_dict(update_dict)})
     else:
-        default_params = {**conf["default_parameters"], **update_dict}
+        default_params = {**flatten_dict(conf["default_parameters"]), **flatten_dict(update_dict)}
         db["parameters"].insert_one({"dataset": dataset, "subset": subset, **default_params})
 
 
