@@ -34,7 +34,8 @@ def compute_feature_descriptors(data, projected):
 
 
 def compute_pca(data, sliding_window_size):
-    windows = sliding_window_view(data, window_shape=sliding_window_size)
+    norm = np.max(np.abs(data))
+    windows = sliding_window_view(data / norm, window_shape=sliding_window_size)
     windows = StandardScaler().fit_transform(windows)
     pca = PCA(n_components=2)
     pca.fit(windows)
