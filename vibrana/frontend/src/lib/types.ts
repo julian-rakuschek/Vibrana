@@ -116,19 +116,37 @@ export type ClusterDelta = {
 }
 
 export type ParameterSettings = {
-    eps: number;
-    minPoints: number;
-    samplingAlgorithm: string;
-    intervals: number[][];
-    running: boolean;
+    tde: {
+        eps: number;
+        minPoints: number;
+        sliding_window_size: number;
+    };
+    psd: {
+        eps: number;
+        minPoints: number;
+    };
+    sampling: {
+        samplingAlgorithm: string;
+        intervals: number[][];
+        running: boolean;
+    };
 }
 
 export type ParameterSettingsUpdate = {
-    eps?: number;
-    minPoints?: number;
-    samplingAlgorithm?: string;
-    intervals?: number[][];
-    running?: boolean;
+    tde?: {
+        eps?: number;
+        minPoints?: number;
+        sliding_window_size?: number;
+    };
+    psd?: {
+        eps?: number;
+        minPoints?: number;
+    };
+    sampling?: {
+        samplingAlgorithm?: string;
+        intervals?: number[][];
+        running?: boolean;
+    };
 }
 
 

@@ -60,7 +60,7 @@ def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str, fea
     return labels, feature_descriptors, ids
 
 def cluster_all_fingerprints(db: Database, dataset: str, subset: str, feature_descriptor: str):
-    parameters = get_parameters(db, dataset, subset)
+    parameters = get_parameters(db, dataset, subset)[feature_descriptor]
     _, features, ids = get_fingerprints_for_clustering(db, dataset, subset, feature_descriptor)
     dbscan = IncrementalDBSCAN(eps=parameters["eps"], min_pts=parameters["minPoints"], metric="jensenshannon")
     dbscan.insert(features)
@@ -97,7 +97,7 @@ def get_parameters(db: Database, dataset: str, subset: str):
 
 def get_running(db: Database, dataset: str, subset: str):
     params = get_parameters(db, dataset, subset)
-    return params.get("running", False)
+    return params.get("sampling", {}).get("running", False)
 
 
 if __name__ == '__main__':

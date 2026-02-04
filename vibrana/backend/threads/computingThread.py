@@ -57,7 +57,7 @@ class ComputingThread(threading.Thread):
         self.insert_func = insert_func
 
     def sample_next_index(self):
-        params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
+        params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         intervals = params.get("intervals", [])
         if len(intervals) == 0:
             return floor(random.random() * self.loader.data_size)
@@ -76,8 +76,8 @@ class ComputingThread(threading.Thread):
         self.loader.load_numpy_file()
         next_index = self.sample_next_index()
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
-        slice_size = params["slice_size"]
-        sliding_window_size = params["sliding_window_size"]
+        slice_size = params["sampling"]["slice_size"]
+        sliding_window_size = params["tde"]["sliding_window_size"]
         data = self.loader.get_slice(next_index, next_index + slice_size)
         if sliding_window_size >= len(data):
             return

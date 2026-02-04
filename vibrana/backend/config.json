@@ -10,11 +10,19 @@
     "port": 6379
   },
   "default_parameters": {
-    "eps": 0.5,
-    "minPoints": 5,
-    "samplingAlgorithm": "random",
-    "running": false,
-    "slice_size": 10000,
-    "sliding_window_size": 1000
+    "tde": {
+      "eps": 0.5,
+      "minPoints": 5,
+      "sliding_window_size": 1000
+    },
+    "psd": {
+      "eps": 0.5,
+      "minPoints": 5
+    },
+    "sampling": {
+      "samplingAlgorithm": "random",
+      "running": false,
+      "slice_size": 10000
+    }
   }
 }

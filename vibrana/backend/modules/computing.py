@@ -14,7 +14,7 @@ computing_app = flask.Blueprint("computing", __name__)
 @validate_subset
 def flask_get_computing_status(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    status = database.get_parameters(db, dataset, subset).get("running", False)
+    status = database.get_running(db, dataset, subset)
     return flask.jsonify(status)
 
 

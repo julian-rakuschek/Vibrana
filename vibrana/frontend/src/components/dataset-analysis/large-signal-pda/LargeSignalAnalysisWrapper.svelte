@@ -142,7 +142,7 @@
             </div>
             <div class="bg-indigo-100 rounded-xl p-4 gap-2 flex flex-col text-indigo-800">
                 <div class="flex flex-row justify-between">
-                    <p class="font-semibold">Computing Control</p>
+                    <p class="font-semibold">Sampling Control</p>
                     {#if running}<p class="bg-green-600 text-white rounded-full px-4 pt-0.5 pb-1 text-sm font-semibold">running</p>
                     {:else}<p class="bg-indigo-600 text-white rounded-full px-4 pt-0.5 pb-1 text-sm font-semibold">paused</p>{/if}
                 </div>
@@ -150,8 +150,10 @@
                                 bind:running/>
             </div>
             <div class="bg-indigo-100 rounded-xl p-4 flex flex-col gap-4 text-indigo-800">
-                <p class="font-semibold">Clustering Parameters</p>
-                <ClusteringSettings {dataset} {subset} onRecomputeComplete={fetchAndDrawAll}/>
+                <p class="font-semibold">
+                    Clustering Parameters ({$fingerprintMode === "tde" ? "Projection" : "PSD"})
+                </p>
+                <ClusteringSettings {dataset} {subset} onRecomputeComplete={fetchAndDrawAll} fingerprintMode={$fingerprintMode}/>
             </div>
         </div>
         <div class="flex flex-col grow overflow-hidden" bind:clientWidth={width}>

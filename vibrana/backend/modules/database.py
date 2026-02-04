@@ -57,7 +57,7 @@ def flask_clear_store_intervals(dataset, subset, path):
     db = flask.current_app.config["DB"]
     intervals = json.loads(flask.request.data)
     current_params = database.get_parameters(db, dataset, subset)
-    current_params["intervals"] = intervals
+    current_params["sampling"]["intervals"] = intervals
     database.update_parameters(db, dataset, subset, current_params)
     return "OK", 200
 
@@ -67,5 +67,5 @@ def flask_clear_store_intervals(dataset, subset, path):
 def flask_clear_get_intervals(dataset, subset, path):
     db = flask.current_app.config["DB"]
     current_params = database.get_parameters(db, dataset, subset)
-    intervals = current_params.get("intervals", [])
+    intervals = current_params.get("sampling", {}).get("intervals", [])
     return database.serialize_mongodb(intervals)
