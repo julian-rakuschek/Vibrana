@@ -66,7 +66,7 @@
         }
     }
 
-    function generateConnectionLines(fingerprint_index_allocation: number[]) {
+    function generateConnectionLines(fingerprint_index_allocation: number[], feature: "tde" | "psd") {
         if (!parentDiv) return [];
         const xPositions = getDivPositions();
         const lines = [];
@@ -82,7 +82,7 @@
                 const target: Point = {x: Math.floor(zoomed * width), y: connectorHeight};
                 lines.push({
                     d: linkGenerator({source, target}),
-                    color: colorMapping[fp.label.tde]
+                    color: colorMapping[fp.label[feature]]
                 })
             }
         }
@@ -111,10 +111,10 @@
             {#if fingerprint_index_allocation[i] !== -1}
                 {@const fp = fingerprints[fingerprint_index_allocation[i]]}
                 <div class="absolute opacity-15 w-full h-full  rounded-3xl"
-                     style={`background-color: ${colorMapping[fp.label.tde]}`}></div>
+                     style={`background-color: ${colorMapping[fp.label[$fingerprintMode]]}`}></div>
                 <div class="absolute w-full h-full">
                     {#if $loading}
-                        <CenteredLoadingSpinner color={colorMapping[fp.label.tde]} />
+                        <CenteredLoadingSpinner color={colorMapping[fp.label[$fingerprintMode]]} />
                     {:else}
                         {#if $fingerprintMode === "tde"}
                             <FingerprintRendering
@@ -124,7 +124,7 @@
                                     fingerprint={fp}
                             />
                         {:else}
-                            <PSDRendering size={size} data={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.tde]} />
+                            <PSDRendering size={size} data={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.psd]} />
                         {/if}
                     {/if}
                 </div>
@@ -135,7 +135,7 @@
 
 <div class="w-full">
     <svg width={width} height={connectorHeight}>
-        {#each generateConnectionLines(fingerprint_index_allocation) as path}
+        {#each generateConnectionLines(fingerprint_index_allocation, $fingerprintMode) as path}
             <path d={path.d} fill="none" stroke={path.color} stroke-width={2}/>
         {/each}
     </svg>

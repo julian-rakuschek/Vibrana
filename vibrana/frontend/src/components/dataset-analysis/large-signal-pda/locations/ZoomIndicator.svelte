@@ -10,6 +10,7 @@
     export let intervals: [number, number][] = [];
     export let colorMapping: ClusterColorMapping;
     export let fingerprints: Fingerprint[];
+    export let feature: "tde" | "psd" = "tde"
 
     const height = 20;
     let canvas: HTMLCanvasElement;
@@ -39,12 +40,12 @@
 
     onMount(() => {
         context = canvas.getContext('2d');
-        label_allocation = computeLabelAllocationArray(fingerprints, width, [0, 1]);
+        label_allocation = computeLabelAllocationArray(fingerprints, width, [0, 1], feature);
         render(zoom_interval, intervals, label_allocation)
     })
 
     $: {
-        label_allocation = computeLabelAllocationArray(fingerprints, width, [0, 1]);
+        label_allocation = computeLabelAllocationArray(fingerprints, width, [0, 1], feature);
         render(zoom_interval, intervals, label_allocation);
     }
 </script>

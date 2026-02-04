@@ -32,9 +32,11 @@
     export let subset = 'x';
     const in_memory = $page.data.config[dataset].loader === "memory";
 
-    const colorGenerator = new ColorGenerator();
-    let colorMapping = colorGenerator.getColorDictionary();
     let dataProvider = new DataProvider(dataset, subset, in_memory);
+    const color_generator_tde = new ColorGenerator();
+    const color_generator_psd = new ColorGenerator();
+    let color_mapping_tde = color_generator_tde.getColorDictionary();
+    let color_mapping_psd = color_generator_psd.getColorDictionary();
     let fingerprints: Fingerprint[] = [];
     let init_load = true;
     let width = 1000;
@@ -42,7 +44,8 @@
     let zoom_interval: [number, number] = [0, 1];
 
     let index_allocation: number[] = new Array(width).fill(-1);
-    let label_allocation: number[] = new Array(width).fill(null);
+    let label_allocation_tde: number[] = new Array(width).fill(null);
+    let label_allocation_psd: number[] = new Array(width).fill(null);
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -57,21 +60,23 @@
 
         console.log(index_allocation)
         for (let i = 0; i < labels.tde.length; i++) {
-            colorGenerator.getColor(labels.tde[i]);
+            color_generator_tde.getColor(labels.tde[i]);
             fingerprints[i].label.tde = labels.tde[i];
         }
         for (let i = 0; i < labels.psd.length; i++) {
-            colorGenerator.getColor(labels.psd[i]);
+            color_generator_psd.getColor(labels.psd[i]);
             fingerprints[i].label.psd = labels.psd[i];
         }
 
         for (let i = 0; i < width; i++) {
             if (index_allocation[i] !== -1) {
-                label_allocation[i] = fingerprints[index_allocation[i]].label.tde;
+                label_allocation_tde[i] = fingerprints[index_allocation[i]].label.tde;
+                label_allocation_psd[i] = fingerprints[index_allocation[i]].label.psd;
             }
         }
 
-        colorMapping = colorGenerator.getColorDictionary();
+        color_mapping_tde = color_generator_tde.getColorDictionary();
+        color_mapping_psd = color_generator_psd.getColorDictionary();
     }
 
     async function fetchAndDrawAll() {
@@ -79,12 +84,15 @@
         let vectors_query = await ApiRoutes.getFingerprints.fetch({params: {dataset, subset}});
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
-            colorGenerator.getColor(vectors_query[i].label.tde);
+            color_generator_tde.getColor(vectors_query[i].label.tde);
+            color_generator_psd.getColor(vectors_query[i].label.psd);
         }
         fingerprints = [...vectors_query];
-        colorMapping = colorGenerator.getColorDictionary();
+        color_mapping_tde = color_generator_tde.getColorDictionary();
+        color_mapping_psd = color_generator_psd.getColorDictionary();
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
-        label_allocation = computeLabelAllocationArray(fingerprints, width, zoom_interval);
+        label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
+        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
     }
 
     onMount(async () => {
@@ -94,7 +102,8 @@
 
     function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
-        label_allocation = computeLabelAllocationArray(fingerprints, width, zoom_interval);
+        label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
+        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
     }
 
     $: updateAllocationArrays(width, zoom_interval);
@@ -114,7 +123,11 @@
                     <p class="col-span-3">Fingerprints:</p>
                     <p>{fingerprints.length}</p>
                     <p class="col-span-3">Number of Clusters:</p>
-                    <p>{(new Set(label_allocation)).size - 1}</p>
+                    {#if $fingerprintMode === "tde"}
+                        <p>{(new Set(label_allocation_tde)).size - 1}</p>
+                    {:else}
+                        <p>{(new Set(label_allocation_psd)).size - 1}</p>
+                    {/if}
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -173,16 +186,21 @@
             {#key width}
                 <TimelineFingerprintRepresentatives
                         {width} {index_allocation} {fingerprints}
-                        {dataProvider} {colorMapping} {zoom_interval}
+                        {dataProvider} {zoom_interval}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                 />
                 <FingerprintsWrapper
                         {width} {dataset} {subset} {fingerprints}
                         {dataProvider} {index_allocation}
-                        {colorMapping} {label_allocation}
+                        label_allocation={$fingerprintMode === "tde" ? label_allocation_tde : label_allocation_psd}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                         bind:zoom_interval
                 />
                 <p class="font-semibold mt-5">Zooming Location</p>
-                <ZoomIndicator {width} {fingerprints} {colorMapping} {zoom_interval} />
+                <ZoomIndicator
+                        {width} {fingerprints} {zoom_interval} feature={$fingerprintMode}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                />
                 <div class="flex">
     <p on:click={() => zoom_interval = [0, 1]} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</p>
 </div>

@@ -21,4 +21,4 @@ export const simpleTable = writable<boolean>(false)
 export const numberClusters = writable<number>(2)
 export const selectedChunk = writable<SelectedChunk | undefined>(undefined)
 
-export const fingerprintMode = writable<string>("tde");
+export const fingerprintMode = writable<"tde" | "psd">("tde");
