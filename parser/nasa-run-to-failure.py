@@ -14,8 +14,8 @@ meta = {
 }
 
 def process_run_to_failure(subset, channel):
-    raw_files_folder = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "nasa-run-to-failure", subset)
-    dataset_folder = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "streams", "nasa-run-to-failure")
+    raw_files_folder = os.path.join(Path(__file__).parents[1], "data", "raw-signals", "nasa-run-to-failure", subset)
+    dataset_folder = os.path.join(Path(__file__).parents[1], "data", "prepared-signals", "nasa-run-to-failure")
     subset_folder = os.path.join(dataset_folder, subset)
 
     if not os.path.exists(raw_files_folder):

@@ -16,6 +16,8 @@ meta = {
 
 def extract_slice(raw_file_path, start, end):
     df = pd.read_parquet(raw_file_path, engine='fastparquet')
+    ts = df.loc[start:end - 1, "TimeStamp"]
+    unix_ts = ts.view("int64").to_numpy() / 1e9
     channels = ["Ch1", "Ch2", "Ch3"]
     data = []
     for c in channels:
@@ -32,7 +34,7 @@ def extract_slice(raw_file_path, start, end):
             channel_data[channel_data < 8] = channel_mean
 
         data.append(channel_data)
-    return data
+    return unix_ts, data
 
 
 def save_preview_image(Ch1, Ch2, Ch3, save_path):
@@ -56,9 +58,9 @@ def save_preview_image(Ch1, Ch2, Ch3, save_path):
 
 
 def parse_hydro(source_file_name, target_folder_name):
-    raw_file_path = os.path.join(Path(__file__).parents[2], "data", "raw-signals", "hydro", source_file_name)
-    file_parsed_folder = os.path.join(Path(__file__).parents[2], "data", "prepared-signals", "streams", target_folder_name)
-    clipboard_folder = os.path.join(Path(__file__).parents[2], "data", "clipboard", "hydro")
+    raw_file_path = os.path.join(Path(__file__).parents[1], "data", "raw-signals", "hydro", source_file_name)
+    file_parsed_folder = os.path.join(Path(__file__).parents[1], "data", "prepared-signals", target_folder_name)
+    clipboard_folder = os.path.join(Path(__file__).parents[1], "data", "clipboard", "hydro")
 
     channel_folder = [
         os.path.join(file_parsed_folder, "x"),
@@ -76,10 +78,13 @@ def parse_hydro(source_file_name, target_folder_name):
     for folder in channel_folder:
         Path(folder).mkdir(parents=True, exist_ok=True)
 
-    values = extract_slice(raw_file_path, 68_500_000, 72_500_000)
+    timestamps, values = extract_slice(raw_file_path, 68_500_000, 72_500_000)
     np.save(os.path.join(channel_folder[0], f"values.npy"), values[0])
+    np.save(os.path.join(channel_folder[0], f"timestamps.npy"), timestamps)
     np.save(os.path.join(channel_folder[1], f"values.npy"), values[1])
+    np.save(os.path.join(channel_folder[1], f"timestamps.npy"), timestamps)
     np.save(os.path.join(channel_folder[2], f"values.npy"), values[2])
+    np.save(os.path.join(channel_folder[2], f"timestamps.npy"), timestamps)
     save_preview_image(values[0], values[1], values[2], os.path.join(clipboard_folder, f"{target_folder_name}.png"))
 
     with open(os.path.join(file_parsed_folder, "meta.json"), "w") as f:
