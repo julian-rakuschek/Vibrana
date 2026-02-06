@@ -21,6 +21,7 @@ const genericRoutes = {
 
 const dbRoutes = {
   getSlice: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index?: number; end_index?: number }, number[]>("GET", "/db/:dataset/:subset/slice"),
+  getTimestamps: new ApiRoute<undefined, { dataset: string; subset: string; }, { start_index?: number; end_index?: number; amount: number }, number[]>("GET", "/db/:dataset/:subset/timestamps"),
   getFingerprints: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, Fingerprint[]>("GET", "/db/:dataset/:subset/fingerprints"),
   clearFingerprints: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/clear"),
   getParameters: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, ParameterSettings>("GET", "/db/:dataset/:subset/parameters"),

@@ -1,6 +1,7 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
 import type {Fingerprint} from "@lib/types";
 import {type Writable, writable} from "svelte/store";
+import {stretchBalanced} from "@lib/helper/util";
 
 export class DataProvider {
     private readonly dataset: string;
@@ -23,6 +24,20 @@ export class DataProvider {
         console.log("Load complete")
         this.loading.set(false);
         return true;
+    }
+
+    async get_timestamps(zoom_interval: [number, number], width: number) {
+        let start = Math.floor(zoom_interval[0] * this.get_length());
+        let end = Math.floor(zoom_interval[1] * this.get_length());
+        if (this.get_length() == 0) {
+            start = 0;
+            end = -1;
+        }
+        const timestamps = await ApiRoutes.getTimestamps.fetch({
+            params: {dataset: this.dataset, subset: this.subset},
+            queryParams: {start_index: start, end_index: end, amount: width}
+        });
+        return stretchBalanced(timestamps, width);
     }
 
     isInMemory(): boolean {return this.in_memory};

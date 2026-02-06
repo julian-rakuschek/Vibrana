@@ -27,6 +27,7 @@
     import MouseScroll from "@components/icons/MouseScroll.svelte";
     import ZoomIndicator from "@components/dataset-analysis/large-signal-pda/locations/ZoomIndicator.svelte";
     import {fingerprintMode} from "@lib/stores";
+    import {humanTimeSpan} from "@lib/helper/util";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -43,6 +44,7 @@
     let running = false;
     let zoom_interval: [number, number] = [0, 1];
 
+    let timestamps: number[] = new Array(width).fill(0);
     let index_allocation: number[] = new Array(width).fill(-1);
     let label_allocation_tde: number[] = new Array(width).fill(null);
     let label_allocation_psd: number[] = new Array(width).fill(null);
@@ -93,6 +95,7 @@
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
         label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+        timestamps = await dataProvider.get_timestamps(zoom_interval, width);
     }
 
     onMount(async () => {
@@ -100,10 +103,11 @@
         init_load = false;
     });
 
-    function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
+    async function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
         label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+        timestamps = await dataProvider.get_timestamps(zoom_interval, width);
     }
 
     $: updateAllocationArrays(width, zoom_interval);
@@ -156,7 +160,7 @@
                 <ClusteringSettings {dataset} {subset} onRecomputeComplete={fetchAndDrawAll} fingerprintMode={$fingerprintMode}/>
             </div>
         </div>
-        <div class="flex flex-col grow overflow-hidden" bind:clientWidth={width}>
+        <div class="flex flex-col grow overflow-shown" bind:clientWidth={width}>
             <div class="gap-2 flex flex-col pb-3">
                 <p class="font-semibold">Fingerprint Locations and Clusters</p>
                 <p class="text-sm">
@@ -182,7 +186,7 @@
                         : Zoom
                     </div>
                 </div>
-
+                <p>Time Span: {humanTimeSpan(timestamps)}</p>
             </div>
 
             {#key width}
@@ -193,7 +197,7 @@
                 />
                 <FingerprintsWrapper
                         {width} {dataset} {subset} {fingerprints}
-                        {dataProvider} {index_allocation}
+                        {dataProvider} {index_allocation} {timestamps}
                         label_allocation={$fingerprintMode === "tde" ? label_allocation_tde : label_allocation_psd}
                         colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                         bind:zoom_interval

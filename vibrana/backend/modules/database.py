@@ -23,9 +23,9 @@ def flask_get_slice(dataset, subset, path):
 @db_app.get("<dataset>/<subset>/timestamps")
 @validate_subset
 def flask_get_timestamps(dataset, subset, path):
-    start_index = flask.request.args.get("start_index", 0)
-    end_index = flask.request.args.get("end_index", -1)
-    amount = flask.request.args.get("amount", 1000)
+    start_index = int(flask.request.args.get("start_index", 0))
+    end_index = int(flask.request.args.get("end_index", -1))
+    amount = int(flask.request.args.get("amount", 1000))
 
     loader = RedisLoader(path, dataset, subset)
     loader.load_numpy_file()

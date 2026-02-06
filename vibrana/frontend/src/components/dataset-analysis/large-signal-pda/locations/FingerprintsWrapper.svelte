@@ -7,6 +7,8 @@
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import {type ClusterColorMapping, type Fingerprint} from '@lib/types';
     import ClusterBackground from '@components/dataset-analysis/large-signal-pda/locations/ClusterBackground.svelte';
+    import TimestampHover from "@components/dataset-analysis/large-signal-pda/locations/TimestampHover.svelte";
+    import {formatUnixTimestamp} from "@lib/helper/util";
 
     export let dataset: string;
     export let subset: string;
@@ -17,6 +19,7 @@
     export let fingerprints: Fingerprint[] = [];
     export let colorMapping: ClusterColorMapping;
     export let zoom_interval: [number, number] = [0, 1];
+    export let timestamps: number[] = [];
     let intervalSelector: IntervalSelection;
     let mouse_x = -1;
 
@@ -38,6 +41,21 @@
     </div>
     <div class="w-full absolute top-[100px] left-0">
         <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x} />
+    </div>
+    <div class="w-full absolute top-[-50px] left-0">
+        <TimestampHover {width} {mouse_x} {timestamps} />
+    </div>
+    <div class="w-[100px] absolute top-1/2 -translate-y-1/2 -left-[70px] rotate-90">
+        {#if timestamps.length > 0}
+            <p class="text-center text-xs">{formatUnixTimestamp(timestamps[0]).isoDate}</p>
+            <p class="text-center text-sm">{formatUnixTimestamp(timestamps[0]).time}</p>
+        {/if}
+    </div>
+    <div class="w-[100px] absolute top-1/2 -translate-y-1/2 -right-[70px] rotate-90">
+        {#if timestamps.length > 0}
+            <p class="text-center text-xs">{formatUnixTimestamp(timestamps[timestamps.length - 1]).isoDate}</p>
+            <p class="text-center text-sm">{formatUnixTimestamp(timestamps[timestamps.length - 1]).time}</p>
+        {/if}
     </div>
 </div>
 <div class="flex">

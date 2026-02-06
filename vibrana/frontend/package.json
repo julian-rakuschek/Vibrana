@@ -51,6 +51,7 @@
     "colorjs.io": "^0.5.2",
     "d3": "^7.9.0",
     "d3fc": "^15.2.13",
+    "date-fns": "^4.1.0",
     "earcut": "^3.0.0",
     "fast-kde": "^0.2.2",
     "polygon-clipping": "^0.15.7",
