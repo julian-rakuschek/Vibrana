@@ -13,6 +13,8 @@
     export let mouse_x = -1;
     export let index_allocation: number[] = new Array(width).fill(-1);
 
+    const max_fp_mouse_distance = 20;
+
     let hovering_fingerprint_index = -1;
     let hovering_fingerprint_pixel_pos = -1;
 
@@ -21,7 +23,7 @@
         let step = 0;
         hovering_fingerprint_index = -1;
         hovering_fingerprint_pixel_pos = -1;
-        while (step < index_allocation.length) {
+        while (step < index_allocation.length && step < max_fp_mouse_distance) {
             const left = index - step >= 0 ? index - step : 0;
             const right = index + step < index_allocation.length ? index + step : index_allocation.length - 1;
             if (index_allocation[left] !== -1) {
@@ -42,7 +44,7 @@
 </script>
 
 <div class="relative w-full" style={`width: ${width}px;`}>
-    {#if mouse_x !== -1}
+    {#if mouse_x !== -1 && hovering_fingerprint_index !== -1}
         <div class="absolute bg-indigo-800 w-[50px] h-[50px] -translate-x-1/2 rotate-45"
              style={`left: ${hovering_fingerprint_pixel_pos}px`}></div>
         <div class="absolute mt-3 p-3 bg-white rounded-xl shadow-xl -translate-x-1/2 border-2 border-solid border-indigo-800"
