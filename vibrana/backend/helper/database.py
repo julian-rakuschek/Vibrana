@@ -9,6 +9,7 @@ from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
 from vibrana.backend.helper.config import get_config
+from vibrana.backend.helper.fluctuationCompute import get_coverage, get_breakpoints
 from vibrana.backend.helper.util import flatten_dict, deep_update
 
 conf = get_config()
@@ -39,8 +40,10 @@ def store_fingerprint(db: Database, data, dataset, subset):
 def get_fingerprints(db: Database, dataset: str, subset: str):
     return list(db["fingerprints"].find({"dataset": dataset, "subset": subset}))
 
+
 def clear_fingerprints(db: Database, dataset: str, subset: str):
     db["fingerprints"].delete_many({"dataset": dataset, "subset": subset})
+    db["provenance"].delete_many({"dataset": dataset, "subset": subset})
 
 
 # ----------------------------------------------
@@ -60,6 +63,7 @@ def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str, fea
     ids = [f["_id"] for f in fingerprints]
     return labels, feature_descriptors, ids
 
+
 def cluster_all_fingerprints(db: Database, dataset: str, subset: str, feature_descriptor: str):
     parameters = get_parameters(db, dataset, subset)[feature_descriptor]
     _, features, ids = get_fingerprints_for_clustering(db, dataset, subset, feature_descriptor)
@@ -70,10 +74,31 @@ def cluster_all_fingerprints(db: Database, dataset: str, subset: str, feature_de
         db["fingerprints"].update_one({"_id": _id}, {"$set": {f"label.{feature_descriptor}": label}})
     return labels
 
+
 def cluster_all_fingerprints_all_feature_descriptors(db: Database, dataset: str, subset: str):
     tde_labels = cluster_all_fingerprints(db, dataset, subset, "tde")
     psd_labels = cluster_all_fingerprints(db, dataset, subset, "psd")
     return {"tde": tde_labels, "psd": psd_labels}
+
+
+# ----------------------------------------------
+#              Provenance Management
+# ----------------------------------------------
+
+def add_provenance_record(db: Database, dataset: str, subset: str):
+    coverage, signal_length = get_coverage(db, dataset, subset)
+    tde_breakpoints = get_breakpoints(db, dataset, subset, "tde")
+    psd_breakpoints = get_breakpoints(db, dataset, subset, "psd")
+    db["provenance"].insert_one({
+        "dataset": dataset,
+        "subset": subset,
+        "coverage": coverage,
+        "signal_length": signal_length,
+        "breakpoints": {
+            "tde": tde_breakpoints,
+            "psd": psd_breakpoints
+        }
+    })
 
 
 # ----------------------------------------------

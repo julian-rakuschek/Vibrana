@@ -1,5 +1,7 @@
 import copy
 
+from pymongo.synchronous.database import Database
+
 from vibrana.backend.helper import database
 
 artificial_fps = [
@@ -12,9 +14,8 @@ artificial_fps = [
     {"start_index": 14, "slice_length": 2},
 ]
 
-def get_coverage():
-    db = database.get_db()
-    fps = db["fingerprints"].find({}, {"start_index": 1, "slice_length": 1, "label": 1, "max_index": 1}).sort("start_index")
+def get_coverage(db: Database, dataset: str, subset: str):
+    fps = db["fingerprints"].find({"dataset": dataset, "subset": subset}, {"start_index": 1, "slice_length": 1, "label": 1, "max_index": 1}).sort("start_index")
     current_fp = None
     covered_data_points = 0
     for fp in fps:
@@ -29,14 +30,13 @@ def get_coverage():
             current_fp = copy.deepcopy(fp)
     covered_data_points += current_fp["slice_length"]
     signal_length = current_fp["max_index"] + 1
-    return covered_data_points, covered_data_points / signal_length
+    return covered_data_points, signal_length
 
-def get_breakpoints(feature):
+def get_breakpoints(db: Database, dataset: str, subset: str, feature: str):
     def repr(fp):
         return {"index": fp["start_index"], "label": fp["label"][feature]}
 
-    db = database.get_db()
-    fps = db["fingerprints"].find({}, {"start_index": 1, "slice_length": 1, "label": 1, "max_index": 1}).sort("start_index")
+    fps = db["fingerprints"].find({"dataset": dataset, "subset": subset}, {"start_index": 1, "slice_length": 1, "label": 1, "max_index": 1}).sort("start_index")
     current_fp = None
     breakpoints = []
     for fp in fps:
