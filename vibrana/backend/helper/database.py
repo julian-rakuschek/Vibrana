@@ -100,6 +100,32 @@ def add_provenance_record(db: Database, dataset: str, subset: str):
         }
     })
 
+def get_latest_provenance_record(db: Database, dataset: str, subset: str):
+    res = db["provenance"].find({
+        "dataset": dataset,
+        "subset": subset,
+    }).sort({"$natural": -1}).limit(1)
+    res = list(res)
+    if len(res) > 0:
+        return res[0]
+    return {
+        "dataset": dataset,
+        "subset": subset,
+        "coverage": 0,
+        "signal_length": 0,
+        "breakpoints": {
+            "tde": [],
+            "psd": []
+        }
+    }
+
+
+def get_all_provenance_records(db: Database, dataset: str, subset: str):
+    return db["provenance"].find({
+        "dataset": dataset,
+        "subset": subset,
+    }).sort({"$natural": 1})
+
 
 # ----------------------------------------------
 #              Parameter Management
