@@ -121,10 +121,10 @@ def get_latest_provenance_record(db: Database, dataset: str, subset: str):
 
 
 def get_all_provenance_records(db: Database, dataset: str, subset: str):
-    return db["provenance"].find({
+    return list(db["provenance"].find({
         "dataset": dataset,
         "subset": subset,
-    }).sort({"$natural": 1})
+    }).sort({"$natural": -1}))
 
 
 # ----------------------------------------------

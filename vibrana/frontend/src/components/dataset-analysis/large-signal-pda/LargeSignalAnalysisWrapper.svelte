@@ -30,6 +30,7 @@
     import {humanTimeSpan} from "@lib/helper/util";
     import CoverageIndicator from "@components/dataset-analysis/large-signal-pda/settings-bar/CoverageIndicator.svelte";
     import {useQueryClient} from "@tanstack/svelte-query";
+    import ProvenanceWrapper from "@components/dataset-analysis/large-signal-pda/provenance/ProvenanceWrapper.svelte";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -104,6 +105,12 @@
         await client.invalidateQueries();
     }
 
+    function inkUsed(index_allocation: number[]): number {
+        const count = index_allocation.filter(x => x !== -1).length;
+        const ink = count / index_allocation.length;
+        return Math.round(ink * 10000) / 100
+    }
+
     onMount(async () => {
         await fetchAndDrawAll();
         init_load = false;
@@ -140,6 +147,8 @@
                     {/if}
                     <p class="col-span-3">Coverage:</p>
                     <CoverageIndicator {dataset} {subset} />
+                    <p class="col-span-3">Ink Used:</p>
+                    <p>{inkUsed(index_allocation)}%</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">
@@ -224,6 +233,7 @@
                     <div class="w-[500px]">
                         <ColorLegend colorMode={ColorMode.Age}/>
                     </div>
+                    <ProvenanceWrapper {dataset} {subset} />
                 </div>
             {/key}
         </div>

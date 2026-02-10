@@ -101,7 +101,7 @@ export type Fingerprint = {
     };
 }
 
-export type Breakpoint = {
+export type ProvenanceSeed = {
     index: number;
     label: number;
 }
@@ -112,8 +112,8 @@ export type Provenance = {
     coverage: number;
     signal_length: number;
     breakpoints: {
-        tde: Breakpoint[];
-        psd: Breakpoint[];
+        tde: ProvenanceSeed[];
+        psd: ProvenanceSeed[];
     }
 }
 

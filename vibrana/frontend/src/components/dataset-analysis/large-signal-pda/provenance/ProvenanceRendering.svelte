@@ -1,0 +1,52 @@
+<script lang="ts">
+    import type {ClusterColorMapping, Provenance, ProvenanceSeed} from "@lib/types";
+    import {onMount} from "svelte";
+    import {fillGaps} from "@lib/algorithms/gapFill";
+    import {ColorGenerator} from "@lib/algorithms/colorGenerator";
+
+    export let provenance_records: Provenance[] = [];
+    export let width = 1000;
+
+    let canvas: HTMLCanvasElement;
+    let context: CanvasRenderingContext2D | null;
+    let colorGenerator: ColorGenerator;
+    const rowHeight = 10;
+    const height = provenance_records.length * rowHeight;
+
+    function breakpointsToStripe(seeds: ProvenanceSeed[], signal_length: number, width: number) {
+        let label_allocation: number[] = new Array(width).fill(null);
+        for (const seed of seeds) {
+            const idx = Math.floor(seed.index / signal_length * width);
+            label_allocation[idx] = seed.label;
+        }
+        return fillGaps(label_allocation, null);
+    }
+
+    function render(provenance_records: Provenance[]) {
+        if (!context) return;
+        context.clearRect(0, 0, width, height);
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, width, height);
+        for (let i = 0; i < provenance_records.length; i++) {
+            const labels = breakpointsToStripe(provenance_records[i].breakpoints.tde, provenance_records[i].signal_length, width);
+            for (let j = 0; j < width; j++) {
+                const label = labels[j];
+                context.globalAlpha = 0.2;
+                context.fillStyle = label === null ? 'lightgray' : colorGenerator.getColor(label);
+                context.fillRect(j, rowHeight * i, 1, rowHeight);
+            }
+        }
+    }
+
+    onMount(async () => {
+        context = canvas.getContext('2d');
+        colorGenerator = new ColorGenerator();
+        render(provenance_records);
+    });
+
+    $: render(provenance_records);
+</script>
+
+<div class="w-full">
+    <canvas {height} {width} bind:this={canvas}></canvas>
+</div>

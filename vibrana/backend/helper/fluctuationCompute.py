@@ -44,10 +44,12 @@ def get_breakpoints(db: Database, dataset: str, subset: str, feature: str):
             current_fp = copy.deepcopy(fp)
             continue
         if fp["label"][feature] != current_fp["label"][feature]:
-            breakpoints.append((repr(current_fp), repr(fp)))
+            breakpoints.append(repr(current_fp))
+            breakpoints.append(repr(fp))
         current_fp = copy.deepcopy(fp)
     if not breakpoints and current_fp:
-        breakpoints.append((repr(current_fp), repr(current_fp)))
+        breakpoints.append(repr(current_fp))
+        breakpoints.append(repr(current_fp))
     return breakpoints
 
 if __name__ == '__main__':
