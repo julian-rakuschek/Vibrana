@@ -112,7 +112,7 @@ def get_latest_provenance_record(db: Database, dataset: str, subset: str):
         "dataset": dataset,
         "subset": subset,
         "coverage": 0,
-        "signal_length": 0,
+        "signal_length": 1,
         "breakpoints": {
             "tde": [],
             "psd": []

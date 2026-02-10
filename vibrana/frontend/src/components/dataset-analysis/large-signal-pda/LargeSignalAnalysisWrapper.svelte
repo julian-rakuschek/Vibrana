@@ -28,6 +28,8 @@
     import ZoomIndicator from "@components/dataset-analysis/large-signal-pda/locations/ZoomIndicator.svelte";
     import {fingerprintMode} from "@lib/stores";
     import {humanTimeSpan} from "@lib/helper/util";
+    import CoverageIndicator from "@components/dataset-analysis/large-signal-pda/settings-bar/CoverageIndicator.svelte";
+    import {useQueryClient} from "@tanstack/svelte-query";
 
     export let dataset = 'hydro';
     export let subset = 'x';
@@ -53,7 +55,9 @@
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
     socket.on('message', data => addNewItem(data['new_fingerprint'], data['labels']));
 
-    function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
+    const client = useQueryClient()
+
+    async function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
         console.log(new_fingerprint, labels)
         new_fingerprint['index'] = fingerprints.length;
         fingerprints = [...fingerprints, new_fingerprint];
@@ -79,6 +83,7 @@
 
         color_mapping_tde = color_generator_tde.getColorDictionary();
         color_mapping_psd = color_generator_psd.getColorDictionary();
+        await client.invalidateQueries();
     }
 
     async function fetchAndDrawAll() {
@@ -96,6 +101,7 @@
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
         label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
         timestamps = await dataProvider.get_timestamps(zoom_interval, width);
+        await client.invalidateQueries();
     }
 
     onMount(async () => {
@@ -132,6 +138,8 @@
                     {:else}
                         <p>{(new Set(label_allocation_psd)).size - 1}</p>
                     {/if}
+                    <p class="col-span-3">Coverage:</p>
+                    <CoverageIndicator {dataset} {subset} />
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-4">

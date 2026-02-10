@@ -101,6 +101,22 @@ export type Fingerprint = {
     };
 }
 
+export type Breakpoint = {
+    index: number;
+    label: number;
+}
+
+export type Provenance = {
+    dataset: string;
+    subset: string;
+    coverage: number;
+    signal_length: number;
+    breakpoints: {
+        tde: Breakpoint[];
+        psd: Breakpoint[];
+    }
+}
+
 export type ClusterColorMapping = {
     [key: number]: string;
 }
