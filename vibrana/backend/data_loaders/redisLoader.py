@@ -1,5 +1,6 @@
 import math
 import os
+import time
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +21,11 @@ def get_redis() -> Redis:
     port = conf["redis"]["port"]
     return redis.Redis(host=host, port=port, db=1)
 
+def clear_all_redis():
+    r = get_redis()
+    for key in r.scan_iter("vibrana:*"):
+        r.delete(key)
+
 class RedisLoader(DataLoaderBase):
     def __init__(self, path_to_npy, dataset, subset):
         super().__init__()
@@ -31,15 +37,19 @@ class RedisLoader(DataLoaderBase):
         self.r = get_redis()
 
     def load_numpy_file(self, overwrite_existing=False):
+        lock_key = f"{self.redis_prefix}:lock"
+        lock = self.r.lock(lock_key, timeout=None, blocking_timeout=None)
+        lock.acquire()
         data_key = f"{self.redis_prefix}:data"
         timestamps_key = f"{self.redis_prefix}:timestamps"
         if not overwrite_existing and self.r.exists(data_key):
             self.data_size = self.r.llen(data_key)
+            lock.release()
             return
         self.r.delete(data_key)
         self.r.delete(timestamps_key)
         data = np.load(self.path_to_npy)
-        timestamps = np.arange(len(data))
+        timestamps = np.arange(len(data)) + int(time.time())
         if os.path.exists(self.path_to_timestamps):
             timestamps = np.load(self.path_to_timestamps)
             if len(timestamps) != len(data):
@@ -57,6 +67,7 @@ class RedisLoader(DataLoaderBase):
         pipe.execute()
         self.data_size = data_size
         print("Done!")
+        lock.release()
 
     def get_slice(self, start_index=0, end_index=-1, as_numpy=True, timestamps=False):
         self.load_numpy_file()
@@ -99,14 +110,17 @@ class RedisLoader(DataLoaderBase):
 
 
 if __name__ == '__main__':
-    dataset = "nasa-run-to-failure"
-    subset = "test2"
+    clear_all_redis()
+    exit(0)
+    dataset = "hydro"
+    subset = "x"
     file_path_data = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", dataset, subset, "values.npy")
     file_path_ts = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", dataset, subset, "timestamps.npy")
-    loader = RedisLoader(file_path_data, dataset, subset, path_to_timestamps=file_path_ts)
-    loader.load_numpy_file(overwrite_existing=True)
+    loader = RedisLoader(file_path_data, dataset, subset)
+    loader.load_numpy_file(overwrite_existing=False)
     slice = loader.get_slice(timestamps=True)
     print(slice)
-    ts = loader.get_timestamp_subsample()
-    print(ts)
+    print(len(slice))
+    # ts = loader.get_timestamp_subsample()
+    # print(ts)
     loader.clear(only_vectors=False)
