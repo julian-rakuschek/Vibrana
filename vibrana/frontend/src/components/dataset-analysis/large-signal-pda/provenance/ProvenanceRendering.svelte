@@ -1,17 +1,18 @@
 <script lang="ts">
     import type {ClusterColorMapping, Provenance, ProvenanceSeed} from "@lib/types";
-    import {onMount} from "svelte";
+    import {onMount, tick} from "svelte";
     import {fillGaps} from "@lib/algorithms/gapFill";
     import {ColorGenerator} from "@lib/algorithms/colorGenerator";
 
     export let provenance_records: Provenance[] = [];
     export let width = 1000;
+    export let feature: string;
 
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
-    let colorGenerator: ColorGenerator;
+    let colorGenerator: ColorGenerator = new ColorGenerator();
     const rowHeight = 10;
-    const height = provenance_records.length * rowHeight;
+    $: height = provenance_records.length * rowHeight;
 
     function breakpointsToStripe(seeds: ProvenanceSeed[], signal_length: number, width: number) {
         let label_allocation: number[] = new Array(width).fill(null);
@@ -28,7 +29,7 @@
         context.fillStyle = '#FFFFFF';
         context.fillRect(0, 0, width, height);
         for (let i = 0; i < provenance_records.length; i++) {
-            const labels = breakpointsToStripe(provenance_records[i].breakpoints.tde, provenance_records[i].signal_length, width);
+            const labels = breakpointsToStripe(provenance_records[i].breakpoints[feature], provenance_records[i].signal_length, width);
             for (let j = 0; j < width; j++) {
                 const label = labels[j];
                 context.globalAlpha = 0.2;
@@ -38,15 +39,26 @@
         }
     }
 
-    onMount(async () => {
+    async function init(provenance_records: Provenance[], height: number) {
         context = canvas.getContext('2d');
-        colorGenerator = new ColorGenerator();
+        canvas.width = width;
+        canvas.height = height;
+        await tick()
         render(provenance_records);
+    }
+
+    onMount(async () => {
+        init(provenance_records, height)
     });
 
-    $: render(provenance_records);
+    $: init(provenance_records, height)
 </script>
 
-<div class="w-full">
-    <canvas {height} {width} bind:this={canvas}></canvas>
+<div>
+    {#if feature === "tde"}
+        <p class="text-center font-semibold">Projection</p>
+    {:else}
+        <p class="text-center font-semibold">PSD</p>
+    {/if}
+    <canvas bind:this={canvas}></canvas>
 </div>

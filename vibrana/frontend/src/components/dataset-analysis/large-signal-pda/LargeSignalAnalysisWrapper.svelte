@@ -127,11 +127,11 @@
 
 </script>
 
-<div class="flex flex-row w-full gap-10 h-full pr-10">
+<div class="flex flex-row w-full gap-10 pr-10">
     {#if init_load}
         <CenteredLoadingSpinner/>
     {:else}
-        <div class="w-[350px] flex flex-col shadow-xl shrink-0 p-4 gap-4 h-full">
+        <div class="w-[350px] flex flex-col shadow-xl shrink-0 p-4 gap-4 h-full rounded-b-xl">
             <p class="self-center text-center text-xl font-bold">Large Signal Analysis</p>
             <DataProviderStatus {dataProvider}/>
             <div class="bg-indigo-100 rounded-xl p-4 flex flex-col gap-4 text-indigo-800">
@@ -233,7 +233,7 @@
                     <div class="w-[500px]">
                         <ColorLegend colorMode={ColorMode.Age}/>
                     </div>
-                    <ProvenanceWrapper {dataset} {subset} />
+                    <ProvenanceWrapper {width} {dataset} {subset} />
                 </div>
             {/key}
         </div>
