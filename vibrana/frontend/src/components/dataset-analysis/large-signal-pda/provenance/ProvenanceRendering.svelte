@@ -32,7 +32,7 @@
             const labels = breakpointsToStripe(provenance_records[i].breakpoints[feature], provenance_records[i].signal_length, width);
             for (let j = 0; j < width; j++) {
                 const label = labels[j];
-                context.globalAlpha = 0.2;
+                context.globalAlpha = 1;
                 context.fillStyle = label === null ? 'lightgray' : colorGenerator.getColor(label);
                 context.fillRect(j, rowHeight * i, 1, rowHeight);
             }

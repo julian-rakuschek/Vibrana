@@ -203,7 +203,7 @@
                         : Zoom
                     </div>
                 </div>
-                <p>Time Span: {humanTimeSpan(timestamps)}</p>
+                <p class="text-center italic"><span class="font-semibold text-indigo-700">Time Span:</span> {humanTimeSpan(timestamps)}</p>
             </div>
 
             {#key width}
