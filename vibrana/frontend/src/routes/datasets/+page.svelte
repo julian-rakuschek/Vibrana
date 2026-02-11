@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Navbar from '@components/manage/Navbar.svelte';
+    import Navbar from '@components/navigation/Navbar.svelte';
     import DatasetList from "@components/lists/DatasetList.svelte";
 
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import '../app.css';
+    import './layout.css';
     import {browser} from '$app/environment'
     import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query'
     import type {Config} from "@lib/types";

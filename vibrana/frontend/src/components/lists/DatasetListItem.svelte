@@ -20,7 +20,7 @@
     {#if dataset.description}<p class="text-sm italic">{dataset.description}</p>{/if}
     <div class="flex flex-row gap-2 mt-4">
         {#each Object.keys(dataset.subsets) as subset}
-            <a class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl transition hover:bg-indigo-200" href={`/datasets/${dataset_key}/${subset}/pda`}>
+            <a class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-xl transition hover:bg-indigo-200" href={`/datasets/${dataset_key}/${subset}`}>
                 {dataset.subsets[subset].name}
             </a>
         {/each}

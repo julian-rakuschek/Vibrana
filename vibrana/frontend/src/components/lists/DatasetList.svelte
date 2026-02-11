@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {page} from '$app/stores';
+    import {page} from '$app/state';
     import DatasetListItem from "@components/lists/DatasetListItem.svelte";
 
-    const datasets = $page.data.config
+    const datasets = page.data.config
 
     console.log(datasets)
 
