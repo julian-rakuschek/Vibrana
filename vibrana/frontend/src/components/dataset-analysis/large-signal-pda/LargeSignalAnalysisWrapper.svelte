@@ -9,7 +9,7 @@
     import {page} from '$app/stores';
     import DataProviderStatus from '@components/dataset-analysis/large-signal-pda/DataProviderStatus.svelte';
     import CenteredLoadingSpinner from '@components/atoms/CenteredLoadingSpinner.svelte';
-    import FingerprintDensity from '@components/dataset-analysis/large-signal-pda/FingerprintDensity.svelte';
+    import Uncertainty from '@components/dataset-analysis/large-signal-pda/Uncertainty.svelte';
     import {
         computeIndexAllocationArray,
         computeLabelAllocationArray,
@@ -228,11 +228,14 @@
     <p on:click={() => zoom_interval = [0, 1]} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</p>
 </div>
                 <div>
-                    <p class="font-semibold mt-5 mb-2">Fingerprint Aging and Density</p>
-                    <FingerprintDensity {width} {dataset} {subset} {fingerprints} {zoom_interval}/>
-                    <div class="w-[500px]">
-                        <ColorLegend colorMode={ColorMode.Age}/>
+                    <div class="w-full flex flex-row justify-between">
+                        <p class="font-semibold mt-5 mb-2">Uncertainty</p>
+                        <div class="w-[500px]">
+                        <ColorLegend colorMode={ColorMode.Uncertainty}/>
                     </div>
+                    </div>
+                    <Uncertainty {width} {dataset} {subset} {fingerprints} {zoom_interval}/>
+
                     <ProvenanceWrapper {width} {dataset} {subset} />
                 </div>
             {/key}

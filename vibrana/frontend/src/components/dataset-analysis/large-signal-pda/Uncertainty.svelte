@@ -13,30 +13,25 @@
     let canvas: HTMLCanvasElement;
     let context: CanvasRenderingContext2D | null;
     export let width = 1000;
-    const height = 200;
+    const height = 100;
     let indices: number[] = [];
-    let aging: number[] = [];
 
     function render() {
         if (!context) return;
 				context.clearRect(0, 0, width, height);
-        const max = aging.toSorted((a, b) => a - b)[aging.length - 1];
-        const min = -1;
-        const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([min, max === -1 ? 1 : max]);
-        const density = density1d(indices, {bins: width, extent: [0, width], bandwidth: 10})
+        const colorScale = d3.scaleSequential(d3.interpolateViridis);
+        const density = density1d(indices, {bins: width, extent: [0, width], bandwidth: 50})
         let densities = density.grid();
         let max_density = densities.toSorted((a, b) => a - b)[densities.length - 1];
         densities = densities.map(d => d / max_density)
         for (let i = 0; i < width; i++) {
-            const pos = i / width;
-            context.fillStyle = (zoom_interval[0] <= pos && zoom_interval[1] >= pos) ? colorScale(aging[i]) : "#eeeeee";
-            context.fillRect(i, height, 1, -height * densities[i]);
+            context.fillStyle = colorScale(1 - densities[i]);
+            context.fillRect(i, height, 1, -height * (1 - densities[i]));
         }
     }
 
     function updateProcedure(fingerprints: Fingerprint[], width: number, zoom_interval: [number, number]) {
         indices = indexListForDensityPlot(fingerprints, width);
-        aging = computeIndexAllocationArray(fingerprints, width, [0, 1]);
         render();
     }
 
