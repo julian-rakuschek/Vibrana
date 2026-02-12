@@ -2,11 +2,15 @@
     import {onMount} from 'svelte';
     import type {ClusterColorMapping} from "@lib/types";
 
-    export let label_allocation: number[] = [];
-    export let colorMapping: ClusterColorMapping;
-    export let width = 1000;
+    interface Props {
+        label_allocation?: number[];
+        colorMapping: ClusterColorMapping;
+        width?: number;
+    }
 
-    let canvas: HTMLCanvasElement;
+    let { label_allocation = [], colorMapping, width = 1000 }: Props = $props();
+
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
     const height = 100;
 
@@ -28,7 +32,9 @@
         render(label_allocation);
     });
 
-    $: render(label_allocation);
+    $effect(() => {
+        render(label_allocation);
+    });
 </script>
 
 <canvas {height} {width} bind:this={canvas}></canvas>

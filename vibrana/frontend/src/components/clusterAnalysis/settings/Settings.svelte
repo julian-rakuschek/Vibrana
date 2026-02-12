@@ -7,18 +7,32 @@
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import type {ClusterDelta, Fingerprint} from "@lib/types";
 
-    export let dataset = 'hydro';
-    export let subset = 'x';
-    export let dataProvider: DataProvider;
-    export let fingerprints: Fingerprint[] = [];
-    export let index_allocation: number[];
-    export let label_allocation_tde: number[];
-    export let label_allocation_psd: number[];
 
-    export let fetchAndDrawAll: () => void;
-    export let addNewItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
+    interface Props {
+        dataset?: string;
+        subset?: string;
+        dataProvider: DataProvider;
+        fingerprints?: Fingerprint[];
+        index_allocation: number[];
+        label_allocation_tde: number[];
+        label_allocation_psd: number[];
+        fetchAndDrawAll: () => void;
+        addNewItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
+    }
 
-    let running: boolean = false;
+    let {
+        dataset = 'hydro',
+        subset = 'x',
+        dataProvider,
+        fingerprints = [],
+        index_allocation,
+        label_allocation_tde,
+        label_allocation_psd,
+        fetchAndDrawAll,
+        addNewItem
+    }: Props = $props();
+
+    let running: boolean = $state(false);
 
     function inkUsed(index_allocation: number[]): number {
         const count = index_allocation.filter(x => x !== -1).length;
@@ -49,12 +63,12 @@
     </div>
     <div class="grid grid-cols-2 gap-4">
         <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'tde' ? 'border-indigo-800' : 'border-indigo-100'}"
-             on:click={() => fingerprintMode.set("tde")}>
+             onclick={() => fingerprintMode.set("tde")}>
             <img src="/tde.png"/>
             <p class="text-center text-indigo-800">Projection</p>
         </div>
         <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'psd' ? 'border-indigo-800' : 'border-indigo-100'}"
-             on:click={() => fingerprintMode.set("psd")}>
+             onclick={() => fingerprintMode.set("psd")}>
             <img src="/welch.png"/>
             <p class="text-center text-indigo-800">PSD</p>
         </div>

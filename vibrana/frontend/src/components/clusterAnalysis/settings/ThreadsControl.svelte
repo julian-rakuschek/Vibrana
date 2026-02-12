@@ -5,13 +5,23 @@
 	import { onMount } from 'svelte';
     import type {ClusterDelta, Fingerprint, ParameterSettingsUpdate} from '@lib/types';
 
-	export let dataset: string;
-	export let subset: string;
-	export let running = false;
-	export let handleReset: () => void;
-	export let handleSingleItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
+	interface Props {
+		dataset: string;
+		subset: string;
+		running?: boolean;
+		handleReset: () => void;
+		handleSingleItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
+	}
 
-    let slice_size: number;
+	let {
+		dataset,
+		subset,
+		running = $bindable(false),
+		handleReset,
+		handleSingleItem
+	}: Props = $props();
+
+    let slice_size: number = $state();
 
     async function saveParameters() {
         await ApiRoutes.storeParameters.fetch({
@@ -56,22 +66,22 @@
 </script>
 
 <div class="flex flex-row w-full gap-2 items-center justify-center">
-	<button class="h-10 w-10" on:click={async () => {await pauseComputing(); await clearVectors()}}>
+	<button class="h-10 w-10" onclick={async () => {await pauseComputing(); await clearVectors()}}>
 		<FancyButton icon="{Trash}" button_color="danger" />
 	</button>
-	<button class="h-10" on:click={async () => {await pauseComputing(); await oneStep()}}>
+	<button class="h-10" onclick={async () => {await pauseComputing(); await oneStep()}}>
 		<FancyButton button_color="primary" text="Single Step" />
 	</button>
-	<button class="h-10 w-10" on:click={async () => {await pauseComputing();}}>
+	<button class="h-10 w-10" onclick={async () => {await pauseComputing();}}>
 		<FancyButton icon="{Pause}" button_color="primary" />
 	</button>
 
-	<button class="h-10 w-10" on:click={async () => {await activateComputing();}}>
+	<button class="h-10 w-10" onclick={async () => {await activateComputing();}}>
 		<FancyButton icon="{Play}" button_color="primary" />
 	</button>
 </div>
 <div class="grid grid-cols-2 gap-y-2 mt-4">
     <p>Slice Size:</p>
-    <input on:keyup={saveParameters} bind:value={slice_size} type="text"
+    <input onkeyup={saveParameters} bind:value={slice_size} type="text"
            class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-full rounded-lg">
 </div>

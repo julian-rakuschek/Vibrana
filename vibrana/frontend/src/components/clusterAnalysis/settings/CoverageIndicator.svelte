@@ -3,8 +3,12 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import type {Provenance} from "@lib/types";
 
-    export let dataset: string;
-    export let subset: string;
+    interface Props {
+        dataset: string;
+        subset: string;
+    }
+
+    let { dataset, subset }: Props = $props();
 
     const provenanceQuery = useQueryFetch(ApiRoutes.latestProvenance, {params: {dataset, subset}}, undefined, undefined)
 
@@ -14,7 +18,6 @@
     }
 </script>
 
-<p>{provenanceQuery.isLoading}</p>
 {#if provenanceQuery.data}
     <p>{computeCoverage(provenanceQuery.data)}%</p>
 {/if}

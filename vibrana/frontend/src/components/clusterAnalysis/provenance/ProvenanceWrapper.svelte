@@ -4,9 +4,13 @@
     import ProvenanceRendering
         from "@components/clusterAnalysis/provenance/ProvenanceRendering.svelte";
 
-    export let dataset: string;
-    export let subset: string;
-    export let width: number;
+    interface Props {
+        dataset: string;
+        subset: string;
+        width: number;
+    }
+
+    let { dataset, subset, width }: Props = $props();
 
     const provenanceQuery = useQueryFetch(ApiRoutes.allProvenance, {params: {dataset, subset}}, undefined, undefined)
 </script>

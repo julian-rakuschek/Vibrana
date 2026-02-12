@@ -1,8 +1,12 @@
 <script lang="ts">
     import {formatUnixTimestamp} from "@lib/helper/util";
-    export let width: number;
-    export let mouse_x: number;
-    export let timestamps: number[] = [];
+    interface Props {
+        width: number;
+        mouse_x: number;
+        timestamps?: number[];
+    }
+
+    let { width, mouse_x, timestamps = [] }: Props = $props();
 </script>
 
 <div class="relative w-full" style={`width: ${width}px;`}>

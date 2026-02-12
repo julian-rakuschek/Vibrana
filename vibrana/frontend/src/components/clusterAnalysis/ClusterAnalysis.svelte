@@ -23,24 +23,28 @@
     import Settings from "@components/clusterAnalysis/settings/Settings.svelte";
     import Header from "@components/clusterAnalysis/Header.svelte";
 
-    export let dataset = 'hydro';
-    export let subset = 'x';
+    interface Props {
+        dataset?: string;
+        subset?: string;
+    }
+
+    let { dataset = 'hydro', subset = 'x' }: Props = $props();
     const in_memory = page.data.config[dataset].loader === "memory";
 
     let dataProvider = new DataProvider(dataset, subset, in_memory);
     const color_generator_tde = new ColorGenerator();
     const color_generator_psd = new ColorGenerator();
-    let color_mapping_tde = color_generator_tde.getColorDictionary();
-    let color_mapping_psd = color_generator_psd.getColorDictionary();
-    let fingerprints: Fingerprint[] = [];
-    let init_load = true;
-    let width = 1000;
-    let zoom_interval: [number, number] = [0, 1];
+    let color_mapping_tde = $state(color_generator_tde.getColorDictionary());
+    let color_mapping_psd = $state(color_generator_psd.getColorDictionary());
+    let fingerprints: Fingerprint[] = $state([]);
+    let init_load = $state(true);
+    let width = $state(1000);
+    let zoom_interval: [number, number] = $state([0, 1]);
 
-    let timestamps: number[] = new Array(width).fill(0);
-    let index_allocation: number[] = new Array(width).fill(-1);
-    let label_allocation_tde: number[] = new Array(width).fill(null);
-    let label_allocation_psd: number[] = new Array(width).fill(null);
+    let timestamps: number[] = $state(new Array(width).fill(0));
+    let index_allocation: number[] = $state(new Array(width).fill(-1));
+    let label_allocation_tde: number[] = $state(new Array(width).fill(null));
+    let label_allocation_psd: number[] = $state(new Array(width).fill(null));
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -109,7 +113,9 @@
         timestamps = await dataProvider.get_timestamps(zoom_interval, width);
     }
 
-    $: updateAllocationArrays(width, zoom_interval);
+    $effect(() => {
+        updateAllocationArrays(width, zoom_interval);
+    });
 
 </script>
 
@@ -125,23 +131,23 @@
         <div class="flex flex-col grow overflow-shown" bind:clientWidth={width}>
             <Header {timestamps}/>
             <TimelineFingerprintRepresentatives
-                    {width} {index_allocation} {fingerprints}
+                    {width} index_allocation={$state.snapshot(index_allocation)} fingerprints={$state.snapshot(fingerprints)}
                     {dataProvider} {zoom_interval}
                     colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
             />
             <ClusterTimelineWrapper
-                    {width} {dataset} {subset} {fingerprints}
-                    {dataProvider} {index_allocation} {timestamps}
-                    label_allocation={$fingerprintMode === "tde" ? label_allocation_tde : label_allocation_psd}
+                    {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
+                    {dataProvider} index_allocation={$state.snapshot(index_allocation)} {timestamps}
+                    label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
                     colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                     bind:zoom_interval
             />
             <ZoomIndicator
-                    {width} {fingerprints} {zoom_interval}
-                    feature={$fingerprintMode}
+                    {width} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}
+                    feature={$fingerprintMode} reset_zoom={() => zoom_interval = [0, 1]}
                     colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
             />
-            <Uncertainty {width} {dataset} {subset} {fingerprints} {zoom_interval}/>
+            <Uncertainty {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)} {zoom_interval} />
             <ProvenanceWrapper {width} {dataset} {subset}/>
         </div>
     {/if}

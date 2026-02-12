@@ -4,17 +4,30 @@
     import type {ClusterColorMapping, Fingerprint} from "@lib/types";
     import {computeLabelAllocationArray} from "@lib/helper/fingerprintHelper";
 
-    export let width = 1000;
-    export let zoom_interval: [number, number] = [0, 1];
-    export let intervals: [number, number][] = [];
-    export let colorMapping: ClusterColorMapping;
-    export let fingerprints: Fingerprint[];
-    export let feature: "tde" | "psd" = "tde"
+    interface Props {
+        width?: number;
+        zoom_interval?: [number, number];
+        intervals?: [number, number][];
+        colorMapping: ClusterColorMapping;
+        fingerprints: Fingerprint[];
+        feature?: "tde" | "psd";
+        reset_zoom: () => void;
+    }
+
+    let {
+        width = 1000,
+        zoom_interval = [0, 1],
+        intervals = [],
+        colorMapping,
+        fingerprints,
+        feature = "tde",
+        reset_zoom
+    }: Props = $props();
 
     const height = 20;
-    let canvas: HTMLCanvasElement;
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
-    let label_allocation: number[] = [];
+    let label_allocation: number[] = $state.raw([]);
 
     function render(zoom_interval: [number, number], intervals: [number, number][], label_allocation: number[]) {
         if (!context) return;
@@ -43,14 +56,19 @@
         render(zoom_interval, intervals, label_allocation)
     })
 
-    $: {
+    $effect(() => {
         label_allocation = computeLabelAllocationArray(fingerprints, width, [0, 1], feature);
+    });
+
+    $effect(() => {
         render(zoom_interval, intervals, label_allocation);
-    }
+    });
 </script>
 
 <p class="font-semibold mt-5">Zooming Location</p>
 <div class="w-full">
     <canvas {height} {width} bind:this={canvas}></canvas>
 </div>
-<button on:click={() => zoom_interval = [0, 1]} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</button>
+<div>
+    <button onclick={() => reset_zoom()} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</button>
+</div>

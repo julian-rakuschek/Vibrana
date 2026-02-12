@@ -6,41 +6,62 @@
     import {fingerprintMode} from "@lib/stores";
     import PSDRendering from "@components/fingerprintRenderer/PSDRendering.svelte";
 
-    export let dataProvider: DataProvider;
-    let loading = dataProvider.loading;
-    export let fingerprints: Fingerprint[] = [];
-    export let width = 1000;
-    export let mouse_x = -1;
-    export let index_allocation: number[] = new Array(width).fill(-1);
+    interface Props {
+        dataProvider: DataProvider;
+        fingerprints?: Fingerprint[];
+        width?: number;
+        mouse_x?: any;
+        index_allocation?: number[];
+    }
+
+    let {
+        dataProvider,
+        fingerprints = [],
+        width = 1000,
+        mouse_x = -1,
+        index_allocation = new Array(width).fill(-1)
+    }: Props = $props();
 
     const max_fp_mouse_distance = 20;
 
-    let hovering_fingerprint_index = -1;
-    let hovering_fingerprint_pixel_pos = -1;
+    let hovering_fingerprint_index = $state(-1);
+    let hovering_fingerprint_pixel_pos = $state(-1);
 
     function get_nearest_fingerprint(index: number) {
         if (index >= index_allocation.length || index < 0) return;
+
+        let foundIndex = -1;
+        let foundPos = -1;
+
         let step = 0;
-        hovering_fingerprint_index = -1;
-        hovering_fingerprint_pixel_pos = -1;
         while (step < index_allocation.length && step < max_fp_mouse_distance) {
             const left = index - step >= 0 ? index - step : 0;
             const right = index + step < index_allocation.length ? index + step : index_allocation.length - 1;
+
             if (index_allocation[left] !== -1) {
-                hovering_fingerprint_index = index_allocation[left];
-                hovering_fingerprint_pixel_pos = left;
+                foundIndex = index_allocation[left];
+                foundPos = left;
                 break;
             }
             if (index_allocation[right] !== -1) {
-                hovering_fingerprint_index = index_allocation[right];
-                hovering_fingerprint_pixel_pos = right;
+                foundIndex = index_allocation[right];
+                foundPos = right;
                 break;
             }
             step++;
         }
+
+        // single commit (prevents false->true flicker)
+        hovering_fingerprint_index = foundIndex;
+        hovering_fingerprint_pixel_pos = foundPos;
     }
 
-    $: get_nearest_fingerprint(Math.floor(mouse_x));
+
+    let loading = dataProvider.loading;
+
+    $effect(() => {
+        get_nearest_fingerprint(Math.floor(mouse_x));
+    });
 </script>
 
 <div class="relative w-full" style={`width: ${width}px;`}>
@@ -55,7 +76,7 @@
                 {#if $fingerprintMode === "tde"}
                     <FingerprintRendering {dataProvider} fingerprint={fingerprints[hovering_fingerprint_index]}/>
                 {:else}
-                    <PSDRendering data={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec} />
+                    <PSDRendering data={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec}/>
                 {/if}
             {/if}
         </div>

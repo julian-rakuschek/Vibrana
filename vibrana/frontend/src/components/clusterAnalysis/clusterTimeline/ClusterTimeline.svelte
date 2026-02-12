@@ -10,18 +10,33 @@
     import {formatUnixTimestamp} from "@lib/helper/util";
     import IntervalSelection from "@components/clusterAnalysis/clusterTimeline/IntervalSelection.svelte";
 
-    export let dataset: string;
-    export let subset: string;
-    export let index_allocation: number[] = [];
-    export let label_allocation: number[] = [];
-    export let width = 1000;
-    export let dataProvider: DataProvider;
-    export let fingerprints: Fingerprint[] = [];
-    export let colorMapping: ClusterColorMapping;
-    export let zoom_interval: [number, number] = [0, 1];
-    export let timestamps: number[] = [];
-    let intervalSelector: IntervalSelection;
-    let mouse_x = -1;
+    interface Props {
+        dataset: string;
+        subset: string;
+        index_allocation?: number[];
+        label_allocation?: number[];
+        width?: number;
+        dataProvider: DataProvider;
+        fingerprints?: Fingerprint[];
+        colorMapping: ClusterColorMapping;
+        zoom_interval?: [number, number];
+        timestamps?: number[];
+    }
+
+    let {
+        dataset,
+        subset,
+        index_allocation = [],
+        label_allocation = [],
+        width = 1000,
+        dataProvider,
+        fingerprints = [],
+        colorMapping,
+        zoom_interval = $bindable([0, 1]),
+        timestamps = []
+    }: Props = $props();
+    let intervalSelector: IntervalSelection = $state();
+    let mouse_x = $state(-1);
 
     function resetIntervals() {
         if (!intervalSelector) return;
@@ -59,5 +74,5 @@
     </div>
 </div>
 <div class="flex">
-    <p on:click={resetIntervals} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset intervals</p>
+    <p onclick={resetIntervals} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset intervals</p>
 </div>

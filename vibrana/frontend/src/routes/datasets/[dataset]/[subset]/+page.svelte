@@ -4,8 +4,8 @@
     import ClusterAnalysis
         from "@components/clusterAnalysis/ClusterAnalysis.svelte";
 
-    $: dataset = page.params.dataset;
-    $: subset = page.params.subset;
+    let dataset = $derived(page.params.dataset);
+    let subset = $derived(page.params.subset);
 </script>
 
 <Navbar/>

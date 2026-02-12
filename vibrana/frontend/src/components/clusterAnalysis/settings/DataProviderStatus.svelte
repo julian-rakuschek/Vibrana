@@ -3,8 +3,12 @@
     import {onMount} from "svelte";
     import {Pulse} from "svelte-loading-spinners";
 
-    export let dataProvider: DataProvider;
-    let loading = dataProvider.loading;
+    interface Props {
+        dataProvider: DataProvider;
+    }
+
+    let { dataProvider }: Props = $props();
+    let loading = $derived(dataProvider.loading);
 
     onMount(async () => {
         if (dataProvider.isInMemory()) {

@@ -4,7 +4,12 @@
     import {QueryClient, QueryClientProvider} from '@tanstack/svelte-query'
     import type {Config} from "@lib/types";
 
-    export let data: Config;
+    interface Props {
+        data: Config;
+        children?: import('svelte').Snippet;
+    }
+
+    let { data, children }: Props = $props();
 
     const queryClient = new QueryClient({
         defaultOptions: {
@@ -17,6 +22,6 @@
 
 <QueryClientProvider client={queryClient}>
     <div class="w-full h-full flex flex-col">
-        <slot/>
+        {@render children?.()}
     </div>
 </QueryClientProvider>

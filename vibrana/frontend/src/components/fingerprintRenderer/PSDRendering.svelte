@@ -13,16 +13,24 @@
         ScatterController,
         Tooltip
     } from "chart.js";
-    import {withOpacityOnWhite} from "@lib/helper/colorHelper";
 
     Chart.register(ScatterController, LineController, LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend, BarElement, BarController);
 
-    export let data: number[] = [];
-    export let size = 200;
-    export let showYAxis = false;
-    export let color = "black"
+    interface Props {
+        data?: number[];
+        size?: number;
+        showYAxis?: boolean;
+        color?: string;
+    }
 
-    let canvas: HTMLCanvasElement;
+    let {
+        data = [],
+        size = 200,
+        showYAxis = false,
+        color = "black"
+    }: Props = $props();
+
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
     let chart: Chart | null = null;
 
@@ -82,7 +90,9 @@
         render(data);
     })
 
-    $: render(data);
+    $effect(() => {
+        render(data);
+    });
 
 </script>
 

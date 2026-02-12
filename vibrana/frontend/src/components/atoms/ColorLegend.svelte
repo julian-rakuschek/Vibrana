@@ -3,7 +3,11 @@
     import {interpolateRdYlBu, interpolateTurbo, interpolateViridis} from "d3";
     import {ColorMode} from "@lib/types";
 
-    export let colorMode: ColorMode;
+    interface Props {
+        colorMode: ColorMode;
+    }
+
+    let { colorMode }: Props = $props();
 
     const radius_color_gradient = `linear-gradient(90deg, ${
         createColorsArray(20, {start: 0, end: 1, reverse: false, interpolateFunc: interpolateTurbo}).join(", ")

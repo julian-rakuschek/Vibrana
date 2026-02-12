@@ -2,8 +2,12 @@
 
     import type {DatasetConfig} from "@lib/types";
 
-    export let dataset_key: string;
-    export let dataset: DatasetConfig;
+    interface Props {
+        dataset_key: string;
+        dataset: DatasetConfig;
+    }
+
+    let { dataset_key, dataset }: Props = $props();
 
 </script>
 

@@ -4,19 +4,29 @@
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import {IntervalModes} from "@lib/types"
 
-    export let dataset: string;
-    export let subset: string;
-    export let width = 1000;
-    export let mouse_x = 0;
 
-    let canvas: HTMLCanvasElement;
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
     const height = 100;
     let mouse_x_anchor = 0;
     let mouse_active = false;
     let mouse_mode: IntervalModes = IntervalModes.ADD;
     let intervals: [number, number][] = [];
-    export let zoom_interval: [number, number] = [0, 1];
+    interface Props {
+        dataset: string;
+        subset: string;
+        width?: number;
+        mouse_x?: number;
+        zoom_interval?: [number, number];
+    }
+
+    let {
+        dataset,
+        subset,
+        width = 1000,
+        mouse_x = $bindable(0),
+        zoom_interval = $bindable([0, 1])
+    }: Props = $props();
 
     function pixelToIntervalPosition(pixel: number) {
         const relative_pixel = pixel / width;
@@ -144,11 +154,13 @@
         visualizeSelectedIntervals();
     });
 
-    $: zoom_interval, visualizeSelectedIntervals();
+    $effect(() => {
+        zoom_interval, visualizeSelectedIntervals();
+    });
 
 </script>
 
-<canvas on:mouseleave={resetMouse} class="noselect" {height} {width} bind:this={canvas}></canvas>
+<canvas onmouseleave={resetMouse} class="noselect" {height} {width} bind:this={canvas}></canvas>
 
 <style>
     .noselect {

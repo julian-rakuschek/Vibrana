@@ -2,7 +2,7 @@
     import {points} from "./landingPagePointCloud"
     import {onMount} from "svelte";
 
-    let canvas: HTMLCanvasElement;
+    let canvas: HTMLCanvasElement | undefined = $state();
     let ctx: CanvasRenderingContext2D | null
     const width = 800;
     const height = 800;
@@ -27,7 +27,7 @@
             });
         }
 
-        if (!ctx) return;
+        if (!ctx || !canvas) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cx = canvas.width / 2;
@@ -68,8 +68,10 @@
     }
 
     onMount(() => {
-        ctx = canvas.getContext('2d')
-        draw();
+        if (canvas) {
+            ctx = canvas.getContext('2d')
+            draw();
+        }
     })
 
 </script>

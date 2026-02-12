@@ -2,7 +2,11 @@
     import {humanTimeSpan} from "@lib/helper/util.js";
     import Icon from '@iconify/svelte';
 
-    export let timestamps: number[];
+    interface Props {
+        timestamps: number[];
+    }
+
+    let { timestamps }: Props = $props();
 </script>
 
 <div class="gap-2 flex flex-col pb-3">

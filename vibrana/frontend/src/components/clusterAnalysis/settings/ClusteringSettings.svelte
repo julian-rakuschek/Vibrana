@@ -1,20 +1,28 @@
 <script lang="ts">
-
     import {onMount} from "svelte";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
     import FancyButton from "@components/atoms/FancyButton.svelte";
     import {Pulse} from "svelte-loading-spinners";
     import type {ParameterSettingsUpdate} from "@lib/types";
 
-    export let dataset: string;
-    export let subset: string;
-    export let fingerprintMode: "tde" | "psd";
-    export let onRecomputeComplete: () => void;
+    interface Props {
+        dataset: string;
+        subset: string;
+        fingerprintMode: "tde" | "psd";
+        onRecomputeComplete: () => void;
+    }
 
-    let eps: number;
-    let minPoints: number;
-    let sliding_window_size: number;
-    let recomputing: boolean = false;
+    let {
+        dataset,
+        subset,
+        fingerprintMode,
+        onRecomputeComplete
+    }: Props = $props();
+
+    let eps: number = $state();
+    let minPoints: number = $state();
+    let sliding_window_size: number = $state();
+    let recomputing: boolean = $state(false);
 
     async function saveParameters() {
         const payload: ParameterSettingsUpdate = {
@@ -51,20 +59,22 @@
         loadInitialParameters(fingerprintMode)
     })
 
-    $: loadInitialParameters(fingerprintMode)
+    $effect(() => {
+        loadInitialParameters(fingerprintMode)
+    });
 
 </script>
 
 <div class="grid grid-cols-2 gap-y-2">
     <p>Epsilon:</p>
-    <input on:keyup={saveParameters} bind:value={eps} type="text"
+    <input onkeyup={saveParameters} bind:value={eps} type="text"
            class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
     <p>Minimum Points:</p>
-    <input on:keyup={saveParameters} bind:value={minPoints} type="text"
+    <input onkeyup={saveParameters} bind:value={minPoints} type="text"
            class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
     {#if fingerprintMode === "tde"}
         <p>Sliding Window Size:</p>
-    <input on:keyup={saveParameters} bind:value={sliding_window_size} type="text"
+    <input onkeyup={saveParameters} bind:value={sliding_window_size} type="text"
            class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
     {/if}
 </div>
@@ -75,7 +85,7 @@
         <p class="text-white">Recomputing Clusters</p>
     </div>
 {:else}
-    <button class="h-7 w-full" on:click={async () => {await recomputeCluster();}}>
+    <button class="h-7 w-full" onclick={async () => {await recomputeCluster();}}>
         <FancyButton button_color="primary" text="Recompute Clusters" text_size="text-md"/>
     </button>
 {/if}

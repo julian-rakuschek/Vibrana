@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Icon, type IconSource } from 'svelte-hero-icons';
 
-	export let button_color: "danger" | "primary" = "primary"
 
 
 	const primary_class_string = `
@@ -20,9 +19,19 @@
     border-b-[1px] border-red-500
 	`;
 
-	export let icon: IconSource | undefined = undefined
-	export let text = ""
-	export let text_size = "text-lg"
+	interface Props {
+		button_color?: "danger" | "primary";
+		icon?: IconSource | undefined;
+		text?: string;
+		text_size?: string;
+	}
+
+	let {
+		button_color = "primary",
+		icon = undefined,
+		text = "",
+		text_size = "text-lg"
+	}: Props = $props();
 </script>
 
 

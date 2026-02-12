@@ -40,7 +40,9 @@ export class DataProvider {
         return stretchBalanced(timestamps, width);
     }
 
-    isInMemory(): boolean {return this.in_memory};
+    isInMemory(): boolean {
+        return this.in_memory
+    };
 
 
     get_fingerprint_data_javascript(fp: Fingerprint) {

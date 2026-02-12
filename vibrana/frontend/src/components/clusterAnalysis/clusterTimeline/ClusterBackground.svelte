@@ -3,11 +3,15 @@
 	import { onMount } from 'svelte';
 	import { fillGaps } from '@lib/algorithms/gapFill';
 
-	export let colorMapping: ClusterColorMapping;
-	export let label_allocation: number[] = [];
-	export let width = 1000;
+	interface Props {
+		colorMapping: ClusterColorMapping;
+		label_allocation?: number[];
+		width?: number;
+	}
 
-	let canvas: HTMLCanvasElement;
+	let { colorMapping, label_allocation = [], width = 1000 }: Props = $props();
+
+	let canvas: HTMLCanvasElement = $state();
 	let context: CanvasRenderingContext2D | null;
 	const height = 100;
 
@@ -32,7 +36,9 @@
 		render(label_allocation);
 	});
 
-	$: render(label_allocation);
+	$effect(() => {
+		render(label_allocation);
+	});
 </script>
 
 <div class="w-full">

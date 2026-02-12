@@ -8,21 +8,32 @@
     import {fingerprintMode} from "@lib/stores";
     import PSDRendering from "@components/fingerprintRenderer/PSDRendering.svelte";
 
-    export let width: number;
-    export let index_allocation: number[];
-    export let zoom_interval: [number, number] = [0, 1];
-    export let fingerprints: Fingerprint[];
-    export let colorMapping: ClusterColorMapping;
-    export let dataProvider: DataProvider;
+    interface Props {
+        width: number;
+        index_allocation: number[];
+        zoom_interval?: [number, number];
+        fingerprints: Fingerprint[];
+        colorMapping: ClusterColorMapping;
+        dataProvider: DataProvider;
+    }
+
+    let {
+        width,
+        index_allocation,
+        zoom_interval = [0, 1],
+        fingerprints,
+        colorMapping,
+        dataProvider
+    }: Props = $props();
     let loading = dataProvider.loading;
 
     const size: number = 100;
     const connectorHeight: number = 30;
     const fingerprints_count: number = Math.max(0, Math.floor(width / size));
 
-    let divRefs: HTMLDivElement[] = Array(fingerprints_count);
-    let parentDiv: HTMLDivElement;
-    let fingerprint_index_allocation: number[] = Array(fingerprints_count).fill(-1);
+    let divRefs: HTMLDivElement[] = $state(Array(fingerprints_count));
+    let parentDiv: HTMLDivElement = $state();
+    let fingerprint_index_allocation: number[] = $state(Array(fingerprints_count).fill(-1));
 
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -94,9 +105,9 @@
         choose_fingerprint_indices(index_allocation, true);
     });
 
-    $: choose_fingerprint_indices(index_allocation, false);
-
-    $: handleZoom(zoom_interval);
+    $effect(() => {
+        handleZoom(zoom_interval);
+    });
 
 
 </script>

@@ -2,9 +2,13 @@
     import {Icon, Bars3, XMark} from "svelte-hero-icons";
     import {goto} from '$app/navigation';
 
-    export let isBeige = false; // Default to light mode
+    interface Props {
+        isBeige?: boolean; // Default to light mode
+    }
 
-    let mobileMenuOpen = false;
+    let { isBeige = false }: Props = $props();
+
+    let mobileMenuOpen = $state(false);
 
     const menuLinks = [
         {name: "Datasets", link: "/datasets"},
@@ -38,7 +42,7 @@
             <button
                     type="button"
                     class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-                    on:click={toggleMobileMenu}
+                    onclick={toggleMobileMenu}
             >
                 <span class="sr-only">Open main menu</span>
                 <Icon src="{Bars3}" class="h-6 w-6" aria-hidden="true"/>
@@ -57,7 +61,7 @@
 
     <!-- Mobile Menu -->
     {#if mobileMenuOpen}
-        <div class="lg:hidden fixed inset-0 z-10 bg-black opacity-50" on:click={closeMobileMenu}></div>
+        <div class="lg:hidden fixed inset-0 z-10 bg-black opacity-50" onclick={closeMobileMenu}></div>
         <div class={`fixed inset-y-0 right-0 z-50 w-full overflow-y-auto ${isBeige ? 'bg-[#faf9f5]' : 'bg-white'} px-6 py-6 sm:max-w-sm`}>
             <div class="flex items-center justify-between">
                 <a href="/" class="-m-1.5 p-1.5">
@@ -66,7 +70,7 @@
                 <button
                         type="button"
                         class="-m-2.5 rounded-md p-2.5 text-gray-700"
-                        on:click={toggleMobileMenu}
+                        onclick={toggleMobileMenu}
                 >
                     <span class="sr-only">Close menu</span>
                     <Icon src="{XMark}" class="h-6 w-6" aria-hidden="true"/>
@@ -79,7 +83,7 @@
                             <a
                                     href={menuLink.link}
                                     class={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7`}
-                                    on:click={() => navigateTo(menuLink.link)}
+                                    onclick={() => navigateTo(menuLink.link)}
                             >
                                 {menuLink.name}
                             </a>

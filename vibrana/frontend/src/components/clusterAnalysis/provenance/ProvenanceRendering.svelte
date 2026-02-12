@@ -4,15 +4,19 @@
     import {fillGaps} from "@lib/algorithms/gapFill";
     import {ColorGenerator} from "@lib/algorithms/colorGenerator";
 
-    export let provenance_records: Provenance[] = [];
-    export let width = 1000;
-    export let feature: string;
+    interface Props {
+        provenance_records?: Provenance[];
+        width?: number;
+        feature: string;
+    }
 
-    let canvas: HTMLCanvasElement;
+    let { provenance_records = [], width = 1000, feature }: Props = $props();
+
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
     let colorGenerator: ColorGenerator = new ColorGenerator();
     const rowHeight = 10;
-    $: height = provenance_records.length * rowHeight;
+    let height = $derived(provenance_records.length * rowHeight);
 
     function breakpointsToStripe(seeds: ProvenanceSeed[], signal_length: number, width: number) {
         let label_allocation: number[] = new Array(width).fill(null);
@@ -51,7 +55,9 @@
         init(provenance_records, height)
     });
 
-    $: init(provenance_records, height)
+    $effect(() => {
+        init(provenance_records, height)
+    });
 </script>
 
 <div>

@@ -6,14 +6,24 @@
     import * as d3 from "d3";
     import ColorLegend from "@components/atoms/ColorLegend.svelte";
 
-    export let dataset: string;
-    export let subset: string;
-    export let fingerprints: Fingerprint[];
-    export let zoom_interval: [number, number] = [0, 1];
 
-    let canvas: HTMLCanvasElement;
+    let canvas: HTMLCanvasElement = $state();
     let context: CanvasRenderingContext2D | null;
-    export let width = 1000;
+    interface Props {
+        dataset: string;
+        subset: string;
+        fingerprints: Fingerprint[];
+        zoom_interval?: [number, number];
+        width?: number;
+    }
+
+    let {
+        dataset,
+        subset,
+        fingerprints,
+        zoom_interval = [0, 1],
+        width = 1000
+    }: Props = $props();
     const height = 100;
     let indices: number[] = [];
 
@@ -41,7 +51,9 @@
         updateProcedure(fingerprints, width, zoom_interval);
     })
 
-    $: updateProcedure(fingerprints, width, zoom_interval);
+    $effect(() => {
+        updateProcedure(fingerprints, width, zoom_interval);
+    });
 </script>
 
 <div class="w-full flex flex-row justify-between">
