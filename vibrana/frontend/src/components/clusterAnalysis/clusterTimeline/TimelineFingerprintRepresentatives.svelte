@@ -136,7 +136,7 @@
                                     color={colorMapping[fp.label[$fingerprintMode]]}
                             />
                         {:else}
-                            <PSDRendering size={size} data={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.psd]} />
+                            <PSDRendering size={size} frequencies={fp.feature_descriptors.psd.f} power={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.psd]} />
                         {/if}
                     {/if}
                 </div>

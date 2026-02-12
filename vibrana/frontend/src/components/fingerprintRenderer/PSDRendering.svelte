@@ -17,16 +17,18 @@
     Chart.register(ScatterController, LineController, LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend, BarElement, BarController);
 
     interface Props {
-        data?: number[];
+        frequencies?: number[];
+        power?: number[];
         size?: number;
-        showYAxis?: boolean;
+        showAxis?: boolean;
         color?: string;
     }
 
     let {
-        data = [],
+        frequencies = [],
+        power = [],
         size = 200,
-        showYAxis = false,
+        showAxis = false,
         color = "black"
     }: Props = $props();
 
@@ -34,20 +36,23 @@
     let context: CanvasRenderingContext2D | null;
     let chart: Chart | null = null;
 
-    function createChart(ctx: CanvasRenderingContext2D, values: number[]) {
-        const default_labels = Array.from({length: values.length}, (x, i) => i);
+    function createChart(ctx: CanvasRenderingContext2D, power: number[], frequencies: number[]) {
+        const dataPoints = frequencies.map((f, i) => ({
+            x: f,
+            y: power[i] ?? 0
+        }));
+
 
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: default_labels,
                 datasets: [
                     {
                         label: "PSD",
-                        data: values,
+                        data: dataPoints,
                         borderColor: color,
                         backgroundColor: color,
-                        order: 10
+                        parsing: false
                     }
                 ]
             },
@@ -57,41 +62,57 @@
                 interaction: {intersect: false, mode: 'index'},
                 animation: false,
                 plugins: {
-                    legend: {
-                        display: false,
-                    }
+                    legend: {display: false}
                 },
                 scales: {
                     x: {
-                        display: false
+                        display: showAxis,
+                        type: 'linear',
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 10,
+                            maxRotation: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Frequency (Hz)',
+                            padding: {top: 0}
+                        }
                     },
                     y: {
-                        display: showYAxis
+                        display: false
                     }
                 }
             }
         });
     }
 
-    function render(values: number[]) {
+    function render(power: number[], frequencies: number[]) {
         if (!context) return;
+
+        const dataPoints = frequencies.map((f, i) => ({
+            x: f,
+            y: power[i] ?? 0
+        }));
+
         if (chart === null) {
-            createChart(context, values);
+            createChart(context, power, frequencies);
         } else {
-            const default_labels = Array.from({length: values.length}, (x, i) => i);
-            chart.data.labels = default_labels
-            chart.data.datasets[0].data = values;
-            chart.update()
+            chart.data.datasets[0].data = dataPoints;
+            chart.update();
         }
     }
 
     onMount(() => {
         context = canvas.getContext('2d');
-        render(data);
+        render(power, frequencies);
     })
 
     $effect(() => {
-        render(data);
+        render(power, frequencies);
     });
 
 </script>

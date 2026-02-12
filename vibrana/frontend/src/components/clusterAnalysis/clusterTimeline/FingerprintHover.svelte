@@ -76,7 +76,11 @@
                 {#if $fingerprintMode === "tde"}
                     <FingerprintRendering {dataProvider} fingerprint={fingerprints[hovering_fingerprint_index]}/>
                 {:else}
-                    <PSDRendering data={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec}/>
+                    <PSDRendering
+                            showAxis
+                            frequencies={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.f}
+                            power={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec}
+                    />
                 {/if}
             {/if}
         </div>
