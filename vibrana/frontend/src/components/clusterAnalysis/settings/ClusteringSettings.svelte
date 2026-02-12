@@ -4,6 +4,7 @@
     import FancyButton from "@components/atoms/FancyButton.svelte";
     import {Pulse} from "svelte-loading-spinners";
     import type {ParameterSettingsUpdate} from "@lib/types";
+    import Tooltip from "@components/atoms/Tooltip.svelte";
 
     interface Props {
         dataset: string;
@@ -67,21 +68,31 @@
 
 <div class="grid grid-cols-2 gap-y-2">
     <p>Epsilon:</p>
-    <input onkeyup={saveParameters} bind:value={eps} type="text"
-           class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+    <div class="flex flex-row items-center gap-1">
+        <input onkeyup={saveParameters} bind:value={eps} type="text"
+               class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+        <Tooltip color="#303f9f"
+                 text="Controls the sensitivity of the clustering algorithm. Higher epsilon means less clusters while lower epsilon results in more clusters."/>
+    </div>
     <p>Minimum Points:</p>
-    <input onkeyup={saveParameters} bind:value={minPoints} type="text"
-           class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+    <div class="flex flex-row items-center gap-1">
+        <input onkeyup={saveParameters} bind:value={minPoints} type="text"
+               class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+        <Tooltip color="#303f9f" text="The minimum number of points required for a cluster to form."/>
+    </div>
     {#if fingerprintMode === "tde"}
         <p>Sliding Window Size:</p>
-    <input onkeyup={saveParameters} bind:value={sliding_window_size} type="text"
-           class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+        <div class="flex flex-row items-center gap-1">
+        <input onkeyup={saveParameters} bind:value={sliding_window_size} type="text"
+               class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-20 rounded-lg">
+            <Tooltip color="#303f9f" text="The number of points used to compute the projection-based fingerprint. A larger window size can capture lower frequencies."/>
+        </div>
     {/if}
 </div>
 
 {#if recomputing}
     <div class="bg-indigo-800 w-full rounded-lg flex flex-row gap-5 p-3 justify-center items-center">
-        <Pulse color="#FFFFFF" size="30" unit="px" />
+        <Pulse color="#FFFFFF" size="30" unit="px"/>
         <p class="text-white">Recomputing Clusters</p>
     </div>
 {:else}

@@ -6,6 +6,7 @@
     import ClusteringSettings from "@components/clusterAnalysis/settings/ClusteringSettings.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import type {ClusterDelta, Fingerprint} from "@lib/types";
+    import Tooltip from "@components/atoms/Tooltip.svelte";
 
 
     interface Props {
@@ -55,9 +56,15 @@
             {:else}
                 <p>{(new Set(label_allocation_psd)).size - 1}</p>
             {/if}
-            <p class="col-span-3">Coverage:</p>
+            <div class="flex flex-row items-center gap-1 col-span-3">
+                <span>Coverage:</span>
+                <Tooltip color="#303f9f" text="The percentage of data points which have been 'seen' from the entire signal."/>
+            </div>
             <CoverageIndicator {dataset} {subset}/>
-            <p class="col-span-3">Ink Used:</p>
+            <div class="flex flex-row items-center gap-1 col-span-3">
+                <span>Ink Used:</span>
+                <Tooltip color="#303f9f" text="The percentage of area covered by fingerprints in the timeline visualization. This ratio changes if users zoom into the signal."/>
+            </div>
             <p>{inkUsed(index_allocation)}%</p>
         </div>
     </div>
@@ -65,12 +72,18 @@
         <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'tde' ? 'border-indigo-800' : 'border-indigo-100'}"
              onclick={() => fingerprintMode.set("tde")}>
             <img src="/tde.png"/>
-            <p class="text-center text-indigo-800">Projection</p>
+            <div class="flex flex-row items-center justify-center gap-1">
+                <p class="text-center text-indigo-800">Projection</p>
+                <Tooltip color="#303f9f" text="The time series is projected into the 2D plane by taking a sliding window view and subsequently applying PCA on it. Strong frequency components lead to circular arrangements within the point cloud."/>
+            </div>
         </div>
         <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'psd' ? 'border-indigo-800' : 'border-indigo-100'}"
              onclick={() => fingerprintMode.set("psd")}>
             <img src="/welch.png"/>
-            <p class="text-center text-indigo-800">PSD</p>
+            <div class="flex flex-row items-center justify-center gap-1">
+                <p class="text-center text-indigo-800">PSD</p>
+                <Tooltip color="#303f9f" text="The estimated power spectral density of the signal using Welch's method. The periodogram shows the power distribution across the frequencies."/>
+            </div>
         </div>
     </div>
     <div class="bg-indigo-100 rounded-xl p-4 gap-2 flex flex-col text-indigo-800">
