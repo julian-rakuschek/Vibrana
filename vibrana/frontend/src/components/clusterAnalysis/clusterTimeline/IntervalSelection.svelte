@@ -129,6 +129,7 @@
             saveIntervals();
         };
         canvas.onwheel = (e) => {
+            e.preventDefault()
             if (e.deltaY < 0) {
                 zoomIn(mouse_x)
             } else {

@@ -42,7 +42,7 @@
     }
 
     function updateProcedure(fingerprints: Fingerprint[], width: number, zoom_interval: [number, number]) {
-        indices = indexListForDensityPlot(fingerprints, width);
+        indices = indexListForDensityPlot(fingerprints, width, zoom_interval);
         render();
     }
 

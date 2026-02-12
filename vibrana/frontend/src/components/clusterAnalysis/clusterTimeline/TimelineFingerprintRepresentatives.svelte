@@ -133,6 +133,7 @@
                                     update_on_fp_change={false}
                                     transparent
                                     fingerprint={fp}
+                                    color={colorMapping[fp.label[$fingerprintMode]]}
                             />
                         {:else}
                             <PSDRendering size={size} data={fp.feature_descriptors.psd.Pxx_spec}  color={colorMapping[fp.label.psd]} />

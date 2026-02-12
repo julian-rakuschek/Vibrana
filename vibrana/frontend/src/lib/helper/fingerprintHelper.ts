@@ -42,10 +42,15 @@ export function updateIndexAllocationArray(index_allocation: number[], new_finge
 }
 
 
-export function indexListForDensityPlot(fingerprints: Fingerprint[], width: number) {
+export function indexListForDensityPlot(fingerprints: Fingerprint[], width: number, zoom_interval: [number, number]) {
     const index_counts: number[] = []
     for (const fp of fingerprints) {
-        const start = Math.floor((fp.start_index / fp.max_index) * width);
+        let relative_start = fp.start_index / fp.max_index;
+        let relative_end = relative_start + fp.slice_length / fp.max_index;
+        if (relative_end < zoom_interval[0] || relative_start > zoom_interval[1]) continue;
+        relative_start = (relative_start - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+        relative_end = (relative_end - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+        const start = Math.floor(relative_start * width);
         const rectangle_width = Math.floor((fp.slice_length / fp.max_index) * width);
         for (let j = 0; j < rectangle_width; j++) index_counts.push(start + j)
     }
