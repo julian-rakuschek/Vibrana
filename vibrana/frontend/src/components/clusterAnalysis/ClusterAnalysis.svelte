@@ -28,7 +28,7 @@
         subset?: string;
     }
 
-    let { dataset = 'hydro', subset = 'x' }: Props = $props();
+    let {dataset = 'hydro', subset = 'x'}: Props = $props();
     const in_memory = page.data.config[dataset].loader === "memory";
 
     let dataProvider = new DataProvider(dataset, subset, in_memory);
@@ -100,7 +100,6 @@
     }
 
 
-
     onMount(async () => {
         await fetchAndDrawAll();
         init_load = false;
@@ -128,27 +127,36 @@
                 {dataProvider} {index_allocation} {label_allocation_tde} {label_allocation_psd}
                 {fetchAndDrawAll} {addNewItem}
         />
-        <div class="flex flex-col grow overflow-shown" bind:clientWidth={width}>
+        <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
             <Header {timestamps}/>
-            <TimelineFingerprintRepresentatives
-                    {width} index_allocation={$state.snapshot(index_allocation)} fingerprints={$state.snapshot(fingerprints)}
-                    {dataProvider} {zoom_interval}
-                    colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-            />
-            <ClusterTimelineWrapper
-                    {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
-                    {dataProvider} index_allocation={$state.snapshot(index_allocation)} {timestamps}
-                    label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
-                    colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-                    bind:zoom_interval
-            />
-            <ZoomIndicator
-                    {width} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}
-                    feature={$fingerprintMode} reset_zoom={() => zoom_interval = [0, 1]}
-                    colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-            />
-            <Uncertainty {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)} {zoom_interval} />
-            <ProvenanceWrapper {width} {dataset} {subset}/>
+            <div>
+                <TimelineFingerprintRepresentatives
+                        {width} index_allocation={$state.snapshot(index_allocation)}
+                        fingerprints={$state.snapshot(fingerprints)}
+                        {dataProvider} {zoom_interval}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                />
+                <ClusterTimelineWrapper
+                        {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
+                        {dataProvider} index_allocation={$state.snapshot(index_allocation)} {timestamps}
+                        label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                        bind:zoom_interval
+                />
+            </div>
+            <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] pb-2">
+                <ZoomIndicator
+                        {width} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}
+                        feature={$fingerprintMode} reset_zoom={() => zoom_interval = [0, 1]}
+                        colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                />
+            </div>
+            <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] mt-5">
+                <Uncertainty {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}/>
+            </div>
+            <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] mt-5 mb-5 pt-2">
+                <ProvenanceWrapper {width} {dataset} {subset}/>
+            </div>
         </div>
     {/if}
 </div>

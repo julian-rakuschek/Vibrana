@@ -16,6 +16,7 @@
 </script>
 
 {#if provenanceQuery.data}
+    <p class="text-center font-semibold">Cluster Evolution Over Time</p>
     <div class="flex flex-row justify-around mb-5">
         <ProvenanceRendering provenance_records={provenanceQuery.data} feature="tde" width={Math.floor(width * 0.45)} />
         <div class="mt-5 grow flex flex-col justify-center items-center" style="height: {provenanceQuery.data.length * 10}px">

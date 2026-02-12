@@ -62,9 +62,9 @@
 
 <div>
     {#if feature === "tde"}
-        <p class="text-center font-semibold">Projection</p>
+        <p class="text-center italic">Projection</p>
     {:else}
-        <p class="text-center font-semibold">PSD</p>
+        <p class="text-center italic">PSD</p>
     {/if}
     <canvas bind:this={canvas}></canvas>
 </div>

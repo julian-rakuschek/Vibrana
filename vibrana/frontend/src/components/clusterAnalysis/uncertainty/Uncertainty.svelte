@@ -56,7 +56,7 @@
     });
 </script>
 
-<div class="w-full flex flex-row justify-between">
+<div class="w-full flex flex-row justify-between px-10 mb-4">
     <p class="font-semibold mt-5 mb-2">Uncertainty</p>
     <div class="w-[500px]">
         <ColorLegend colorMode={ColorMode.Uncertainty}/>

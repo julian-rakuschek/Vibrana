@@ -65,10 +65,10 @@
     });
 </script>
 
-<p class="font-semibold mt-5">Zooming Location</p>
+<p class="font-semibold mt-5 text-center">Zooming Location</p>
 <div class="w-full">
     <canvas {height} {width} bind:this={canvas}></canvas>
 </div>
-<div>
+<div class="flex flex-row justify-center">
     <button onclick={() => reset_zoom()} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset Zoom</button>
 </div>
