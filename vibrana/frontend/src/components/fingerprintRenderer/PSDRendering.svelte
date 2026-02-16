@@ -37,7 +37,7 @@
     let chart: Chart | null = null;
 
     function createChart(ctx: CanvasRenderingContext2D, power: number[], frequencies: number[]) {
-        const dataPoints = frequencies.map((f, i) => ({
+        const dataPoints = frequencies.slice(0, frequencies.length / 3).map((f, i) => ({
             x: f,
             y: power[i] ?? 0
         }));
@@ -68,6 +68,8 @@
                     x: {
                         display: showAxis,
                         type: 'linear',
+                        offset: false,
+                        bounds: 'data',
                         grid: {
                             display: false
                         },
@@ -93,7 +95,7 @@
     function render(power: number[], frequencies: number[]) {
         if (!context) return;
 
-        const dataPoints = frequencies.map((f, i) => ({
+        const dataPoints = frequencies.slice(0, frequencies.length / 3).map((f, i) => ({
             x: f,
             y: power[i] ?? 0
         }));

@@ -34,6 +34,7 @@
         const max_y_value = projected.map(d => d[1]).toSorted((a, b) => a - b)[projected.length - 1];
 
         if (!context || !canvas) return;
+        context.clearRect(0, 0, size, size);
         if (!transparent) {
             context.fillStyle = '#FFFFFF';
             context.fillRect(0, 0, size, size);

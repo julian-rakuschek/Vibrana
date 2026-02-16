@@ -40,6 +40,7 @@
     let init_load = $state(true);
     let width = $state(1000);
     let zoom_interval: [number, number] = $state([0, 1]);
+    let fingerprintRepresentatives: TimelineFingerprintRepresentatives = $state();
 
     let timestamps: number[] = $state(new Array(width).fill(0));
     let index_allocation: number[] = $state(new Array(width).fill(-1));
@@ -53,13 +54,11 @@
     const client = useQueryClient()
 
     async function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
-        console.log(new_fingerprint, labels)
         new_fingerprint['index'] = fingerprints.length;
         fingerprints = [...fingerprints, new_fingerprint];
 
         index_allocation = updateIndexAllocationArray(index_allocation, new_fingerprint, zoom_interval);
 
-        console.log(index_allocation)
         for (let i = 0; i < labels.tde.length; i++) {
             color_generator_tde.getColor(labels.tde[i]);
             fingerprints[i].label.tde = labels.tde[i];
@@ -79,6 +78,10 @@
         color_mapping_tde = color_generator_tde.getColorDictionary();
         color_mapping_psd = color_generator_psd.getColorDictionary();
         await client.invalidateQueries();
+
+        if (fingerprintRepresentatives) {
+            fingerprintRepresentatives.choose_fingerprint_indices(index_allocation, false, fingerprints);
+        }
     }
 
     async function fetchAndDrawAll() {
@@ -129,18 +132,22 @@
         />
         {#if fingerprints.length === 0}
             <div class="h-full grow grid place-items-center">
-                <p class="text-center italic text-xl">No fingerprint has been computed so far. <br />Click the "Single Step" button to get started.</p>
+                <p class="text-center italic text-xl">No fingerprint has been computed so far. <br/>Click the "Single
+                    Step" button to get started.</p>
             </div>
         {:else}
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
-                    <TimelineFingerprintRepresentatives
-                            {width} index_allocation={$state.snapshot(index_allocation)}
-                            fingerprints={$state.snapshot(fingerprints)}
-                            {dataProvider} {zoom_interval}
-                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-                    />
+                    {#key width}
+                        <TimelineFingerprintRepresentatives
+                                {width} index_allocation={$state.snapshot(index_allocation)}
+                                fingerprints={fingerprints}
+                                {dataProvider} {zoom_interval}
+                                colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                                bind:this={fingerprintRepresentatives}
+                        />
+                    {/key}
                     <ClusterTimelineWrapper
                             {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
                             {dataProvider} index_allocation={$state.snapshot(index_allocation)} {timestamps}
