@@ -22,7 +22,7 @@ def flask_get_computing_status(dataset, subset, path):
 @validate_subset
 def flask_activate_computation(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    database.update_parameters(db, dataset, subset, {"running": True})
+    database.update_parameters(db, dataset, subset, {"sampling.running": True})
     return {"success": True}
 
 
@@ -30,7 +30,7 @@ def flask_activate_computation(dataset, subset, path):
 @validate_subset
 def flask_pause_computation(dataset, subset, path):
     db = flask.current_app.config["DB"]
-    database.update_parameters(db, dataset, subset, {"running": False})
+    database.update_parameters(db, dataset, subset, {"sampling.running": False})
     return {"success": True}
 
 
