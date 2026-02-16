@@ -132,7 +132,7 @@
                         {#if $fingerprintMode === "tde"}
                             <FingerprintRendering
                                     {dataProvider} {size}
-                                    update_on_fp_change={true}
+                                    cache_projection={true}
                                     transparent
                                     fingerprint={$state.snapshot(fingerprint_index_allocation[i])}
                                     color={colorMapping[fingerprint_index_allocation[i].label[$fingerprintMode]]}

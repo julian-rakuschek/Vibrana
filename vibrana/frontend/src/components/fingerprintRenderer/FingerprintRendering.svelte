@@ -10,7 +10,7 @@
         size?: number;
         transparent?: boolean;
         color?: string | null;
-        update_on_fp_change?: boolean;
+        cache_projection?: boolean;
     }
 
     let {
@@ -19,14 +19,18 @@
         size = 200,
         transparent = false,
         color = null,
-        update_on_fp_change = true
+        cache_projection = false
     }: Props = $props();
 
     let canvas: HTMLCanvasElement | undefined = $state();
     let context: CanvasRenderingContext2D | null;
+    let cached_projection: number[][] | null = null;
 
     function visualizeFingerprint(fp: Fingerprint) {
-        const projected = dataProvider.get_fingerprint_data_javascript(fp);
+        if (cached_projection === null || !cache_projection) {
+            cached_projection = dataProvider.get_fingerprint_data_javascript(fp);
+        }
+        const projected = cached_projection;
 
         const min_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[0];
         const max_x_value = projected.map(d => d[0]).toSorted((a, b) => a - b)[projected.length - 1];
@@ -60,7 +64,7 @@
     $effect(() => {
         if (!canvas) return;
         context ??= canvas.getContext('2d');
-        if (fingerprint && update_on_fp_change) visualizeFingerprint(fingerprint);
+        if (fingerprint) visualizeFingerprint(fingerprint);
     });
 
 

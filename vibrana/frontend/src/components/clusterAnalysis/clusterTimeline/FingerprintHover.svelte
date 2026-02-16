@@ -74,7 +74,7 @@
                 <CenteredLoadingSpinner/>
             {:else}
                 {#if $fingerprintMode === "tde"}
-                    <FingerprintRendering {dataProvider} fingerprint={fingerprints[hovering_fingerprint_index]}/>
+                    <FingerprintRendering {dataProvider} cache_projection={false} fingerprint={fingerprints[hovering_fingerprint_index]}/>
                 {:else}
                     <PSDRendering
                             showAxis
