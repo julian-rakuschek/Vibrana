@@ -66,12 +66,21 @@
 
         const xPositions = getDivPositions();
 
-        return Array.from({ length: fingerprints_count }, (_, i) => {
+        const allocated_fps = Array.from({ length: fingerprints_count }, (_, i) => {
             const x_position = Math.floor(xPositions[i] + size / 2);
             const x_lower = Math.floor(xPositions[i]);
             const x_upper = Math.floor(xPositions[i] + size);
             return get_nearest_fingerprint(x_position, x_lower, x_upper, index_allocation, fingerprints);
         });
+
+        let prev = null;
+        for (let i = 0; i < fingerprints_count; i++) {
+            if (prev === null) prev = allocated_fps[i]
+            else if (allocated_fps[i] == prev) allocated_fps[i] = null;
+            else prev = allocated_fps[i];
+        }
+
+        return allocated_fps;
     }
 
     export function choose_fingerprint_indices(
@@ -124,8 +133,15 @@
         zoom_interval;
         index_allocation;
         fingerprints;
+        fingerprint_index_allocation = Array(fingerprints_count).fill(null);
         if (!parentDiv) return;
-        fingerprint_index_allocation = computeFingerprintIndices(index_allocation, fingerprints);
+        const timeoutId = window.setTimeout(() => {
+            fingerprint_index_allocation = computeFingerprintIndices(index_allocation, fingerprints);
+        }, 200);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
     });
 </script>
 
