@@ -12,6 +12,7 @@
     let mouse_active = false;
     let mouse_mode: IntervalModes = IntervalModes.ADD;
     let intervals: [number, number][] = [];
+
     interface Props {
         dataset: string;
         subset: string;
@@ -61,12 +62,12 @@
     }
 
     async function saveIntervals() {
-        await ApiRoutes.storeIntervals.fetch({ params: { dataset, subset }, data: intervals })
+        await ApiRoutes.storeIntervals.fetch({params: {dataset, subset}, data: intervals})
     }
 
     export async function resetIntervals() {
         intervals = [];
-        await ApiRoutes.storeIntervals.fetch({ params: { dataset, subset }, data: [] })
+        await ApiRoutes.storeIntervals.fetch({params: {dataset, subset}, data: []})
         visualizeSelectedIntervals();
     }
 
@@ -76,29 +77,35 @@
 
     function zoomIn(mouse_x: number) {
         const split = mouse_x / width;
-        const current_width = Math.abs(zoom_interval[1] - zoom_interval[0]);
-        const intensity = zoomIntensity(current_width);
+        const currentWidth = zoom_interval[1] - zoom_interval[0];
+        const factor = 0.9; // keep 90% each wheel step
 
-        const new_start = zoom_interval[0] + split * intensity;
-        const new_end = zoom_interval[1] - (1 - split) * intensity;
-        const new_width = Math.abs(new_end - new_start);
+        const target = zoom_interval[0] + currentWidth * split;
+        const newWidth = currentWidth * factor;
 
-        if (new_width < 0.005) return;
-        zoom_interval = [new_start, new_end];
+        zoom_interval = [
+            target - newWidth * split,
+            target + newWidth * (1 - split)
+        ];
     }
 
 
     function zoomOut(mouse_x: number) {
         const split = mouse_x / width;
-        const current_width = Math.abs(zoom_interval[0] - zoom_interval[1])
+        const currentWidth = zoom_interval[1] - zoom_interval[0];
+        const factor = 1 / 0.9; // keep 90% each wheel step
+
+        const target = zoom_interval[0] + currentWidth * split;
+        const newWidth = currentWidth * factor;
+
         zoom_interval = [
-            Math.max(0, zoom_interval[0] - (1 - split) * zoomIntensity(current_width)),
-            Math.min(1, zoom_interval[1] + split * zoomIntensity(current_width))
+            Math.max(0, target - newWidth * split),
+            Math.min(1, target + newWidth * (1 - split))
         ]
     }
 
     async function getIntervals() {
-        intervals = await ApiRoutes.getIntervals.fetch({ params: { dataset, subset } })
+        intervals = await ApiRoutes.getIntervals.fetch({params: {dataset, subset}})
     }
 
     function initMouse() {
