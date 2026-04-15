@@ -82,52 +82,6 @@ def cluster_all_fingerprints_all_feature_descriptors(db: Database, dataset: str,
 
 
 # ----------------------------------------------
-#              Provenance Management
-# ----------------------------------------------
-
-def add_provenance_record(db: Database, dataset: str, subset: str):
-    coverage, signal_length = get_coverage(db, dataset, subset)
-    tde_breakpoints = get_breakpoints(db, dataset, subset, "tde")
-    psd_breakpoints = get_breakpoints(db, dataset, subset, "psd")
-    db["provenance"].insert_one({
-        "dataset": dataset,
-        "subset": subset,
-        "coverage": coverage,
-        "signal_length": signal_length,
-        "breakpoints": {
-            "tde": tde_breakpoints,
-            "psd": psd_breakpoints
-        }
-    })
-
-def get_latest_provenance_record(db: Database, dataset: str, subset: str):
-    res = db["provenance"].find({
-        "dataset": dataset,
-        "subset": subset,
-    }).sort({"$natural": -1}).limit(1)
-    res = list(res)
-    if len(res) > 0:
-        return res[0]
-    return {
-        "dataset": dataset,
-        "subset": subset,
-        "coverage": 0,
-        "signal_length": 1,
-        "breakpoints": {
-            "tde": [],
-            "psd": []
-        }
-    }
-
-
-def get_all_provenance_records(db: Database, dataset: str, subset: str):
-    return list(db["provenance"].find({
-        "dataset": dataset,
-        "subset": subset,
-    }).sort({"$natural": -1}))
-
-
-# ----------------------------------------------
 #              Parameter Management
 # ----------------------------------------------
 

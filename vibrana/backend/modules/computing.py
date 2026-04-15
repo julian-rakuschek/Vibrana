@@ -40,7 +40,6 @@ def flask_make_single_step(dataset, subset, path):
     def insert_fingerprint(dataset, subset, data):
         database.store_fingerprint(db, data, dataset, subset)
         labels = database.cluster_all_fingerprints_all_feature_descriptors(db, dataset, subset)
-        database.add_provenance_record(db, dataset, subset)
         return labels
 
     db = flask.current_app.config["DB"]

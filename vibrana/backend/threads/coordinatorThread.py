@@ -48,7 +48,6 @@ class CoordinatorThread(threading.Thread):
         self.locks[dataset][subset].acquire()
         database.store_fingerprint(self.db, data, dataset, subset)
         labels = database.cluster_all_fingerprints_all_feature_descriptors(self.db, dataset, subset)
-        database.add_provenance_record(self.db, dataset, subset)
         self.locks[dataset][subset].release()
         return labels
 

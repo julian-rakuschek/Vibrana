@@ -39,20 +39,6 @@ def flask_get_fingerprints(dataset, subset, path):
     return database.serialize_mongodb(database.get_fingerprints(db, dataset, subset))
 
 
-@db_app.get("<dataset>/<subset>/provenance/latest")
-@validate_subset
-def flask_get_latest_provenance_record(dataset, subset, path):
-    db = flask.current_app.config["DB"]
-    return database.serialize_mongodb(database.get_latest_provenance_record(db, dataset, subset))
-
-
-@db_app.get("<dataset>/<subset>/provenance/all")
-@validate_subset
-def flask_get_all_provenance_records(dataset, subset, path):
-    db = flask.current_app.config["DB"]
-    return database.serialize_mongodb(database.get_all_provenance_records(db, dataset, subset))
-
-
 @db_app.post("<dataset>/<subset>/clear")
 @validate_subset
 def flask_clear_dataset(dataset, subset, path):

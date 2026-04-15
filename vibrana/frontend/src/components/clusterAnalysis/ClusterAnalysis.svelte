@@ -19,7 +19,6 @@
     import ZoomIndicator from "@components/clusterAnalysis/clusterTimeline/ZoomIndicator.svelte";
     import {fingerprintMode} from "@lib/stores";
     import {useQueryClient} from "@tanstack/svelte-query";
-    import ProvenanceWrapper from "@components/clusterAnalysis/provenance/ProvenanceWrapper.svelte";
     import Settings from "@components/clusterAnalysis/settings/Settings.svelte";
     import Header from "@components/clusterAnalysis/Header.svelte";
 
@@ -166,9 +165,6 @@
                 <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] mt-5">
                     <Uncertainty {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
                                  {zoom_interval}/>
-                </div>
-                <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] mt-5 mb-5 pt-2">
-                    <ProvenanceWrapper {width} {dataset} {subset}/>
                 </div>
             </div>
         {/if}
