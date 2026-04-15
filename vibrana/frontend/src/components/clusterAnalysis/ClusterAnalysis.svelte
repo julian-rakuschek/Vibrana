@@ -53,33 +53,30 @@
     const client = useQueryClient()
 
     async function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
-        new_fingerprint['index'] = fingerprints.length;
-        fingerprints = [...fingerprints, new_fingerprint];
-
-        index_allocation = updateIndexAllocationArray(index_allocation, new_fingerprint, zoom_interval);
-
-        for (let i = 0; i < labels.tde.length; i++) {
-            color_generator_tde.getColor(labels.tde[i]);
-            fingerprints[i].label.tde = labels.tde[i];
-        }
-        for (let i = 0; i < labels.psd.length; i++) {
-            color_generator_psd.getColor(labels.psd[i]);
-            fingerprints[i].label.psd = labels.psd[i];
-        }
-
-        for (let i = 0; i < width; i++) {
-            if (index_allocation[i] !== -1) {
-                label_allocation_tde[i] = fingerprints[index_allocation[i]].label.tde;
-                label_allocation_psd[i] = fingerprints[index_allocation[i]].label.psd;
+        const nextFingerprints = [...fingerprints, {...new_fingerprint, index: fingerprints.length}].map((fp, i) => ({
+            ...fp,
+            label: {
+                ...fp.label,
+                tde: labels.tde[i] ?? fp.label.tde,
+                psd: labels.psd[i] ?? fp.label.psd
             }
-        }
+        }));
 
-        color_mapping_tde = color_generator_tde.getColorDictionary();
-        color_mapping_psd = color_generator_psd.getColorDictionary();
+        labels.tde.forEach(label => color_generator_tde.getColor(label));
+        labels.psd.forEach(label => color_generator_psd.getColor(label));
+
+        fingerprints = nextFingerprints;
+        index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
+        label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
+        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+
+        color_mapping_tde = {...color_generator_tde.getColorDictionary()};
+        color_mapping_psd = {...color_generator_psd.getColorDictionary()};
+
         await client.invalidateQueries();
 
         if (fingerprintRepresentatives) {
-            fingerprintRepresentatives.choose_fingerprint_indices(index_allocation, false, fingerprints);
+            fingerprintRepresentatives.choose_fingerprint_indices(index_allocation, true, fingerprints);
         }
     }
 
@@ -155,16 +152,12 @@
                             bind:zoom_interval
                     />
                 </div>
-                <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] pb-2">
+                <div>
                     <ZoomIndicator
                             {width} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}
                             feature={$fingerprintMode} reset_zoom={() => zoom_interval = [0, 1]}
                             colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                     />
-                </div>
-                <div class="shadow-[0_0_10px_rgba(0,0,0,0.25)] mt-5">
-                    <Uncertainty {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
-                                 {zoom_interval}/>
                 </div>
             </div>
         {/if}

@@ -1,13 +1,14 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
-import type {Fingerprint} from "@lib/types";
+import type {Fingerprint, TimeInformation} from "@lib/types";
 import {type Writable, writable} from "svelte/store";
-import {stretchBalanced} from "@lib/helper/util";
+import {generateTimestamps} from "@lib/helper/util";
 
 export class DataProvider {
     private readonly dataset: string;
     private readonly subset: string;
     private readonly in_memory: boolean;
     public loading: Writable<boolean> = writable(false);
+    private time_information: TimeInformation | undefined;
     // only used if in_memory is true
     private vibration_signal: number[] | undefined;
 
@@ -20,6 +21,7 @@ export class DataProvider {
     async load() {
         if (!this.in_memory) throw "only allowed when dataset is configured as in memory";
         this.loading.set(true);
+        this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
         this.vibration_signal = await ApiRoutes.getSlice.fetch({params: {dataset: this.dataset, subset: this.subset}});
         console.log("Load complete")
         this.loading.set(false);
@@ -27,17 +29,10 @@ export class DataProvider {
     }
 
     async get_timestamps(zoom_interval: [number, number], width: number) {
-        let start = Math.floor(zoom_interval[0] * this.get_length());
-        let end = Math.floor(zoom_interval[1] * this.get_length());
-        if (this.get_length() == 0) {
-            start = 0;
-            end = -1;
+        if (!this.time_information) {
+            this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
         }
-        const timestamps = await ApiRoutes.getTimestamps.fetch({
-            params: {dataset: this.dataset, subset: this.subset},
-            queryParams: {start_index: start, end_index: end, amount: width}
-        });
-        return stretchBalanced(timestamps, width);
+        return generateTimestamps(this.time_information?.start_time ?? "1970-01-01T00:00:00", this.time_information?.end_time ?? "1970-01-01T23:59:00", width, zoom_interval);
     }
 
     isInMemory(): boolean {

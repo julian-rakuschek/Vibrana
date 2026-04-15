@@ -1,22 +1,33 @@
 import { intervalToDuration, formatDuration } from "date-fns";
 
 
+export function generateTimestamps(
+    start: string,
+    end: string,
+    amount: number,
+    zoomInterval: [number, number] = [0, 1]
+): number[] {
+    if (amount <= 0) return [];
 
+    const startSeconds = new Date(start).getTime() / 1000;
+    const endSeconds = new Date(end).getTime() / 1000;
+    const [zoomStart, zoomEnd] = zoomInterval;
 
-export function stretchBalanced<T>(arr: readonly T[], targetLen: number): T[] {
-      const n = arr.length;
-      if (n === 0) return [];
-      if (targetLen <= 0) return [];
+    if (Number.isNaN(startSeconds) || Number.isNaN(endSeconds)) {
+        throw new Error("Invalid start or end timestamp");
+    }
+    if (zoomStart < 0 || zoomEnd > 1 || zoomStart > zoomEnd) {
+        throw new Error("Invalid zoom interval");
+    }
 
-      const base = Math.floor(targetLen / n);
-      const rem = targetLen % n;
+    const totalDuration = endSeconds - startSeconds;
+    const visibleStart = startSeconds + totalDuration * zoomStart;
+    const visibleEnd = startSeconds + totalDuration * zoomEnd;
 
-      const out: T[] = [];
-      for (let i = 0; i < n; i++) {
-        const repeats = base + (i < rem ? 1 : 0);
-        for (let r = 0; r < repeats; r++) out.push(arr[i]);
-      }
-      return out;
+    if (amount === 1) return [visibleStart];
+
+    const step = (visibleEnd - visibleStart) / (amount - 1);
+    return Array.from({ length: amount }, (_, index) => visibleStart + step * index);
 }
 
 export function formatUnixTimestamp(timestamp: number): { isoDate: string; time: string;} {

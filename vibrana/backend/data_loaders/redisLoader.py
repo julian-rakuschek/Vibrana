@@ -1,3 +1,5 @@
+import datetime
+import json
 import math
 import os
 import time
@@ -26,77 +28,57 @@ def clear_all_redis():
     for key in r.scan_iter("vibrana:*"):
         r.delete(key)
 
+
+def estimate_sampling_frequency(meta: dict) -> float:
+    start = datetime.datetime.fromisoformat(meta["start_time"])
+    end = datetime.datetime.fromisoformat(meta["end_time"])
+    total_samples = meta["total_sample_points"]
+    duration_seconds = (end - start).total_seconds()
+    return total_samples / duration_seconds
+
+
 class RedisLoader(DataLoaderBase):
     def __init__(self, path_to_npy, dataset, subset):
         super().__init__()
         self.path_to_npy = path_to_npy
-        self.path_to_timestamps = os.path.join(Path(path_to_npy).parents[0], "timestamps.npy")
         self.redis_prefix = f"vibrana:{dataset}:{subset}"
         self.dataset = dataset
         self.subset = subset
         self.r = get_redis()
+
+        time_file = os.path.join(Path(path_to_npy).parents[0], "time.json")
+        with open(time_file, "r") as f:
+            self.fs = estimate_sampling_frequency(json.load(f))
 
     def load_numpy_file(self, overwrite_existing=False):
         lock_key = f"{self.redis_prefix}:lock"
         lock = self.r.lock(lock_key, timeout=None, blocking_timeout=None)
         lock.acquire()
         data_key = f"{self.redis_prefix}:data"
-        timestamps_key = f"{self.redis_prefix}:timestamps"
         if not overwrite_existing and self.r.exists(data_key):
             self.data_size = self.r.llen(data_key)
             lock.release()
             return
         self.r.delete(data_key)
-        self.r.delete(timestamps_key)
         data = np.load(self.path_to_npy)
-        timestamps = np.arange(len(data)) + int(time.time())
-        if os.path.exists(self.path_to_timestamps):
-            timestamps = np.load(self.path_to_timestamps)
-            if len(timestamps) != len(data):
-                print("WARNING: timestamps and data values differ in length! Using default timestamps as fallback")
         print(f"Loading {data_key} into redis with size {len(data)}")
         pipe = self.r.pipeline()
         batch_size = 1000
         data_size = 0
         for i in tqdm(range(0, len(data), batch_size)):
             batch = data[i:i + batch_size].tolist()
-            batch_ts = timestamps[i:i + batch_size].tolist()
             pipe.rpush(data_key, *batch)
-            pipe.rpush(timestamps_key, *batch_ts)
             data_size += len(batch)
         pipe.execute()
         self.data_size = data_size
         print("Done!")
         lock.release()
 
-    def get_slice(self, start_index=0, end_index=-1, as_numpy=True, timestamps=False):
+    def get_slice(self, start_index=0, end_index=-1, as_numpy=True):
         self.load_numpy_file()
-        data_key = f"{self.redis_prefix}:timestamps" if timestamps else f"{self.redis_prefix}:data"
+        data_key = f"{self.redis_prefix}:data"
         retrieved = self.r.lrange(data_key, start_index, end_index)
         retrieved = [float(x) for x in retrieved]
-        if as_numpy:
-            retrieved = np.array(retrieved)
-        return retrieved
-
-    def get_timestamp_subsample(self, start_index=0, end_index=-1, as_numpy=True, amount=1000):
-        self.load_numpy_file()
-        data_key = f"{self.redis_prefix}:timestamps"
-
-        if end_index == -1:
-            end_index = self.data_size - 1
-        if start_index < 0:
-            start_index = self.data_size + start_index
-        if end_index < 0:
-            end_index = self.data_size + end_index
-
-        step = self.data_size // amount
-        indices = range(start_index, end_index + 1, step)
-
-        pipe = self.r.pipeline()
-        for i in indices:
-            pipe.lindex(data_key, i)
-
-        retrieved = [float(x) for x in pipe.execute()]
         if as_numpy:
             retrieved = np.array(retrieved)
         return retrieved

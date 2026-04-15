@@ -1,6 +1,6 @@
 <script lang="ts">
     import type {ClusterColorMapping, Fingerprint, Point} from "@lib/types";
-    import {onMount} from "svelte";
+    import {onMount, untrack} from "svelte";
     import FingerprintRendering from "@components/fingerprintRenderer/FingerprintRendering.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
@@ -25,27 +25,24 @@
         colorMapping,
         dataProvider
     }: Props = $props();
+
     let loading = dataProvider.loading;
 
-    const size: number = 100;
-    const connectorHeight: number = 30;
-    const fingerprints_count: number = Math.max(0, Math.floor(width / size));
+    const size = 100;
+    const connectorHeight = 30;
+    const fingerprints_count = Math.max(0, Math.floor(width / size));
 
     let divRefs: HTMLDivElement[] = $state(Array(fingerprints_count));
     let parentDiv: HTMLDivElement = $state();
     let fingerprint_index_allocation: (Fingerprint | null)[] = $state(Array(fingerprints_count).fill(null));
 
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    function handleZoom(zoom_interval: [number, number]) {
-        clearTimeout(timeoutId);
-        fingerprint_index_allocation = Array(fingerprints_count).fill(null);
-        timeoutId = setTimeout(() => {
-            choose_fingerprint_indices(index_allocation, true, fingerprints);
-        }, 500);
-    }
-
-    function get_nearest_fingerprint(x_position: number, lower_bound: number, upper_bound: number, index_allocation: number[], fingerprints: Fingerprint[]): Fingerprint | null {
+    function get_nearest_fingerprint(
+        x_position: number,
+        lower_bound: number,
+        upper_bound: number,
+        index_allocation: number[],
+        fingerprints: Fingerprint[]
+    ): Fingerprint | null {
         if (x_position >= index_allocation.length || x_position < 0) return null;
         let step = 0;
         while (step < index_allocation.length) {
@@ -60,24 +57,37 @@
     }
 
     function getDivPositions() {
-        const base_left = parentDiv.getBoundingClientRect().left
+        const base_left = parentDiv.getBoundingClientRect().left;
         return divRefs.map(div => div.getBoundingClientRect().left - base_left);
     }
 
-    export function choose_fingerprint_indices(index_allocation: number[], updateAllFingerprints: boolean, fingerprints: Fingerprint[]) {
-        if (!parentDiv) return;
+    function computeFingerprintIndices(index_allocation: number[], fingerprints: Fingerprint[]) {
+        if (!parentDiv) return Array(fingerprints_count).fill(null);
+
         const xPositions = getDivPositions();
-        for (let i = 0; i < fingerprints_count; i++) {
-            if (!fingerprint_index_allocation[i] || updateAllFingerprints) {
-                const x_position = Math.floor(xPositions[i] + size / 2);
-                const x_lower = Math.floor(xPositions[i]);
-                const x_upper = Math.floor(xPositions[i] + size);
-                fingerprint_index_allocation[i] = get_nearest_fingerprint(x_position, x_lower, x_upper, index_allocation, fingerprints);
-            }
-            else if (fingerprint_index_allocation[i] !== null) {
-                fingerprint_index_allocation[i].label = fingerprints[fingerprint_index_allocation[i].index].label
-            }
+
+        return Array.from({ length: fingerprints_count }, (_, i) => {
+            const x_position = Math.floor(xPositions[i] + size / 2);
+            const x_lower = Math.floor(xPositions[i]);
+            const x_upper = Math.floor(xPositions[i] + size);
+            return get_nearest_fingerprint(x_position, x_lower, x_upper, index_allocation, fingerprints);
+        });
+    }
+
+    export function choose_fingerprint_indices(
+        index_allocation: number[],
+        updateAllFingerprints: boolean,
+        fingerprints: Fingerprint[]
+    ) {
+        if (updateAllFingerprints) {
+            fingerprint_index_allocation = computeFingerprintIndices(index_allocation, fingerprints);
+            return;
         }
+
+        const previous = untrack(() => fingerprint_index_allocation);
+        fingerprint_index_allocation = previous.map(fp =>
+            fp ? fingerprints[fp.index] : null
+        );
     }
 
     function generateConnectionLines(fingerprint_index_allocation: (Fingerprint | null)[], feature: "tde" | "psd") {
@@ -85,34 +95,38 @@
         const xPositions = getDivPositions();
         const lines = [];
         const linkGenerator = d3.linkVertical().x((d: Point) => d.x).y((d: Point) => d.y);
+
         for (let i = 0; i < fingerprints_count; i++) {
             const fp = fingerprint_index_allocation[i];
             if (fp) {
                 const source: Point = {x: Math.floor(xPositions[i] + size / 2), y: 0};
-                const fp_x_start = (fp.start_index / fp.max_index);
-                const fp_x_end = fp_x_start + (fp.slice_length / fp.max_index);
+                const fp_x_start = fp.start_index / fp.max_index;
+                const fp_x_end = fp_x_start + fp.slice_length / fp.max_index;
                 const fp_target = (fp_x_start + fp_x_end) / 2;
                 const zoomed = (fp_target - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
                 const target: Point = {x: Math.floor(zoomed * width), y: connectorHeight};
+
                 lines.push({
                     d: linkGenerator({source, target}),
                     color: colorMapping[fp.label[feature]]
-                })
+                });
             }
         }
+
         return lines;
     }
 
-
     onMount(() => {
-        choose_fingerprint_indices(index_allocation, true, fingerprints);
+        fingerprint_index_allocation = computeFingerprintIndices(index_allocation, fingerprints);
     });
 
     $effect(() => {
-        handleZoom(zoom_interval);
+        zoom_interval;
+        index_allocation;
+        fingerprints;
+        if (!parentDiv) return;
+        fingerprint_index_allocation = computeFingerprintIndices(index_allocation, fingerprints);
     });
-
-
 </script>
 
 <div class="flex flex-row justify-between" bind:this={parentDiv}>

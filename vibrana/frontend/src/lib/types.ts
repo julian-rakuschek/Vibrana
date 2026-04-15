@@ -46,21 +46,13 @@ export type Fingerprint = {
     };
 }
 
-export type ProvenanceSeed = {
-    index: number;
-    label: number;
+export type TimeInformation = {
+    start_time: string;
+    end_time: string;
+    total_sample_points: number;
+    display_as_delta: boolean;
 }
 
-export type Provenance = {
-    dataset: string;
-    subset: string;
-    coverage: number;
-    signal_length: number;
-    breakpoints: {
-        tde: ProvenanceSeed[];
-        psd: ProvenanceSeed[];
-    }
-}
 
 export type ClusterColorMapping = {
     [key: number]: string;

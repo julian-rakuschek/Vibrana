@@ -4,7 +4,7 @@ import type {
   Fingerprint,
   Config,
   ParameterSettings,
-  ClusterDelta, ParameterSettingsUpdate, Provenance
+  ClusterDelta, ParameterSettingsUpdate, TimeInformation
 } from '@lib/types';
 
 // ApiRoute types:
@@ -28,8 +28,7 @@ const dbRoutes = {
   storeParameters: new ApiRoute<ParameterSettingsUpdate, { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/parameters"),
   getIntervals: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, [number, number][]>("GET", "/db/:dataset/:subset/intervals"),
   storeIntervals: new ApiRoute<[number, number][], { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/intervals"),
-  latestProvenance: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, Provenance>("GET", "/db/:dataset/:subset/provenance/latest"),
-  allProvenance: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, Provenance[]>("GET", "/db/:dataset/:subset/provenance/all"),
+  getTimeInformation: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, TimeInformation>("GET", "/db/:dataset/:subset/time"),
 };
 
 const computingRoutes = {

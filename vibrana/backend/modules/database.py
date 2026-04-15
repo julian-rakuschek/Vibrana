@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 
 import flask
 
@@ -20,16 +22,13 @@ def flask_get_slice(dataset, subset, path):
     return loader.get_slice(start_index, end_index, as_numpy=False)
 
 
-@db_app.get("<dataset>/<subset>/timestamps")
+@db_app.get("<dataset>/<subset>/time")
 @validate_subset
-def flask_get_timestamps(dataset, subset, path):
-    start_index = int(flask.request.args.get("start_index", 0))
-    end_index = int(flask.request.args.get("end_index", -1))
-    amount = int(flask.request.args.get("amount", 1000))
-
-    loader = RedisLoader(path, dataset, subset)
-    loader.load_numpy_file()
-    return loader.get_timestamp_subsample(start_index, end_index, as_numpy=False, amount=amount)
+def flask_get_time(dataset, subset, path):
+    time_file = os.path.join(Path(path).parents[0], "time.json")
+    with open(time_file, "r") as f:
+        time = json.load(f)
+    return time
 
 
 @db_app.get("<dataset>/<subset>/fingerprints")

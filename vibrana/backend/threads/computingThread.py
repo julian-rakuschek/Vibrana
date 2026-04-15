@@ -20,15 +20,14 @@ from vibrana.backend.data_loaders.dataLoaderBase import DataLoaderBase
 from vibrana.backend.data_loaders.redisLoader import RedisLoader
 import vibrana.backend.helper.database as database
 
-def compute_feature_descriptors(data, projected, timestamps):
+def compute_feature_descriptors(data, projected, sample_rate=1.0):
     feature_descriptors = {}
 
     radii = np.linalg.norm(projected, axis=1)
     counts, bins = np.histogram(radii, bins=20, range=(0, np.max(radii)), density=True)
     feature_descriptors["tde"] = {"bins": bins.tolist(), "counts": counts.tolist()}
 
-    fs = 1.0 / np.median(np.diff(timestamps))
-    f, Pxx_spec = signal.welch(data, fs, scaling='spectrum')
+    f, Pxx_spec = signal.welch(data, sample_rate, scaling='spectrum')
     feature_descriptors["psd"] = {"f": f.tolist(), "Pxx_spec": Pxx_spec.tolist()}
 
     return feature_descriptors
@@ -81,11 +80,10 @@ class ComputingThread(threading.Thread):
         slice_size = params["sampling"]["slice_size"]
         sliding_window_size = params["tde"]["sliding_window_size"]
         data = self.loader.get_slice(next_index, next_index + slice_size)
-        timestamps = self.loader.get_slice(next_index, next_index + slice_size, timestamps=True)
         if sliding_window_size >= len(data):
             return
         v1, v2, projected = compute_pca(data, sliding_window_size)
-        feature_descriptors = compute_feature_descriptors(data, projected, timestamps)
+        feature_descriptors = compute_feature_descriptors(data, projected, self.loader.fs)
 
         to_insert = {
             "dataset": self.loader.dataset, "subset": self.loader.subset,
