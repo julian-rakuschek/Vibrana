@@ -33,6 +33,7 @@
     "@tanstack/svelte-query": "^6.0.18",
     "@types/d3": "^7.4.3",
     "@types/node": "^25.2.3",
+    "avl": "^2.0.0",
     "axios": "^1.13.5",
     "chart.js": "^4.5.1",
     "colorjs.io": "^0.6.1",

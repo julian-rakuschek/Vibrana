@@ -1,4 +1,6 @@
 import { intervalToDuration, formatDuration } from "date-fns";
+import type {AVLNode, AVLTree} from "avl";
+import type {Fingerprint} from "@lib/types";
 
 
 export function generateTimestamps(
@@ -49,3 +51,25 @@ export function humanTimeSpan(timestamps: number[]): string {
 
     return formatDuration(duration);
 }
+
+
+export function findNearestFingerprint(query: number, tree: AVLTree<number, Fingerprint>): Fingerprint | null {
+        let node = tree.root;
+        let best: AVLNode<number, Fingerprint> | null = null;
+
+        while (node) {
+            const currentDistance = Math.abs(node.key - query);
+            const bestDistance = best === null ? Infinity : Math.abs(best.key - query);
+            const isCloser = currentDistance < bestDistance;
+            const isTieWithSmallerKey =
+                currentDistance === bestDistance &&
+                best !== null &&
+                node.key < best.key;
+
+            if (best === null || isCloser || isTieWithSmallerKey) best = node;
+            if (query === node.key) return node.data ?? null;
+            node = query < node.key ? node.left : node.right;
+        }
+
+        return best?.data ?? null;
+    }

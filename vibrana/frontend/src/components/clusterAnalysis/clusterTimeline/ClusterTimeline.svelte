@@ -9,6 +9,8 @@
     import TimestampHover from "@components/clusterAnalysis/clusterTimeline/TimestampHover.svelte";
     import {formatUnixTimestamp} from "@lib/helper/util";
     import IntervalSelection from "@components/clusterAnalysis/clusterTimeline/IntervalSelection.svelte";
+    import {AVLTree} from "avl";
+    import {computeVisibleIndices} from "@lib/helper/fingerprintHelper";
 
     interface Props {
         dataset: string;
@@ -17,6 +19,7 @@
         label_allocation?: number[];
         width?: number;
         dataProvider: DataProvider;
+        fp_tree: AVLTree<number, Fingerprint>;
         fingerprints?: Fingerprint[];
         colorMapping: ClusterColorMapping;
         zoom_interval?: [number, number];
@@ -30,6 +33,7 @@
         label_allocation = [],
         width = 1000,
         dataProvider,
+        fp_tree,
         fingerprints = [],
         colorMapping,
         zoom_interval = $bindable([0, 1]),
@@ -46,7 +50,7 @@
 
 <div class="w-full relative h-[100px]">
     <div class="w-full absolute top-0 left-0">
-        <ClusterBackground {width} {colorMapping} {label_allocation} />
+        <ClusterBackground {width} {colorMapping} {fp_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, dataProvider.get_length())} />
     </div>
     <div class="w-full absolute top-0 left-0">
         <FingerprintLocations {width} {label_allocation} {colorMapping} />
