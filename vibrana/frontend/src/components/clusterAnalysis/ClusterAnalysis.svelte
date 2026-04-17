@@ -22,6 +22,7 @@
     import Settings from "@components/clusterAnalysis/settings/Settings.svelte";
     import Header from "@components/clusterAnalysis/Header.svelte";
     import {AVLTree} from "avl";
+    import IntervalTree from 'node-interval-tree'
 
     interface Props {
         dataset?: string;
@@ -35,6 +36,7 @@
     const color_generator_tde = new ColorGenerator();
     const color_generator_psd = new ColorGenerator();
     const fp_tree = new AVLTree<number, Fingerprint>();
+    let fp_interval_tree = new IntervalTree<Fingerprint>();
 
     let color_mapping_tde = $state(color_generator_tde.getColorDictionary());
     let color_mapping_psd = $state(color_generator_psd.getColorDictionary());
@@ -78,8 +80,10 @@
 
         // necessary to rebuild entire tree, because clustering results may change across many instances
         fp_tree.clear();
+        fp_interval_tree = new IntervalTree<Fingerprint>();
         for (const nextFingerprint of nextFingerprints) {
             fp_tree.insert(nextFingerprint.start_index, nextFingerprint);
+            fp_interval_tree.insert(nextFingerprint.start_index, nextFingerprint.start_index + nextFingerprint.slice_length, nextFingerprint);
         }
 
         await client.invalidateQueries();
@@ -93,11 +97,13 @@
         zoom_interval = [0, 1];
         let vectors_query = await ApiRoutes.getFingerprints.fetch({params: {dataset, subset}});
         fp_tree.clear();
+        fp_interval_tree = new IntervalTree<Fingerprint>();
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
             color_generator_tde.getColor(vectors_query[i].label.tde);
             color_generator_psd.getColor(vectors_query[i].label.psd);
             fp_tree.insert(vectors_query[i].start_index, vectors_query[i]);
+            fp_interval_tree.insert(vectors_query[i].start_index, vectors_query[i].start_index + vectors_query[i].slice_length, vectors_query[i]);
         }
         fingerprints = [...vectors_query];
         color_mapping_tde = color_generator_tde.getColorDictionary();
@@ -157,7 +163,7 @@
                     {/key}
                     <ClusterTimelineWrapper
                             {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
-                            {dataProvider} {fp_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
+                            {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
                             label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
                             colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
                             bind:zoom_interval

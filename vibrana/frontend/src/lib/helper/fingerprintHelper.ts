@@ -45,7 +45,9 @@ export function computeVisibleIndices(zoom_interval: [number, number], width: nu
     const start_index = Math.floor(zoom_interval[0] * max_index);
     const end_index = Math.floor(zoom_interval[1] * max_index);
     const index_span = Math.abs(end_index - start_index);
-    return new Array(width).fill(0).map((_, i) => Math.floor(start_index + i/width * index_span));
+    const indices = new Array(width + 1).fill(0).map((_, i) => Math.floor(start_index + i/width * index_span));
+    indices[width] = Math.min(end_index, max_index)
+    return indices
 }
 
 

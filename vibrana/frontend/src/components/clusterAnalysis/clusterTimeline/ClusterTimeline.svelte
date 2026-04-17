@@ -11,6 +11,9 @@
     import IntervalSelection from "@components/clusterAnalysis/clusterTimeline/IntervalSelection.svelte";
     import {AVLTree} from "avl";
     import {computeVisibleIndices} from "@lib/helper/fingerprintHelper";
+    import TimelineSegmentationVisualization
+        from "@components/clusterAnalysis/clusterTimeline/TimelineSegmentationVisualization.svelte";
+    import type IntervalTree from "node-interval-tree";
 
     interface Props {
         dataset: string;
@@ -20,6 +23,7 @@
         width?: number;
         dataProvider: DataProvider;
         fp_tree: AVLTree<number, Fingerprint>;
+        fp_interval_tree: IntervalTree<Fingerprint>;
         fingerprints?: Fingerprint[];
         colorMapping: ClusterColorMapping;
         zoom_interval?: [number, number];
@@ -34,6 +38,7 @@
         width = 1000,
         dataProvider,
         fp_tree,
+        fp_interval_tree,
         fingerprints = [],
         colorMapping,
         zoom_interval = $bindable([0, 1]),
@@ -49,13 +54,11 @@
 </script>
 
 <div class="w-full relative h-[100px]">
+
     <div class="w-full absolute top-0 left-0">
         {#await dataProvider.get_length() then len}
-            <ClusterBackground {width} {colorMapping} {fp_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
+            <TimelineSegmentationVisualization {width} {colorMapping} {fp_tree} {fp_interval_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
         {/await}
-    </div>
-    <div class="w-full absolute top-0 left-0">
-        <FingerprintLocations {width} {label_allocation} {colorMapping}/>
     </div>
     <div class="w-full absolute top-0 left-0">
         <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval/>
