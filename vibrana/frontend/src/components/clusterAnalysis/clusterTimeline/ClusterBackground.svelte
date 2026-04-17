@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type {ClusterColorMapping, Fingerprint} from '@lib/types';
 	import { onMount } from 'svelte';
-	import { fillGaps } from '@lib/algorithms/gapFill';
 	import {AVLTree} from "avl";
 	import {findNearestFingerprint} from "@lib/helper/util";
 	import {fingerprintMode} from "@lib/stores";

@@ -50,19 +50,21 @@
 
 <div class="w-full relative h-[100px]">
     <div class="w-full absolute top-0 left-0">
-        <ClusterBackground {width} {colorMapping} {fp_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, dataProvider.get_length())} />
+        {#await dataProvider.get_length() then len}
+            <ClusterBackground {width} {colorMapping} {fp_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
+        {/await}
     </div>
     <div class="w-full absolute top-0 left-0">
-        <FingerprintLocations {width} {label_allocation} {colorMapping} />
+        <FingerprintLocations {width} {label_allocation} {colorMapping}/>
     </div>
     <div class="w-full absolute top-0 left-0">
-        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval />
+        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval/>
     </div>
     <div class="w-full absolute top-[100px] left-0">
-        <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x} />
+        <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x}/>
     </div>
     <div class="w-full absolute top-[-50px] left-0">
-        <TimestampHover {width} {mouse_x} {timestamps} />
+        <TimestampHover {width} {mouse_x} {timestamps}/>
     </div>
     <div class="w-[100px] absolute top-1/2 -translate-y-1/2 -left-[70px] rotate-90">
         {#if timestamps.length > 0}
@@ -78,5 +80,7 @@
     </div>
 </div>
 <div class="flex">
-    <p onclick={resetIntervals} class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">Reset intervals</p>
+    <p onclick={resetIntervals}
+       class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
+        Reset intervals</p>
 </div>

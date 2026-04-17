@@ -59,7 +59,10 @@ export class DataProvider {
         return projected;
     }
 
-    get_length() {
-        return this.vibration_signal?.length ?? 0;
+    async get_length() {
+        if (!this.time_information) {
+            this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
+        }
+        return this.time_information.total_sample_points;
     }
 }
