@@ -108,12 +108,12 @@
         for (let i = 0; i < fingerprints_count; i++) {
             const fp = fingerprint_index_allocation[i];
             if (fp) {
-                const source: Point = {x: Math.floor(xPositions[i] + size / 2), y: 0};
+                const source: Point = {x: Math.floor(xPositions[i] + size / 2), y: connectorHeight};
                 const fp_x_start = fp.start_index / fp.max_index;
                 const fp_x_end = fp_x_start + fp.slice_length / fp.max_index;
                 const fp_target = (fp_x_start + fp_x_end) / 2;
                 const zoomed = (fp_target - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
-                const target: Point = {x: Math.floor(zoomed * width), y: connectorHeight};
+                const target: Point = {x: Math.floor(zoomed * width), y: 0};
 
                 lines.push({
                     d: linkGenerator({source, target}),
@@ -144,7 +144,13 @@
         };
     });
 </script>
-
+<div class="w-full">
+    <svg width={width} height={connectorHeight}>
+        {#each generateConnectionLines(fingerprint_index_allocation, $fingerprintMode) as path}
+            <path d={path.d} fill="none" stroke={path.color} stroke-width={2}/>
+        {/each}
+    </svg>
+</div>
 <div class="flex flex-row justify-between" bind:this={parentDiv}>
     {#each {length: fingerprints_count} as _, i}
         <div
@@ -177,10 +183,4 @@
     {/each}
 </div>
 
-<div class="w-full">
-    <svg width={width} height={connectorHeight}>
-        {#each generateConnectionLines(fingerprint_index_allocation, $fingerprintMode) as path}
-            <path d={path.d} fill="none" stroke={path.color} stroke-width={2}/>
-        {/each}
-    </svg>
-</div>
+

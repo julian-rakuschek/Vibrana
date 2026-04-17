@@ -52,7 +52,11 @@
         intervalSelector.resetIntervals();
     }
 </script>
-
+<div class="flex w-full justify-center mb-10">
+    <p onclick={resetIntervals}
+       class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
+        Reset intervals</p>
+</div>
 <div class="w-full relative h-[100px]">
 
     <div class="w-full absolute top-0 left-0">
@@ -63,7 +67,7 @@
     <div class="w-full absolute top-0 left-0">
         <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval/>
     </div>
-    <div class="w-full absolute top-[100px] left-0">
+    <div class="w-full absolute top-[100px] left-0 z-50">
         <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x}/>
     </div>
     <div class="w-full absolute top-[-50px] left-0">
@@ -82,8 +86,4 @@
         {/if}
     </div>
 </div>
-<div class="flex">
-    <p onclick={resetIntervals}
-       class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
-        Reset intervals</p>
-</div>
+

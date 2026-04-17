@@ -152,6 +152,13 @@
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
+                    <ClusterTimelineWrapper
+                            {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
+                            {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
+                            label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
+                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                            bind:zoom_interval
+                    />
                     {#key width}
                         <TimelineFingerprintRepresentatives
                                 {width} index_allocation={$state.snapshot(index_allocation)}
@@ -161,13 +168,6 @@
                                 bind:this={fingerprintRepresentatives}
                         />
                     {/key}
-                    <ClusterTimelineWrapper
-                            {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
-                            {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
-                            label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
-                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-                            bind:zoom_interval
-                    />
                 </div>
                 <div>
                     <ZoomIndicator
