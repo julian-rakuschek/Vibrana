@@ -5,16 +5,20 @@
     import {findNearestFingerprint} from "@lib/helper/util";
     import {fingerprintMode} from "@lib/stores";
     import type IntervalTree from "node-interval-tree";
+    import {computeVisibleIndices, indexListForDensityPlot} from "@lib/helper/fingerprintHelper";
+    import {density1d} from 'fast-kde';
 
     interface Props {
         colorMapping: ClusterColorMapping;
         visibleIndices?: number[];
         width?: number;
+        zoom_interval: [number, number];
+        max_index: number;
         fp_tree: AVLTree<number, Fingerprint>;
         fp_interval_tree: IntervalTree<Fingerprint>;
     }
 
-    let {colorMapping, visibleIndices = [], width = 1000, fp_tree, fp_interval_tree}: Props = $props();
+    let {colorMapping, visibleIndices = [], width = 1000, fp_tree, fp_interval_tree, max_index, zoom_interval}: Props = $props();
 
     let canvas: HTMLCanvasElement | undefined = $state();
     let context: CanvasRenderingContext2D | null;
@@ -24,6 +28,28 @@
         label: number;
         y: number;
         height: number;
+    }
+
+    function getIntervalCounts(visibleIndices: number[]) {
+        const counts: number[] = [];
+        for (let i = 0; i < width; i++) {
+            const fp_count = fp_interval_tree.search(visibleIndices[i], visibleIndices[i + 1]).length
+            for (let j = 0; j < fp_count; j++) {
+                counts.push(i);
+            }
+        }
+        return counts;
+    }
+
+    function computeBarHeights(visibleIndices: number[]) {
+        const density_input = getIntervalCounts(visibleIndices);
+        if (density_input.length === 0) {
+            return new Array(width).fill(0.05 * height)
+        }
+        const visible_densities: number[] = density1d(density_input, {bins: width, extent: [0, width], bandwidth: 50}).grid();
+        const max_density = Math.max(...visible_densities);
+        const densities = visible_densities.map(d => d / max_density);
+        return densities.map(d => Math.max(0.05 * height, d * height));
     }
 
     function label_distribution(fingerprints: Fingerprint[], feature: "tde" | "psd", baseline_y: number, height: number): VerticalBarElement[] {
@@ -45,10 +71,12 @@
     function render(visibleIndices: number[], feature: "tde" | "psd") {
         if (!canvas || !context) return;
         context.clearRect(0, 0, width, height);
+        const heights = computeBarHeights(visibleIndices);
         for (let i = 0; i < width; i++) {
             const fingerprints: Fingerprint[] = fp_interval_tree.search(visibleIndices[i], visibleIndices[i+1])
+            const local_height = heights[i];
             if (fingerprints.length > 0) {
-                const label_dist = label_distribution(fingerprints, feature, height, height)
+                const label_dist = label_distribution(fingerprints, feature, height, local_height)
                 context.globalAlpha = 1;
                 for (const verticalBarElement of label_dist) {
                     context.fillStyle = colorMapping[verticalBarElement.label]
@@ -58,7 +86,7 @@
                 const label = findNearestFingerprint(visibleIndices[i], fp_tree)?.label[feature] ?? null;
                 context.globalAlpha = 0.2;
                 context.fillStyle = label === null ? 'lightgray' : colorMapping[label];
-                context.fillRect(i, 0, 1, height);
+                context.fillRect(i, height, 1, -local_height);
             }
         }
     }

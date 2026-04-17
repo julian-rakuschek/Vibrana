@@ -57,7 +57,7 @@
 
     <div class="w-full absolute top-0 left-0">
         {#await dataProvider.get_length() then len}
-            <TimelineSegmentationVisualization {width} {colorMapping} {fp_tree} {fp_interval_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
+            <TimelineSegmentationVisualization {width} {colorMapping} {fp_tree} {fp_interval_tree} {zoom_interval} max_index={len - 1} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
         {/await}
     </div>
     <div class="w-full absolute top-0 left-0">
