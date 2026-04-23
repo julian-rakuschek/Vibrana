@@ -7,7 +7,6 @@
     import {DataProvider} from '@lib/dataProvider/dataProvider';
     import {page} from '$app/state';
     import CenteredLoadingSpinner from '@components/atoms/CenteredLoadingSpinner.svelte';
-    import Uncertainty from '@components/clusterAnalysis/uncertainty/Uncertainty.svelte';
     import {
         computeIndexAllocationArray,
         computeLabelAllocationArray,
@@ -23,7 +22,6 @@
     import Header from "@components/clusterAnalysis/Header.svelte";
     import {AVLTree} from "avl";
     import IntervalTree from 'node-interval-tree'
-    import ZoomIndicatorV2 from "@components/clusterAnalysis/clusterTimeline/ZoomIndicatorV2.svelte";
 
     interface Props {
         dataset?: string;
@@ -153,8 +151,8 @@
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
-                    <ZoomIndicatorV2 {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval {fp_tree} {fp_interval_tree}
-                                     colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
+                    <ZoomIndicator {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval {fp_tree} {fp_interval_tree}
+                                   colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
 
                 </div>
                 <div>

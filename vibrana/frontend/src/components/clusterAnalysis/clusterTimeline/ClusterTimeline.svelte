@@ -1,11 +1,8 @@
 <script lang="ts">
 
     import FingerprintHover from "@components/clusterAnalysis/clusterTimeline/FingerprintHover.svelte";
-    import FingerprintLocations
-        from "@components/clusterAnalysis/clusterTimeline/FingerprintLocations.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import {type ClusterColorMapping, type Fingerprint} from '@lib/types';
-    import ClusterBackground from '@components/clusterAnalysis/clusterTimeline/ClusterBackground.svelte';
     import TimestampHover from "@components/clusterAnalysis/clusterTimeline/TimestampHover.svelte";
     import {formatUnixTimestamp} from "@lib/helper/util";
     import IntervalSelection from "@components/clusterAnalysis/clusterTimeline/IntervalSelection.svelte";
