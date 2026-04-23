@@ -153,7 +153,7 @@
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
-                    <ZoomIndicatorV2 {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} {zoom_interval} {fp_tree} {fp_interval_tree}
+                    <ZoomIndicatorV2 {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval {fp_tree} {fp_interval_tree}
                                      colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
 
                 </div>
