@@ -23,6 +23,7 @@
     import Header from "@components/clusterAnalysis/Header.svelte";
     import {AVLTree} from "avl";
     import IntervalTree from 'node-interval-tree'
+    import ZoomIndicatorV2 from "@components/clusterAnalysis/clusterTimeline/ZoomIndicatorV2.svelte";
 
     interface Props {
         dataset?: string;
@@ -152,6 +153,11 @@
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
+                    <ZoomIndicatorV2 {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} {zoom_interval} {fp_tree} {fp_interval_tree}
+                                     colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
+
+                </div>
+                <div>
                     <ClusterTimelineWrapper
                             {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
                             {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
@@ -168,13 +174,6 @@
                                 bind:this={fingerprintRepresentatives}
                         />
                     {/key}
-                </div>
-                <div>
-                    <ZoomIndicator
-                            {width} fingerprints={$state.snapshot(fingerprints)} {zoom_interval}
-                            feature={$fingerprintMode} reset_zoom={() => zoom_interval = [0, 1]}
-                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-                    />
                 </div>
             </div>
         {/if}

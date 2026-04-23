@@ -12,17 +12,16 @@
         colorMapping: ClusterColorMapping;
         visibleIndices?: number[];
         width?: number;
-        zoom_interval: [number, number];
-        max_index: number;
+        height?: number;
+        bar_height_based_on_density?: boolean;
         fp_tree: AVLTree<number, Fingerprint>;
         fp_interval_tree: IntervalTree<Fingerprint>;
     }
 
-    let {colorMapping, visibleIndices = [], width = 1000, fp_tree, fp_interval_tree, max_index, zoom_interval}: Props = $props();
+    let {colorMapping, visibleIndices = [], width = 1000, fp_tree, fp_interval_tree, bar_height_based_on_density = true, height = 100}: Props = $props();
 
     let canvas: HTMLCanvasElement | undefined = $state();
     let context: CanvasRenderingContext2D | null;
-    const height = 100;
 
     type VerticalBarElement = {
         label: number;
@@ -74,7 +73,7 @@
         const heights = computeBarHeights(visibleIndices);
         for (let i = 0; i < width; i++) {
             const fingerprints: Fingerprint[] = fp_interval_tree.search(visibleIndices[i], visibleIndices[i+1])
-            const local_height = heights[i];
+            const local_height = bar_height_based_on_density ? heights[i] : height;
             if (fingerprints.length > 0) {
                 const label_dist = label_distribution(fingerprints, feature, height, local_height)
                 context.globalAlpha = 1;
