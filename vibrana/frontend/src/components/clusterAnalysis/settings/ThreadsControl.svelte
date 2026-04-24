@@ -90,7 +90,7 @@
     <select onchange={saveParameters} bind:value={sampling_strategy} name="sampling" id="sampling" class="bg-indigo-50 border-none py-0 px-2 border-indigo-800 h-[25px] w-full rounded-lg">
         <option value="random">Random</option>
         <option value="binary">Binary Search</option>
-        <option value="density">Density</option>
+        <option value="gaps">Gap Filling</option>
         <option value="linear">Linear</option>
     </select>
 </div>

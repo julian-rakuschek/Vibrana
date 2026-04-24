@@ -51,7 +51,7 @@ def clear_fingerprints(db: Database, dataset: str, subset: str):
 # ----------------------------------------------
 
 def get_fingerpints_for_sampling(db: Database, dataset: str, subset: str):
-    fingerprints = list(db["fingerprints"].find({"dataset": dataset, "subset": subset}, {"_id": 0, "label": 1, "start_index": 1}))
+    fingerprints = list(db["fingerprints"].find({"dataset": dataset, "subset": subset}, {"_id": 0, "label": 1, "start_index": 1, "slice_length": 1}))
     fingerprints = sorted(fingerprints, key=lambda x: x["start_index"], reverse=False)
     return fingerprints
 
