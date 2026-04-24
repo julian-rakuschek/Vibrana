@@ -107,38 +107,47 @@ class ComputingThread(threading.Thread):
         return int(np.mean(sorted_gaps[0]))
 
     def linear_sample(self):
-        def scan_range(start_index, end_index, fingerprints, slice_size):
-            needle = start_index
-            while needle < end_index:
-                fps_start = [fp for fp in fingerprints if
-                       fp["start_index"] <= needle < fp["start_index"] + fp["slice_length"]]
-                fps_end = [fp for fp in fingerprints if
-                       fp["start_index"] <= needle + slice_size - 1 < fp["start_index"] + fp["slice_length"]]
-                fps = fps_start + fps_end
-                if len(fps) == 0:
-                    return needle
-                else:
-                    needle += slice_size
-            return None
+        def overlaps(candidate_start, candidate_end, fp):
+            fp_start = fp["start_index"]
+            fp_end = fp_start + fp["slice_length"]
+            return candidate_start < fp_end and fp_start < candidate_end
 
+        def scan_range(start_index, end_index_exclusive, fingerprints, slice_size):
+            max_start = end_index_exclusive - slice_size
+            needle = start_index
+            while needle <= max_start:
+                candidate_end = needle + slice_size
+                if not any(overlaps(needle, candidate_end, fp) for fp in fingerprints):
+                    return needle
+                needle += slice_size
+            return None
 
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         slice_size = params["slice_size"]
         intervals = params.get("intervals", [])
-        fingerprints = database.get_fingerpints_for_sampling(self.db, self.loader.dataset, self.loader.subset)
-        result = None
-        if len(intervals) == 0:
-            result = scan_range(0, self.loader.data_size - slice_size - 1, fingerprints, slice_size)
+        all_fingerprints = database.get_fingerpints_for_sampling(
+            self.db, self.loader.dataset, self.loader.subset
+        )
+
+        if not intervals:
+            result = scan_range(0, self.loader.data_size, all_fingerprints, slice_size)
+            return result if result is not None else self.sample_random()
+
         for interval in intervals:
             interval_start = int(interval[0] * self.loader.data_size)
             interval_end = int(interval[1] * self.loader.data_size)
-            fingerprints = [fp for fp in fingerprints if fp["start_index"] >= interval_start and fp["start_index"] + fp["slice_length"] <= interval_end]
-            result = scan_range(interval_start, interval_end, fingerprints, slice_size)
+
+            interval_fingerprints = [
+                fp for fp in all_fingerprints
+                if fp["start_index"] < interval_end
+                   and fp["start_index"] + fp["slice_length"] > interval_start
+            ]
+
+            result = scan_range(interval_start, interval_end, interval_fingerprints, slice_size)
             if result is not None:
-                break
-        if result is None:
-            return self.sample_random()
-        return result
+                return result
+
+        return self.sample_random()
 
 
     def process_slice(self):
