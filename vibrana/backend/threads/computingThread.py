@@ -57,6 +57,19 @@ class ComputingThread(threading.Thread):
         self.active = False
         self.insert_func = insert_func
 
+    def get_fingerprints_in_intervals(self, intervals, all_fingerprints):
+        fingerprints = []
+        for interval in intervals:
+            interval_start = int(interval[0] * self.loader.data_size)
+            interval_end = int(interval[1] * self.loader.data_size)
+
+            fingerprints.extend([
+                fp for fp in all_fingerprints
+                if fp["start_index"] < interval_end
+                   and fp["start_index"] + fp["slice_length"] > interval_start
+            ])
+        return fingerprints
+
     def sample_random(self):
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         intervals = params.get("intervals", [])
@@ -76,12 +89,15 @@ class ComputingThread(threading.Thread):
     def sample_binary(self):
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         fingerprints = database.get_fingerpints_for_sampling(self.db, self.loader.dataset, self.loader.subset)
+        intervals = params.get("intervals", [])
+        if len(intervals) > 0:
+            fingerprints = self.get_fingerprints_in_intervals(intervals, fingerprints)
         if len(fingerprints) < 2:
             return self.sample_random()
         gaps = []
         current_label_tde = fingerprints[0]["label"]["tde"]
         current_label_psd = fingerprints[0]["label"]["psd"]
-        for i in range(len(fingerprints) - 2):
+        for i in range(len(fingerprints) - 1):
             if current_label_tde != fingerprints[i + 1]["label"]["tde"]:
                 gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
                 current_label_tde = fingerprints[i + 1]["label"]["tde"]
@@ -96,10 +112,13 @@ class ComputingThread(threading.Thread):
     def sample_largest_gap(self):
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         fingerprints = database.get_fingerpints_for_sampling(self.db, self.loader.dataset, self.loader.subset)
+        intervals = params.get("intervals", [])
+        if len(intervals) > 0:
+            fingerprints = self.get_fingerprints_in_intervals(intervals, fingerprints)
         if len(fingerprints) < 2:
             return self.sample_random()
         gaps = []
-        for i in range(len(fingerprints) - 2):
+        for i in range(len(fingerprints) - 1):
             gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
         sorted_gaps = sorted(gaps, key=lambda x: abs(x[0] - x[1]), reverse=True)
         if len(sorted_gaps) == 0:
@@ -222,7 +241,7 @@ if __name__ == '__main__':
     db = database.get_db()
     insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
     thread = ComputingThread(db, loader.r, loader, insert_func)
-    res = thread.sample_binary()
+    res = thread.sample_largest_gap()
     print(res)
     # thread.start()
     # print("after run")
