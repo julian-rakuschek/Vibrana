@@ -80,3 +80,11 @@ def flask_clear_get_intervals(dataset, subset, path):
     current_params = database.get_parameters(db, dataset, subset)
     intervals = current_params.get("sampling", {}).get("intervals", [])
     return database.serialize_mongodb(intervals)
+
+@db_app.get("<dataset>/<subset>/coverage")
+@validate_subset
+def flask_get_coverage(dataset, subset, path):
+    db = flask.current_app.config["DB"]
+    coverage = database.get_coverage(db, dataset, subset)
+    ratio = coverage[1] / coverage[0]
+    return flask.jsonify(ratio)
