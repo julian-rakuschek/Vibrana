@@ -57,7 +57,7 @@ class ComputingThread(threading.Thread):
         self.active = False
         self.insert_func = insert_func
 
-    def sample_next_index(self):
+    def sample_random(self):
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
         intervals = params.get("intervals", [])
         if len(intervals) == 0:
@@ -72,11 +72,38 @@ class ComputingThread(threading.Thread):
             cumulative += length
         return 0
 
+
+    def sample_binary(self):
+        params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)["sampling"]
+        fingerprints = database.get_fingerpints_for_sampling(self.db, self.loader.dataset, self.loader.subset)
+        if len(fingerprints) < 2:
+            return self.sample_random()
+        gaps = []
+        current_label_tde = fingerprints[0]["label"]["tde"]
+        current_label_psd = fingerprints[0]["label"]["psd"]
+        for i in range(len(fingerprints) - 2):
+            if current_label_tde != fingerprints[i + 1]["label"]["tde"]:
+                gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
+                current_label_tde = fingerprints[i + 1]["label"]["tde"]
+            if current_label_psd != fingerprints[i + 1]["label"]["psd"]:
+                gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
+                current_label_psd = fingerprints[i + 1]["label"]["psd"]
+        sorted_gaps = sorted(gaps, key=lambda x: abs(x[0] - x[1]), reverse=True)
+        if len(sorted_gaps) == 0:
+            return self.sample_random()
+        return int(np.mean(sorted_gaps[0]))
+
+
     def process_slice(self):
         start = time.time()
         self.loader.load_numpy_file()
-        next_index = self.sample_next_index()
         params = database.get_parameters(self.db, self.loader.dataset, self.loader.subset)
+        if params["sampling"]["samplingAlgorithm"] == "random":
+            next_index = self.sample_random()
+        elif params["sampling"]["samplingAlgorithm"] == "binary":
+            next_index = self.sample_binary()
+        else:
+            next_index = self.sample_random()
         slice_size = params["sampling"]["slice_size"]
         sliding_window_size = params["tde"]["sliding_window_size"]
         data = self.loader.get_slice(next_index, next_index + slice_size)
@@ -129,13 +156,14 @@ class ComputingThread(threading.Thread):
 if __name__ == '__main__':
     dataset = "hydro"
     subset = "x"
-    file_path = os.path.join(Path(__file__).parents[2], "data", "parsed", "hydro", "hydro-1", "values-hydro-1-x.npy")
+    file_path = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", "hydro", "x", "values.npy")
     loader = RedisLoader(file_path, dataset, subset)
     loader.load_numpy_file(False)
     db = database.get_db()
     insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
     thread = ComputingThread(db, loader.r, loader, insert_func)
-    thread.process_slice()
+    res = thread.sample_binary()
+    print(res)
     # thread.start()
     # print("after run")
     # print(thread.is_alive())
