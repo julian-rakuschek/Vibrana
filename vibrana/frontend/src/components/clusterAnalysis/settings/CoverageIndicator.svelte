@@ -8,7 +8,16 @@
     }
 
     let { dataset, subset }: Props = $props();
+    const coverageQuery = useQueryFetch(ApiRoutes.getCoverage, {
+        params: {dataset, subset}
+    });
 
 </script>
 
-<p>TODO Coverage</p>
+{#if coverageQuery.isPending}
+    <p>Loading...</p>
+{:else if coverageQuery.isError}
+    <p>Error</p>
+{:else}
+    <p>{coverageQuery.data.toFixed(2)}%</p>
+{/if}

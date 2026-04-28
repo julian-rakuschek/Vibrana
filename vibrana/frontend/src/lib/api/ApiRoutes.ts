@@ -29,6 +29,7 @@ const dbRoutes = {
   getIntervals: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, [number, number][]>("GET", "/db/:dataset/:subset/intervals"),
   storeIntervals: new ApiRoute<[number, number][], { dataset: string; subset: string; }, undefined, DefaultAppResponse>("POST", "/db/:dataset/:subset/intervals"),
   getTimeInformation: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, TimeInformation>("GET", "/db/:dataset/:subset/time"),
+  getCoverage: new ApiRoute<undefined, { dataset: string; subset: string; }, undefined, number>("GET", "/db/:dataset/:subset/coverage")
 };
 
 const computingRoutes = {
