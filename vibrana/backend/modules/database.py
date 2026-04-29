@@ -4,6 +4,7 @@ from pathlib import Path
 
 import flask
 
+from vibrana.backend.data_loaders.diskLoader import DiskLoader
 from vibrana.backend.data_loaders.redisLoader import RedisLoader
 from vibrana.backend.helper.validators import validate_subset
 import vibrana.backend.helper.database as database
@@ -16,9 +17,8 @@ db_app = flask.Blueprint("db", __name__)
 def flask_get_slice(dataset, subset, path):
     start_index = flask.request.args.get("start_index", 0)
     end_index = flask.request.args.get("end_index", -1)
-
-    loader = RedisLoader(path, dataset, subset)
-    loader.load_numpy_file()
+    conf = flask.current_app.config["datasets"][dataset]
+    loader = database.get_loader(conf["loader"], path, dataset, subset)
     return loader.get_slice(start_index, end_index, as_numpy=False)
 
 

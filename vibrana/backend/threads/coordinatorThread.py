@@ -36,8 +36,8 @@ class CoordinatorThread(threading.Thread):
             self.locks[dataset_name] = {}
             for subset_name, subset_object in dataset_object["subsets"].items():
                 print(dataset_name, subset_name)
-                loader = RedisLoader(subset_object["file"], dataset_name, subset_name)
-                thread = ComputingThread(self.db, self.r, loader, self.insert_fingerprint, self.sio)
+                loader = database.get_loader(dataset_object["loader"], subset_object["file"], dataset_name, subset_name)
+                thread = ComputingThread(self.db, loader, self.insert_fingerprint, self.sio)
                 thread.start()
                 self.loaders[dataset_name][subset_name] = loader
                 self.threads[dataset_name][subset_name] = thread

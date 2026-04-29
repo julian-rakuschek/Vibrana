@@ -45,9 +45,8 @@ def compute_pca(data, sliding_window_size):
 
 
 class ComputingThread(threading.Thread):
-    def __init__(self, db: Database, redis_instance: redis.Redis, dataLoader: RedisLoader, insert_func: Callable, socket_client=None):
+    def __init__(self, db: Database, dataLoader: RedisLoader, insert_func: Callable, socket_client=None):
         threading.Thread.__init__(self)
-        self.redis = redis_instance
         self.loader = dataLoader
         self.db = db
         self.sio = socket_client
@@ -240,7 +239,7 @@ if __name__ == '__main__':
     loader.load_numpy_file(False)
     db = database.get_db()
     insert_func = lambda dataset, subset, data: database.store_fingerprint(db, data, dataset, subset)
-    thread = ComputingThread(db, loader.r, loader, insert_func)
+    thread = ComputingThread(db, loader, insert_func)
     res = thread.sample_largest_gap()
     print(res)
     # thread.start()

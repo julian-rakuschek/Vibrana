@@ -24,13 +24,17 @@ class DiskLoader(DataLoaderBase):
         self.path_to_npy = path_to_npy
         self.dataset = dataset
         self.subset = subset
+        self.redis_prefix = f"vibrana:{dataset}:{subset}"
         time_file = os.path.join(Path(path_to_npy).parents[0], "time.json")
         with open(time_file, "r") as f:
             self.fs = estimate_sampling_frequency(json.load(f))
         self.array = np.load(path_to_npy, mmap_mode="r")
 
-    def get_slice(self, start_index=0, end_index=-1):
-        return self.array[start_index:end_index]
+    def get_slice(self, start_index=0, end_index=-1, as_numpy=False):
+        slice = self.array[start_index:end_index]
+        if not as_numpy:
+            return slice.tolist()
+        return slice
 
 
 

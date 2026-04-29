@@ -8,6 +8,8 @@ from bson import json_util
 from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
+from vibrana.backend.data_loaders.diskLoader import DiskLoader
+from vibrana.backend.data_loaders.redisLoader import RedisLoader
 from vibrana.backend.helper.config import get_config
 from vibrana.backend.helper.fluctuationCompute import get_coverage, get_breakpoints
 from vibrana.backend.helper.util import flatten_dict, deep_update
@@ -28,6 +30,20 @@ def get_db() -> Database:
     db: Database = conn[conf["mongo"]["db"]]
     return db
 
+
+# ----------------------------------------------
+#              Loader Management
+# ----------------------------------------------
+
+def get_loader(loader_type, path, dataset, subset):
+    if loader_type == "memory":
+        loader = RedisLoader(path, dataset, subset)
+        loader.load_numpy_file()
+    elif loader_type == "disk":
+        loader = DiskLoader(path, dataset, subset)
+    else:
+        raise Exception("Unknown loader type")
+    return loader
 
 # ----------------------------------------------
 #              Fingerprint Management

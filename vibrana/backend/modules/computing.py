@@ -43,8 +43,8 @@ def flask_make_single_step(dataset, subset, path):
         return labels
 
     db = flask.current_app.config["DB"]
-    loader = RedisLoader(path, dataset, subset)
-    loader.load_numpy_file(False)
-    thread = ComputingThread(db, loader.r, loader, insert_fingerprint)
+    conf = flask.current_app.config["datasets"][dataset]
+    loader = database.get_loader(conf["loader"], path, dataset, subset)
+    thread = ComputingThread(db, loader, insert_fingerprint)
     data = thread.process_slice()
     return data

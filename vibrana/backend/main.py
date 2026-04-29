@@ -14,6 +14,7 @@ import vibrana.backend.helper.database as database
 app = flask.Flask(__name__)
 app.config['SECRET_KEY'] = "hi mum"
 app.config['DB'] = database.get_db()
+app.config['datasets'] = crawl_dataset_folder()
 
 app.register_blueprint(db_app, url_prefix="/api/db")
 app.register_blueprint(analysis_app, url_prefix="/api/analysis")
@@ -31,7 +32,7 @@ def index_route():
 
 @app.route("/api/config")
 def flask_get_config():
-    return crawl_dataset_folder()
+    return app.config['datasets']
 
 
 @app.route("/<path:path>")
