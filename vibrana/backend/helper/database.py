@@ -1,6 +1,8 @@
+import copy
 import json
 import os
 from argparse import ArgumentError
+from pathlib import Path
 
 import numpy as np
 import pymongo
@@ -11,7 +13,6 @@ from vibrana.algorithms.incdbscan import IncrementalDBSCAN
 from vibrana.backend.data_loaders.diskLoader import DiskLoader
 from vibrana.backend.data_loaders.redisLoader import RedisLoader
 from vibrana.backend.helper.config import get_config
-from vibrana.backend.helper.fluctuationCompute import get_coverage, get_breakpoints
 from vibrana.backend.helper.util import flatten_dict, deep_update
 
 conf = get_config()
@@ -32,7 +33,7 @@ def get_db() -> Database:
 
 
 # ----------------------------------------------
-#              Loader Management
+#              Signal Management
 # ----------------------------------------------
 
 def get_loader(loader_type, path, dataset, subset):
@@ -44,6 +45,12 @@ def get_loader(loader_type, path, dataset, subset):
     else:
         raise Exception("Unknown loader type")
     return loader
+
+def get_length(dataset, subset):
+    conf_file = os.path.join(Path(__file__).parents[3], "data", "prepared-signals", dataset, subset, "time.json")
+    with open(conf_file) as f:
+        f_json = json.load(f)
+        return f_json["total_sample_points"]
 
 # ----------------------------------------------
 #              Fingerprint Management
@@ -127,6 +134,33 @@ def get_parameters(db: Database, dataset: str, subset: str):
 def get_running(db: Database, dataset: str, subset: str):
     params = get_parameters(db, dataset, subset)
     return params.get("sampling", {}).get("running", False)
+
+
+# ----------------------------------------------
+#              Coverage
+# ----------------------------------------------
+
+
+def get_coverage(db: Database, dataset: str, subset: str):
+    fps = get_fingerpints_for_sampling(db, dataset, subset)
+    signal_length = get_length(dataset, subset)
+    covered_data_points = 0
+    if len(fps) == 0:
+        return covered_data_points, signal_length
+    current_fp = None
+    for fp in fps:
+        fp['end_index'] = fp['start_index'] + fp['slice_length'] - 1
+        if current_fp is None:
+            current_fp = copy.deepcopy(fp)
+            continue
+        if fp["start_index"] <= current_fp["end_index"]:
+            current_fp["slice_length"] = fp["end_index"] - current_fp["start_index"] + 1
+        else:
+            covered_data_points += current_fp["slice_length"]
+            current_fp = copy.deepcopy(fp)
+    covered_data_points += current_fp["slice_length"]
+    return covered_data_points, signal_length
+
 
 
 if __name__ == '__main__':

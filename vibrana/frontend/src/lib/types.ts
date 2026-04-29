@@ -12,6 +12,7 @@ export enum IntervalModes { ADD, DELETE }
 export type Config = {
     [dataset: string]: DatasetConfig;
 }
+
 export type DatasetConfig = {
     name: string;
     folder: string;

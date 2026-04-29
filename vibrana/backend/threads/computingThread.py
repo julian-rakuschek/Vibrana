@@ -184,7 +184,7 @@ class ComputingThread(threading.Thread):
             next_index = self.sample_random()
         slice_size = params["sampling"]["slice_size"]
         sliding_window_size = params["tde"]["sliding_window_size"]
-        data = self.loader.get_slice(next_index, next_index + slice_size)
+        data = self.loader.get_slice(next_index, next_index + slice_size, as_numpy=True)
         if sliding_window_size >= len(data):
             return
         v1, v2, projected = compute_pca(data, sliding_window_size)

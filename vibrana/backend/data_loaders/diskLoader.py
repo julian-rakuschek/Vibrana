@@ -29,6 +29,7 @@ class DiskLoader(DataLoaderBase):
         with open(time_file, "r") as f:
             self.fs = estimate_sampling_frequency(json.load(f))
         self.array = np.load(path_to_npy, mmap_mode="r")
+        self.data_size = len(self.array)
 
     def get_slice(self, start_index=0, end_index=-1, as_numpy=False):
         slice = self.array[start_index:end_index]

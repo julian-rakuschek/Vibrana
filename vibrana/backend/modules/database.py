@@ -86,5 +86,5 @@ def flask_clear_get_intervals(dataset, subset, path):
 def flask_get_coverage(dataset, subset, path):
     db = flask.current_app.config["DB"]
     coverage = database.get_coverage(db, dataset, subset)
-    ratio = coverage[1] / coverage[0]
+    ratio = coverage[0] / coverage[1]
     return flask.jsonify(ratio)

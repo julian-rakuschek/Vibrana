@@ -19,9 +19,13 @@ export class DataProvider {
     }
 
     async load() {
-        if (!this.in_memory) throw "only allowed when dataset is configured as in memory";
         this.loading.set(true);
         this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
+
+        if (!this.in_memory) {
+            this.loading.set(false);
+            return true;
+        }
         this.vibration_signal = await ApiRoutes.getSlice.fetch({params: {dataset: this.dataset, subset: this.subset}});
         console.log("Load complete")
         this.loading.set(false);
@@ -40,7 +44,7 @@ export class DataProvider {
     };
 
 
-    get_fingerprint_data_javascript(fp: Fingerprint) {
+    compute_in_memory_projection(fp: Fingerprint) {
         if (!this.in_memory) throw "only available when dataset is configured as in memory";
         if (!this.vibration_signal) {
             console.warn("Vibration signal has not been loaded, returning empty projection.")
@@ -57,6 +61,13 @@ export class DataProvider {
             projected.push([x, y]);
         }
         return projected;
+    }
+
+    async fetch_projection(fp: Fingerprint) {
+        return await ApiRoutes.computeProjection.fetch({
+            params: {dataset: this.dataset, subset: this.subset},
+            data: fp
+        });
     }
 
     async get_length() {
