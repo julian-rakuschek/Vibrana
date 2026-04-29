@@ -12,3 +12,8 @@ def flask_compute_clustering(dataset, subset, path):
     db = flask.current_app.config["DB"]
     cluster_all_fingerprints_all_feature_descriptors(db, dataset, subset)
     return {"success": True}
+
+@analysis_app.post("<dataset>/<subset>/graph")
+@validate_subset
+def flask_compute_graph(dataset, subset, path):
+    db = flask.current_app.config["DB"]
