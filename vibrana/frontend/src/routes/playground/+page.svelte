@@ -1,7 +1,7 @@
 <script lang="ts">
 
-  import PeriodogramBar from "@components/differenceView/PeriodogramBar.svelte";
-  import DifferenceBand from "@components/differenceView/DifferenceBand.svelte";
+  import PeriodogramBar from "@components/clusterAnalysis/differenceView/PeriodogramBar.svelte";
+  import DifferenceBand from "@components/clusterAnalysis/differenceView/DifferenceBand.svelte";
 
   let periodogram1: number[] = [0, 0, 10, 20, 10, 0, 0, 0, 40, 0];
   let periodogram2: number[] = [0, 0, 10, 20, 10, 0, 20, 30, 10, 0];

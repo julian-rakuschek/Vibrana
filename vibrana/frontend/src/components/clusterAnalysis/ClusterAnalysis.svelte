@@ -22,6 +22,7 @@
     import Header from "@components/clusterAnalysis/Header.svelte";
     import {AVLTree} from "avl";
     import IntervalTree from 'node-interval-tree'
+    import DifferenceView from "@components/clusterAnalysis/differenceView/DifferenceView.svelte";
 
     interface Props {
         dataset?: string;
@@ -172,6 +173,9 @@
                                 bind:this={fingerprintRepresentatives}
                         />
                     {/key}
+                </div>
+                <div>
+                    <DifferenceView {width} fingerprints={$state.snapshot(fingerprints)} colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
                 </div>
             </div>
         {/if}

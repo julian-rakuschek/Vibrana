@@ -1,4 +1,4 @@
-import type {Fingerprint} from "@lib/types";
+import type {AveragePsdSegment, Fingerprint} from "@lib/types";
 
 
 function updateAllocationArray(fp: Fingerprint, zoom_interval: [number, number], allocation_array: number[], property_accessor: (fp: Fingerprint) => number) {
@@ -64,4 +64,45 @@ export function indexListForDensityPlot(fingerprints: Fingerprint[], width: numb
         for (let j = 0; j < rectangle_width; j++) index_counts.push(start + j)
     }
     return index_counts;
+}
+
+function averagePsdSegment(segment: Fingerprint[]): AveragePsdSegment {
+    const psdLength = segment[0].feature_descriptors.psd.Pxx_spec.length;
+    const psdSums = new Array(psdLength).fill(0);
+
+    for (const fp of segment) {
+        const psd = fp.feature_descriptors.psd.Pxx_spec;
+        for (let i = 0; i < psdLength; i++) {
+            psdSums[i] += psd[i] ?? 0;
+        }
+    }
+
+    return {
+        label: segment[0].label.psd,
+        averagePsd: psdSums.map(value => value / segment.length)
+    };
+}
+
+export function computeAveragePsdSegments(fingerprints: Fingerprint[]): AveragePsdSegment[] {
+    if (fingerprints.length === 0) return [];
+
+    const sortedFingerprints = [...fingerprints].sort((a, b) => a.start_index - b.start_index);
+    const segments: AveragePsdSegment[] = [];
+    let currentSegment: Fingerprint[] = [sortedFingerprints[0]];
+    let currentLabel = sortedFingerprints[0].label.psd;
+
+    for (let i = 1; i < sortedFingerprints.length; i++) {
+        const fingerprint = sortedFingerprints[i];
+
+        if (fingerprint.label.psd !== currentLabel) {
+            segments.push(averagePsdSegment(currentSegment));
+            currentSegment = [];
+            currentLabel = fingerprint.label.psd;
+        }
+
+        currentSegment.push(fingerprint);
+    }
+
+    segments.push(averagePsdSegment(currentSegment));
+    return segments;
 }

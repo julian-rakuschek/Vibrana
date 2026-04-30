@@ -47,6 +47,11 @@ export type Fingerprint = {
     };
 }
 
+export type AveragePsdSegment = {
+    label: number;
+    averagePsd: number[];
+}
+
 export type TimeInformation = {
     start_time: string;
     end_time: string;
