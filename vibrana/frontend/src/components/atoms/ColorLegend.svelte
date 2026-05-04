@@ -1,6 +1,6 @@
 <script lang="ts">
     import {createColorsArray} from "@lib/helper/colorHelper";
-    import {interpolateRdYlBu, interpolateTurbo, interpolateViridis} from "d3";
+    import {interpolateRdYlBu, interpolateTurbo, interpolateViridis, interpolateRdBu} from "d3";
     import {ColorMode} from "@lib/types";
 
     interface Props {
@@ -14,7 +14,7 @@
     })`;
 
     const distance_color_gradient = `linear-gradient(90deg, ${
-        createColorsArray(20, {start: 0, end: 1, reverse: true, interpolateFunc: interpolateRdYlBu}).join(", ")
+        createColorsArray(20, {start: 0, end: 1, reverse: true, interpolateFunc: interpolateRdBu}).join(", ")
     })`;
 
     const freq_color_gradient = `linear-gradient(90deg, ${
@@ -26,7 +26,7 @@
             case ColorMode.Radius:
                 return "Distance of each point to the center of the point cloud.";
             case ColorMode.Distance:
-                return "The similarity of your marked labels with positions in the signal.";
+                return "The difference between the previous and the next signal in terms of frequency power changes.";
             case ColorMode.Frequency:
                 return "Mean amplitude of the SFFT over time."
             case ColorMode.Age:
@@ -50,9 +50,9 @@
         {/if}
 
         {#if colorMode === ColorMode.Distance}
-            <span class="text-sm text-gray-700 col-span-1">Low Similarity</span>
+            <span class="text-sm text-gray-700 col-span-1">Power Decrease</span>
             <div class="w-full h-[10px] col-span-2" style={`background: ${distance_color_gradient}`}></div>
-            <span class="text-sm text-gray-700 col-span-1">High Similarity</span>
+            <span class="text-sm text-gray-700 col-span-1">Power Increase</span>
         {/if}
 
         {#if colorMode === ColorMode.Frequency}

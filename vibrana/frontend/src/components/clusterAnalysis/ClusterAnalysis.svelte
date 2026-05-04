@@ -175,7 +175,7 @@
                     {/key}
                 </div>
                 <div>
-                    <DifferenceView {width} fingerprints={$state.snapshot(fingerprints)} colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
+                    <DifferenceView {width} fingerprints={$state.snapshot(fingerprints)} colorMapping={color_mapping_psd} />
                 </div>
             </div>
         {/if}
