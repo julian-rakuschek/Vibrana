@@ -50,6 +50,7 @@
     let index_allocation: number[] = $state(new Array(width).fill(-1));
     let label_allocation_tde: number[] = $state(new Array(width).fill(null));
     let label_allocation_psd: number[] = $state(new Array(width).fill(null));
+    let selectedIndices: number[] = $state([]);
 
     const socket = io('http://localhost:5000');
     socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
@@ -162,7 +163,7 @@
                             {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
                             label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
                             colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
-                            bind:zoom_interval
+                            bind:zoom_interval bind:selectedIndices
                     />
                     {#key width}
                         <TimelineFingerprintRepresentatives
@@ -175,7 +176,7 @@
                     {/key}
                 </div>
                 <div>
-                    <DifferenceView {width} fingerprints={$state.snapshot(fingerprints)} colorMapping={color_mapping_psd} />
+                    <DifferenceView {width} fingerprints={$state.snapshot(fingerprints)} colorMapping={color_mapping_psd} {selectedIndices} />
                 </div>
             </div>
         {/if}

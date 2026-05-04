@@ -2,7 +2,7 @@
 
     import FingerprintHover from "@components/clusterAnalysis/clusterTimeline/FingerprintHover.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
-    import {type ClusterColorMapping, type Fingerprint} from '@lib/types';
+    import {type ClusterColorMapping, type Fingerprint, InteractionMode} from '@lib/types';
     import TimestampHover from "@components/clusterAnalysis/clusterTimeline/TimestampHover.svelte";
     import {formatUnixTimestamp} from "@lib/helper/util";
     import IntervalSelection from "@components/clusterAnalysis/clusterTimeline/IntervalSelection.svelte";
@@ -25,6 +25,7 @@
         colorMapping: ClusterColorMapping;
         zoom_interval?: [number, number];
         timestamps?: number[];
+        selectedIndices: number[];
     }
 
     let {
@@ -39,30 +40,56 @@
         fingerprints = [],
         colorMapping,
         zoom_interval = $bindable([0, 1]),
-        timestamps = []
+        timestamps = [],
+        selectedIndices = $bindable([]),
     }: Props = $props();
+
     let intervalSelector: IntervalSelection = $state();
     let mouse_x = $state(-1);
+    let interactionMode = $state(InteractionMode.SELECT);
+
+    const inactive_button = "bg-white rounded-lg shadow-lg px-3 py-1 text-black cursor-default hover:bg-indigo-50"
+    const active_button = "bg-indigo-500 text-white rounded-lg shadow-lg px-3 py-1 cursor-default"
 
     function resetIntervals() {
         if (!intervalSelector) return;
         intervalSelector.resetIntervals();
     }
+
+    function resetSelectedIndices() {
+        selectedIndices = [];
+    }
 </script>
+<div class="flex w-full justify-center mb-2 gap-4">
+    <div class="{interactionMode === InteractionMode.SELECT ? active_button : inactive_button}"
+         onclick={() => interactionMode = InteractionMode.SELECT}>Sample Selection
+    </div>
+    <div class="{interactionMode === InteractionMode.INTERVAL ? active_button : inactive_button}"
+         onclick={() => interactionMode = InteractionMode.INTERVAL}>Interval Definition
+    </div>
+</div>
 <div class="flex w-full justify-center mb-10">
-    <p onclick={resetIntervals}
-       class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
-        Reset intervals</p>
+    {#if interactionMode === InteractionMode.SELECT}
+        <p onclick={resetSelectedIndices}
+           class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
+            Reset selected indices</p>
+    {:else}
+        <p onclick={resetIntervals}
+           class="text-sm text-black/70 hover:text-black/90 cursor-default border-b-2 border-dotted border-black/70 hover:border-black/90">
+            Reset intervals</p>
+    {/if}
 </div>
 <div class="w-full relative h-[100px]">
 
     <div class="w-full absolute top-0 left-0">
         {#await dataProvider.get_length() then len}
-            <TimelineSegmentationVisualization {width} {colorMapping} {fp_tree} {fp_interval_tree} visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
+            <TimelineSegmentationVisualization {width} {colorMapping} {fp_tree} {fp_interval_tree}
+                                               visibleIndices={computeVisibleIndices(zoom_interval, width, len)}/>
         {/await}
     </div>
     <div class="w-full absolute top-0 left-0">
-        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval/>
+        <IntervalSelection {width} {dataset} {subset} bind:mouse_x bind:this={intervalSelector} bind:zoom_interval
+                           bind:selectedIndices interaction_mode={interactionMode}/>
     </div>
     <div class="w-full absolute top-[100px] left-0 z-50">
         <FingerprintHover {width} {fingerprints} {index_allocation} {dataProvider} {mouse_x}/>

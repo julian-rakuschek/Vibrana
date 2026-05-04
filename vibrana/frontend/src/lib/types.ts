@@ -7,6 +7,7 @@ export enum ColorMode {
 }
 
 export enum IntervalModes { ADD, DELETE }
+export enum InteractionMode { INTERVAL, SELECT }
 
 
 export type Config = {

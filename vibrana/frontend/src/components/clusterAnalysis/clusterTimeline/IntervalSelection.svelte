@@ -2,7 +2,7 @@
     import {onMount} from 'svelte';
     import {deleteInterval, mergeIntervals} from "@lib/helper/intervals";
     import {ApiRoutes} from "@lib/api/ApiRoutes";
-    import {IntervalModes} from "@lib/types"
+    import {InteractionMode, IntervalModes} from "@lib/types"
 
 
     let canvas: HTMLCanvasElement = $state();
@@ -19,6 +19,8 @@
         width?: number;
         mouse_x?: number;
         zoom_interval?: [number, number];
+        interaction_mode: InteractionMode;
+        selectedIndices: number[];
     }
 
     let {
@@ -26,7 +28,9 @@
         subset,
         width = 1000,
         mouse_x = $bindable(0),
-        zoom_interval = $bindable([0, 1])
+        zoom_interval = $bindable([0, 1]),
+        interaction_mode,
+        selectedIndices = $bindable([])
     }: Props = $props();
 
     function pixelToIntervalPosition(pixel: number) {
@@ -34,9 +38,16 @@
         return Math.abs(zoom_interval[0] - zoom_interval[1]) * relative_pixel + zoom_interval[0];
     }
 
-    function visualizeSelectedIntervals() {
+    function render() {
         if (!context) return;
         context.clearRect(0, 0, width, height);
+        visualizeSelectedIntervals()
+        visualizeSelectedIndices()
+        visualizeCursor()
+    }
+
+    function visualizeSelectedIntervals() {
+        if (!context) return;
 
         context.fillStyle = '#1a237e';
         context.globalAlpha = 0.3
@@ -52,13 +63,26 @@
             const selected = [Math.min(mouse_x, mouse_x_anchor), Math.max(mouse_x, mouse_x_anchor)];
             context.fillRect(selected[0], 0, selected[1] - selected[0], height);
         }
+    }
 
-
+    function visualizeCursor() {
+        if (!context) return;
         context.globalAlpha = 1
         if (mouse_mode === IntervalModes.DELETE) context.fillStyle = '#e53935';
         if (mouse_mode === IntervalModes.ADD) context.fillStyle = '#4caf50';
         if (!mouse_active) context.fillStyle = '#1a237e';
         context.fillRect(mouse_x, 0, 1, height);
+    }
+
+    function visualizeSelectedIndices() {
+        if (!context) return;
+        context.fillStyle = '#1a237e';
+        context.globalAlpha = 1
+
+        for (const index of selectedIndices) {
+            const pixelPosition = (index - zoom_interval[0]) / (zoom_interval[1] - zoom_interval[0]);
+            context.fillRect(pixelPosition * width, 0, 3, height);
+        }
     }
 
     async function saveIntervals() {
@@ -68,7 +92,7 @@
     export async function resetIntervals() {
         intervals = [];
         await ApiRoutes.storeIntervals.fetch({params: {dataset, subset}, data: []})
-        visualizeSelectedIntervals();
+        render();
     }
 
     function zoomIntensity(interval_width: number) {
@@ -110,17 +134,20 @@
 
     function initMouse() {
         canvas.onmousemove = (e) => {
+            if (interaction_mode !== InteractionMode.INTERVAL) mouse_active = false;
             mouse_x = e.clientX - canvas.getBoundingClientRect().left;
             if (!mouse_active) mouse_x_anchor = mouse_x;
-            visualizeSelectedIntervals();
+            render();
         };
         canvas.onmousedown = (e) => {
+            if (interaction_mode !== InteractionMode.INTERVAL) return;
             mouse_active = true;
             mouse_x_anchor = mouse_x;
             if (e.buttons === 1) mouse_mode = IntervalModes.ADD;
             if (e.buttons === 2) mouse_mode = IntervalModes.DELETE;
         };
         canvas.onmouseup = (e) => {
+            if (interaction_mode !== InteractionMode.INTERVAL) return;
             mouse_active = false;
             const selected = [
                 Math.min(pixelToIntervalPosition(mouse_x), pixelToIntervalPosition(mouse_x_anchor)),
@@ -135,6 +162,14 @@
             }
             saveIntervals();
         };
+        canvas.onclick = (e) => {
+            if (interaction_mode !== InteractionMode.SELECT) return;
+            selectedIndices.push(pixelToIntervalPosition(mouse_x))
+            if (selectedIndices.length > 2) {
+                selectedIndices.shift()
+            }
+            render();
+        };
         canvas.onwheel = (e) => {
             e.preventDefault()
             if (e.deltaY < 0) {
@@ -142,7 +177,7 @@
             } else {
                 zoomOut(mouse_x)
             }
-            visualizeSelectedIntervals();
+            render();
         }
         canvas.oncontextmenu = function (e) {
             e.preventDefault();
@@ -159,11 +194,11 @@
         context = canvas.getContext('2d');
         initMouse();
         await getIntervals();
-        visualizeSelectedIntervals();
+        render();
     });
 
     $effect(() => {
-        zoom_interval, visualizeSelectedIntervals();
+        zoom_interval, render();
     });
 
 </script>
