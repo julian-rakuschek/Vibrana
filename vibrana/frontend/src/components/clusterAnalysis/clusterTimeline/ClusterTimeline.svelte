@@ -62,7 +62,7 @@
 </script>
 <div class="flex w-full justify-center mb-2 gap-4">
     <div class="{interactionMode === InteractionMode.SELECT ? active_button : inactive_button}"
-         onclick={() => interactionMode = InteractionMode.SELECT}>Sample Selection
+         onclick={() => interactionMode = InteractionMode.SELECT}>Index Selection
     </div>
     <div class="{interactionMode === InteractionMode.INTERVAL ? active_button : inactive_button}"
          onclick={() => interactionMode = InteractionMode.INTERVAL}>Interval Definition
