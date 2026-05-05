@@ -92,7 +92,7 @@
         });
     }
 
-    function render(power: number[], frequencies: number[]) {
+    function render(power: number[], frequencies: number[], color: string) {
         if (!context) return;
 
         const dataPoints = frequencies.slice(0, frequencies.length / 3).map((f, i) => ({
@@ -104,17 +104,19 @@
             createChart(context, power, frequencies);
         } else {
             chart.data.datasets[0].data = dataPoints;
+            chart.data.datasets[0].borderColor = color;
+            chart.data.datasets[0].backgroundColor = color;
             chart.update();
         }
     }
 
     onMount(() => {
         context = canvas.getContext('2d');
-        render(power, frequencies);
+        render(power, frequencies, color);
     })
 
     $effect(() => {
-        render(power, frequencies);
+        render(power, frequencies, color);
     });
 
 </script>
