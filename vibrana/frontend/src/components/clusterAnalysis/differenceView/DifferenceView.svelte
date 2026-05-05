@@ -75,26 +75,38 @@
             {#if selectedFingerprints.length === 2}
                 {@const first = selectedFingerprints[0]}
                 {@const second = selectedFingerprints[1]}
-                <FingerprintDetailView
-                        fingerprint={first.fingerprint}
-                        {dataProvider}
-                        actualIndex={first.actualIndex}
-                        {colorMapping}
-                        averagePSD={first.averagePSD}
-                />
-                <FingerprintDifference
-                        fingerprint1={first.fingerprint}
-                        fingerprint2={second.fingerprint}
-                        averagePSD1={first.averagePSD}
-                        averagePSD2={second.averagePSD}
-                />
-                <FingerprintDetailView
-                        fingerprint={second.fingerprint}
-                        {dataProvider}
-                        actualIndex={second.actualIndex}
-                        {colorMapping}
-                        averagePSD={second.averagePSD}
-                />
+                <div class="relative flex gap-4">
+                    <div
+                            class="pointer-events-none absolute left-1/2 -translate-x-1/2 w-1/4 top-1/2 h-64 -translate-y-1/2 opacity-20"
+                            style={`clip-path: polygon(0 38%, calc(100% - 92px) 38%, calc(100% - 92px) 24%, 100% 50%, calc(100% - 92px) 76%, calc(100% - 92px) 62%, 0 62%); background: linear-gradient(90deg, ${colorMapping[first.fingerprint.label[$fingerprintMode]]}, ${colorMapping[second.fingerprint.label[$fingerprintMode]]});`}
+                    ></div>
+                    <div class="relative z-10">
+                        <FingerprintDetailView
+                                fingerprint={first.fingerprint}
+                                {dataProvider}
+                                actualIndex={first.actualIndex}
+                                {colorMapping}
+                                averagePSD={first.averagePSD}
+                        />
+                    </div>
+                    <div class="relative z-10">
+                        <FingerprintDifference
+                                fingerprint1={first.fingerprint}
+                                fingerprint2={second.fingerprint}
+                                averagePSD1={first.averagePSD}
+                                averagePSD2={second.averagePSD}
+                        />
+                    </div>
+                    <div class="relative z-10">
+                        <FingerprintDetailView
+                                fingerprint={second.fingerprint}
+                                {dataProvider}
+                                actualIndex={second.actualIndex}
+                                {colorMapping}
+                                averagePSD={second.averagePSD}
+                        />
+                    </div>
+                </div>
             {:else}
                 {#each selectedFingerprints as selectedFingerprint}
                     <FingerprintDetailView

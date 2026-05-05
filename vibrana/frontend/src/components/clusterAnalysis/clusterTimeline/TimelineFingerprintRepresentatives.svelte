@@ -174,7 +174,7 @@
                                     color={colorMapping[fingerprint_index_allocation[i].label[$fingerprintMode]]}
                             />
                         {:else}
-                            <PSDRendering size={size} frequencies={fingerprint_index_allocation[i].feature_descriptors.psd.f} power={fingerprint_index_allocation[i].feature_descriptors.psd.Pxx_spec}  color={colorMapping[fingerprint_index_allocation[i].label.psd]} />
+                            <PSDRendering width={size} height={size} frequencies={fingerprint_index_allocation[i].feature_descriptors.psd.f} power={fingerprint_index_allocation[i].feature_descriptors.psd.Pxx_spec}  color={colorMapping[fingerprint_index_allocation[i].label.psd]} />
                         {/if}
                     {/if}
                 </div>

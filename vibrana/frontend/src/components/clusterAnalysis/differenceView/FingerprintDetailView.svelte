@@ -16,27 +16,39 @@
     let {fingerprint, dataProvider, actualIndex, colorMapping, averagePSD}: Props = $props();
 </script>
 
-<div class="relative flex flex-col shadow-xl rounded-lg m-3 w-[300px] h-[750px]">
+<div class="relative flex flex-col shadow-xl rounded-lg m-3 w-[400px] h-[800px]">
     <div class="absolute opacity-15 w-full h-full  rounded-lg"
          style={`background-color: ${colorMapping[fingerprint.label[$fingerprintMode]]}`}></div>
-    <div class="absolute flex flex-col w-full h-full justify-center items-center">
+    <div class="absolute flex flex-col w-full h-full justify-center items-center gap-5">
         <p class="text-xs text-black/60 text-center">Index {actualIndex.toLocaleString()}</p>
-        <p>PSD</p>
-        <PSDRendering
-                showAxis
-                frequencies={fingerprint.feature_descriptors.psd.f}
-                power={fingerprint.feature_descriptors.psd.Pxx_spec}
-                color={colorMapping[fingerprint.label[$fingerprintMode]]}
-        />
-        <p>Average Cluster PSD</p>
-        <PSDRendering
-                showAxis
-                frequencies={fingerprint.feature_descriptors.psd.f}
-                power={averagePSD}
-                color={colorMapping[fingerprint.label[$fingerprintMode]]}
-        />
-        <p>Projection</p>
-        <FingerprintRendering {fingerprint} {dataProvider} color={colorMapping[fingerprint.label[$fingerprintMode]]} transparent/>
+        <div class="flex flex-col justify-center items-center">
+            <p>PSD</p>
+            <PSDRendering
+                    showAxis
+                    showYAxis
+                    frequencies={fingerprint.feature_descriptors.psd.f}
+                    power={fingerprint.feature_descriptors.psd.Pxx_spec}
+                    color={colorMapping[fingerprint.label[$fingerprintMode]]}
+                    width={400}
+                    height={200}
+            />
+        </div>
+        <div class="flex flex-col justify-center items-center">
+            <p>Projection</p>
+            <FingerprintRendering {fingerprint} {dataProvider} color={colorMapping[fingerprint.label[$fingerprintMode]]} transparent/>
+        </div>
+        <div class="flex flex-col justify-center items-center">
+            <p>Average Cluster PSD</p>
+            <PSDRendering
+                    showAxis
+                    showYAxis
+                    frequencies={fingerprint.feature_descriptors.psd.f}
+                    power={averagePSD}
+                    color={colorMapping[fingerprint.label[$fingerprintMode]]}
+                    width={400}
+                    height={200}
+            />
+        </div>
     </div>
 
 </div>
