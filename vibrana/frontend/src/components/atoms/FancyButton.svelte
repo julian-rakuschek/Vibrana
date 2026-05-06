@@ -21,6 +21,7 @@
 
 	interface Props {
 		button_color?: "danger" | "primary";
+		disabled?: boolean;
 		icon?: IconSource | undefined;
 		text?: string;
 		text_size?: string;
@@ -28,6 +29,7 @@
 
 	let {
 		button_color = "primary",
+		disabled = false,
 		icon = undefined,
 		text = "",
 		text_size = "text-lg"
@@ -35,7 +37,7 @@
 </script>
 
 
-<div class={button_color === "primary" ? primary_class_string : danger_class_string}>
+<div class={`${button_color === "primary" ? primary_class_string : danger_class_string} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}>
 	{#if icon}<Icon src="{icon}" class="w-7 h-7 text-white" solid/>{/if}
 	{#if text !== ""}<span class={`flex flex-col justify-center items-center h-full text-white font-semibold ${text_size} mx-3`}>{text}</span>{/if}
 </div>

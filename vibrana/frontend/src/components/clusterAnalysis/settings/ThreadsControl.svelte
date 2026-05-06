@@ -23,6 +23,7 @@
 
     let slice_size: number = $state(0);
     let sampling_strategy: string = $state("random");
+    let singleStepPending: boolean = $state(false);
 
     async function saveParameters() {
         await ApiRoutes.storeParameters.fetch({
@@ -46,8 +47,15 @@
     }
 
     async function oneStep() {
-        const data = await ApiRoutes.computeSingleStep.fetch({params: {dataset, subset}});
-        if (handleSingleItem) handleSingleItem(data.new_fingerprint, data.labels);
+        if (singleStepPending) return;
+        singleStepPending = true;
+
+        try {
+            const data = await ApiRoutes.computeSingleStep.fetch({params: {dataset, subset}});
+            if (handleSingleItem) handleSingleItem(data.new_fingerprint, data.labels);
+        } finally {
+            singleStepPending = false;
+        }
     }
 
     async function clearVectors() {
@@ -71,8 +79,8 @@
     <button class="h-10 w-10" onclick={async () => {await pauseComputing(); await clearVectors()}}>
         <FancyButton icon="{Trash}" button_color="danger"/>
     </button>
-    <button class="h-10" onclick={async () => {await pauseComputing(); await oneStep()}}>
-        <FancyButton button_color="primary" text="Single Step"/>
+    <button class="h-10" disabled={singleStepPending} onclick={async () => {await pauseComputing(); await oneStep()}}>
+        <FancyButton button_color="primary" text="Single Step" disabled={singleStepPending}/>
     </button>
     <button class="h-10 w-10" onclick={async () => {await pauseComputing();}}>
         <FancyButton icon="{Pause}" button_color="primary"/>
