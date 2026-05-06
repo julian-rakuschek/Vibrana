@@ -2,7 +2,7 @@
     import type {ClusterColorMapping, Fingerprint} from "@lib/types";
     import FingerprintRendering from "@components/fingerprintRenderer/FingerprintRendering.svelte";
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
-    import PSDRendering from "@components/fingerprintRenderer/PSDRendering.svelte";
+    import FFTRendering from "@components/fingerprintRenderer/FFTRendering.svelte";
     import {fingerprintMode} from "@lib/stores";
 
     interface Props {
@@ -10,10 +10,10 @@
         dataProvider: DataProvider;
         actualIndex: number;
         colorMapping: ClusterColorMapping;
-        averagePSD: number[];
+        averageFFT: number[];
     }
 
-    let {fingerprint, dataProvider, actualIndex, colorMapping, averagePSD}: Props = $props();
+    let {fingerprint, dataProvider, actualIndex, colorMapping, averageFFT}: Props = $props();
 </script>
 
 <div class="relative flex flex-col shadow-xl rounded-lg m-3 w-[400px] h-[800px]">
@@ -22,12 +22,12 @@
     <div class="absolute flex flex-col w-full h-full justify-center items-center gap-5">
         <p class="text-xs text-black/60 text-center">Index {actualIndex.toLocaleString()}</p>
         <div class="flex flex-col justify-center items-center">
-            <p>PSD</p>
-            <PSDRendering
+            <p>FFT</p>
+            <FFTRendering
                     showAxis
                     showYAxis
-                    frequencies={fingerprint.feature_descriptors.psd.f}
-                    power={fingerprint.feature_descriptors.psd.Pxx_spec}
+                    frequencies={fingerprint.feature_descriptors.fft.f}
+                    power={fingerprint.feature_descriptors.fft.magnitudes}
                     color={colorMapping[fingerprint.label[$fingerprintMode]]}
                     width={400}
                     height={200}
@@ -38,12 +38,12 @@
             <FingerprintRendering {fingerprint} {dataProvider} color={colorMapping[fingerprint.label[$fingerprintMode]]} transparent/>
         </div>
         <div class="flex flex-col justify-center items-center">
-            <p>Average Cluster PSD</p>
-            <PSDRendering
+            <p>Average Cluster FFT</p>
+            <FFTRendering
                     showAxis
                     showYAxis
-                    frequencies={fingerprint.feature_descriptors.psd.f}
-                    power={averagePSD}
+                    frequencies={fingerprint.feature_descriptors.fft.f}
+                    power={averageFFT}
                     color={colorMapping[fingerprint.label[$fingerprintMode]]}
                     width={400}
                     height={200}

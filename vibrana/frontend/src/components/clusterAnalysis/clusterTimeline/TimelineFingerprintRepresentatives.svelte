@@ -6,7 +6,7 @@
     import CenteredLoadingSpinner from "@components/atoms/CenteredLoadingSpinner.svelte";
     import * as d3 from 'd3';
     import {fingerprintMode} from "@lib/stores";
-    import PSDRendering from "@components/fingerprintRenderer/PSDRendering.svelte";
+    import FFTRendering from "@components/fingerprintRenderer/FFTRendering.svelte";
 
     interface Props {
         width: number;
@@ -99,7 +99,7 @@
         );
     }
 
-    function generateConnectionLines(fingerprint_index_allocation: (Fingerprint | null)[], feature: "tde" | "psd") {
+    function generateConnectionLines(fingerprint_index_allocation: (Fingerprint | null)[], feature: "tde" | "fft") {
         if (!parentDiv) return [];
         const xPositions = getDivPositions();
         const lines = [];
@@ -174,7 +174,7 @@
                                     color={colorMapping[fingerprint_index_allocation[i].label[$fingerprintMode]]}
                             />
                         {:else}
-                            <PSDRendering width={size} height={size} frequencies={fingerprint_index_allocation[i].feature_descriptors.psd.f} power={fingerprint_index_allocation[i].feature_descriptors.psd.Pxx_spec}  color={colorMapping[fingerprint_index_allocation[i].label.psd]} />
+                            <FFTRendering width={size} height={size} frequencies={fingerprint_index_allocation[i].feature_descriptors.fft.f} power={fingerprint_index_allocation[i].feature_descriptors.fft.magnitudes}  color={colorMapping[fingerprint_index_allocation[i].label.fft]} />
                         {/if}
                     {/if}
                 </div>

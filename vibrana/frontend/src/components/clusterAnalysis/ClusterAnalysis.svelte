@@ -34,12 +34,12 @@
 
     let dataProvider = new DataProvider(dataset, subset, in_memory);
     const color_generator_tde = new ColorGenerator();
-    const color_generator_psd = new ColorGenerator();
+    const color_generator_fft = new ColorGenerator();
     const fp_tree = new AVLTree<number, Fingerprint>();
     let fp_interval_tree = new IntervalTree<Fingerprint>();
 
     let color_mapping_tde = $state(color_generator_tde.getColorDictionary());
-    let color_mapping_psd = $state(color_generator_psd.getColorDictionary());
+    let color_mapping_fft = $state(color_generator_fft.getColorDictionary());
     let fingerprints: Fingerprint[] = $state([]);
     let init_load = $state(true);
     let width = $state(1000);
@@ -49,7 +49,7 @@
     let timestamps: number[] = $state(new Array(width).fill(0));
     let index_allocation: number[] = $state(new Array(width).fill(-1));
     let label_allocation_tde: number[] = $state(new Array(width).fill(null));
-    let label_allocation_psd: number[] = $state(new Array(width).fill(null));
+    let label_allocation_fft: number[] = $state(new Array(width).fill(null));
     let selectedIndices: number[] = $state([]);
 
     const socket = io('http://localhost:5000');
@@ -64,20 +64,20 @@
             label: {
                 ...fp.label,
                 tde: labels.tde[i] ?? fp.label.tde,
-                psd: labels.psd[i] ?? fp.label.psd
+                fft: labels.fft[i] ?? fp.label.fft
             }
         }));
 
         labels.tde.forEach(label => color_generator_tde.getColor(label));
-        labels.psd.forEach(label => color_generator_psd.getColor(label));
+        labels.fft.forEach(label => color_generator_fft.getColor(label));
 
         fingerprints = nextFingerprints;
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
-        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+        label_allocation_fft = computeLabelAllocationArray(fingerprints, width, zoom_interval, "fft");
 
         color_mapping_tde = {...color_generator_tde.getColorDictionary()};
-        color_mapping_psd = {...color_generator_psd.getColorDictionary()};
+        color_mapping_fft = {...color_generator_fft.getColorDictionary()};
 
         // necessary to rebuild entire tree, because clustering results may change across many instances
         fp_tree.clear();
@@ -102,16 +102,16 @@
         for (let i = 0; i < vectors_query.length; i++) {
             vectors_query[i]['index'] = i;
             color_generator_tde.getColor(vectors_query[i].label.tde);
-            color_generator_psd.getColor(vectors_query[i].label.psd);
+            color_generator_fft.getColor(vectors_query[i].label.fft);
             fp_tree.insert(vectors_query[i].start_index, vectors_query[i]);
             fp_interval_tree.insert(vectors_query[i].start_index, vectors_query[i].start_index + vectors_query[i].slice_length, vectors_query[i]);
         }
         fingerprints = [...vectors_query];
         color_mapping_tde = color_generator_tde.getColorDictionary();
-        color_mapping_psd = color_generator_psd.getColorDictionary();
+        color_mapping_fft = color_generator_fft.getColorDictionary();
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
-        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+        label_allocation_fft = computeLabelAllocationArray(fingerprints, width, zoom_interval, "fft");
         timestamps = await dataProvider.get_timestamps(zoom_interval, width);
         await client.invalidateQueries();
     }
@@ -125,7 +125,7 @@
     async function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
         index_allocation = computeIndexAllocationArray(fingerprints, width, zoom_interval);
         label_allocation_tde = computeLabelAllocationArray(fingerprints, width, zoom_interval, "tde");
-        label_allocation_psd = computeLabelAllocationArray(fingerprints, width, zoom_interval, "psd");
+        label_allocation_fft = computeLabelAllocationArray(fingerprints, width, zoom_interval, "fft");
         timestamps = await dataProvider.get_timestamps(zoom_interval, width);
     }
 
@@ -141,7 +141,7 @@
     {:else}
         <Settings
                 {dataset} {subset} {fingerprints}
-                {dataProvider} {index_allocation} {label_allocation_tde} {label_allocation_psd}
+                {dataProvider} {index_allocation} {label_allocation_tde} {label_allocation_fft}
                 {fetchAndDrawAll} {addNewItem}
         />
         {#if fingerprints.length === 0}
@@ -154,15 +154,15 @@
                 <Header {timestamps}/>
                 <div>
                     <ZoomIndicator {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval {fp_tree} {fp_interval_tree}
-                                   colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} />
+                                   colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft} />
 
                 </div>
                 <div>
                     <ClusterTimelineWrapper
                             {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
                             {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
-                            label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_psd)}
-                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                            label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_fft)}
+                            colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft}
                             bind:zoom_interval bind:selectedIndices
                     />
                     {#key width}
@@ -170,13 +170,13 @@
                                 {width} index_allocation={$state.snapshot(index_allocation)}
                                 fingerprints={fingerprints}
                                 {dataProvider} {zoom_interval}
-                                colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd}
+                                colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft}
                                 bind:this={fingerprintRepresentatives}
                         />
                     {/key}
                 </div>
                 <div>
-                    <DifferenceView {width} {dataProvider} {fp_tree} fingerprints={$state.snapshot(fingerprints)} colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_psd} {selectedIndices} />
+                    <DifferenceView {width} {dataProvider} {fp_tree} fingerprints={$state.snapshot(fingerprints)} colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft} {selectedIndices} />
                 </div>
             </div>
         {/if}

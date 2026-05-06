@@ -40,17 +40,17 @@ export type Fingerprint = {
     sliding_window_size: number;
     feature_descriptors: {
         tde: Histogram;
-        psd: { f: number[]; Pxx_spec: number[] };
+        fft: { f: number[]; magnitudes: number[] };
     };
     label: {
         tde: number;
-        psd: number;
+        fft: number;
     };
 }
 
-export type AveragePsdSegment = {
+export type AverageFFTSegment = {
     label: number;
-    averagePsd: number[];
+    averageFFT: number[];
 }
 
 export type TimeInformation = {
@@ -67,7 +67,7 @@ export type ClusterColorMapping = {
 
 export type ClusterDelta = {
     tde: number[];
-    psd: number[];
+    fft: number[];
 }
 
 export type ParameterSettings = {
@@ -76,7 +76,7 @@ export type ParameterSettings = {
         minPoints: number;
         sliding_window_size: number;
     };
-    psd: {
+    fft: {
         eps: number;
         minPoints: number;
     };
@@ -94,7 +94,7 @@ export type ParameterSettingsUpdate = {
         minPoints?: number;
         sliding_window_size?: number;
     };
-    psd?: {
+    fft?: {
         eps?: number;
         minPoints?: number;
     };

@@ -85,8 +85,8 @@ def get_fingerprints_for_clustering(db: Database, dataset: str, subset: str, fea
     labels = [f.get("label", {}).get(feature_descriptor, -1) for f in fingerprints]
     if feature_descriptor == "tde":
         feature_descriptors = [f["feature_descriptors"]["tde"]["counts"] for f in fingerprints]
-    elif feature_descriptor == "psd":
-        feature_descriptors = [f["feature_descriptors"]["psd"]["Pxx_spec"] for f in fingerprints]
+    elif feature_descriptor == "fft":
+        feature_descriptors = [f["feature_descriptors"]["fft"]["magnitudes"] for f in fingerprints]
     else:
         raise ValueError("unknown feature descriptor")
     ids = [f["_id"] for f in fingerprints]
@@ -106,8 +106,8 @@ def cluster_all_fingerprints(db: Database, dataset: str, subset: str, feature_de
 
 def cluster_all_fingerprints_all_feature_descriptors(db: Database, dataset: str, subset: str):
     tde_labels = cluster_all_fingerprints(db, dataset, subset, "tde")
-    psd_labels = cluster_all_fingerprints(db, dataset, subset, "psd")
-    return {"tde": tde_labels, "psd": psd_labels}
+    fft_labels = cluster_all_fingerprints(db, dataset, subset, "fft")
+    return {"tde": tde_labels, "fft": fft_labels}
 
 
 # ----------------------------------------------
@@ -165,4 +165,4 @@ def get_coverage(db: Database, dataset: str, subset: str):
 
 if __name__ == '__main__':
     db = get_db()
-    cluster_all_fingerprints(db, "hydro", "x", "psd")
+    cluster_all_fingerprints(db, "hydro", "x", "fft")

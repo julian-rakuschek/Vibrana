@@ -21,7 +21,7 @@
     type SelectedFingerprint = {
         actualIndex: number;
         fingerprint: Fingerprint;
-        averagePSD: number[];
+        averageFFT: number[];
     };
 
     function parameterToSignalIndex(t: number, signalLength: number) {
@@ -29,19 +29,19 @@
         return Math.min(Math.max(Math.floor(t * signalLength), 0), signalLength - 1);
     }
 
-    function computeAveragePSD(label: number, fingerprintMode: "tde" | "psd"): number[] {
+    function computeAverageFFT(label: number, fingerprintMode: "tde" | "fft"): number[] {
         const cluster = fingerprints
             .filter(f => f.label[fingerprintMode] === label)
-            .map(f => f.feature_descriptors.psd.Pxx_spec);
+            .map(f => f.feature_descriptors.fft.magnitudes);
 
         if (cluster.length === 0) return [];
 
-        const psdLength = cluster[0].length;
-        const sums = new Array(psdLength).fill(0);
+        const fftLength = cluster[0].length;
+        const sums = new Array(fftLength).fill(0);
 
-        for (const psd of cluster) {
-            for (let i = 0; i < psdLength; i++) {
-                sums[i] += psd[i] ?? 0;
+        for (const fft of cluster) {
+            for (let i = 0; i < fftLength; i++) {
+                sums[i] += fft[i] ?? 0;
             }
         }
 
@@ -60,7 +60,7 @@
                 return {
                     actualIndex,
                     fingerprint,
-                    averagePSD: computeAveragePSD(fingerprint.label[$fingerprintMode], $fingerprintMode)
+                    averageFFT: computeAverageFFT(fingerprint.label[$fingerprintMode], $fingerprintMode)
                 };
             })
             .filter((entry): entry is SelectedFingerprint => entry !== null);
@@ -86,15 +86,15 @@
                                 {dataProvider}
                                 actualIndex={first.actualIndex}
                                 {colorMapping}
-                                averagePSD={first.averagePSD}
+                                averageFFT={first.averageFFT}
                         />
                     </div>
                     <div class="relative z-10">
                         <FingerprintDifference
                                 fingerprint1={first.fingerprint}
                                 fingerprint2={second.fingerprint}
-                                averagePSD1={first.averagePSD}
-                                averagePSD2={second.averagePSD}
+                                averageFFT1={first.averageFFT}
+                                averageFFT2={second.averageFFT}
                         />
                     </div>
                     <div class="relative z-10">
@@ -103,7 +103,7 @@
                                 {dataProvider}
                                 actualIndex={second.actualIndex}
                                 {colorMapping}
-                                averagePSD={second.averagePSD}
+                                averageFFT={second.averageFFT}
                         />
                     </div>
                 </div>
@@ -114,7 +114,7 @@
                             {dataProvider}
                             actualIndex={selectedFingerprint.actualIndex}
                             {colorMapping}
-                            averagePSD={selectedFingerprint.averagePSD}
+                            averageFFT={selectedFingerprint.averageFFT}
                     />
                 {/each}
             {/if}

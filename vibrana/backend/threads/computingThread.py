@@ -12,13 +12,26 @@ import socketio
 import redis
 from numpy.lib.stride_tricks import sliding_window_view
 from pymongo.synchronous.database import Database
-from scipy import signal
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 from vibrana.backend.data_loaders.dataLoaderBase import DataLoaderBase
 from vibrana.backend.data_loaders.redisLoader import RedisLoader
 import vibrana.backend.helper.database as database
+
+fft_BINS = 50
+
+
+def bin_fft(frequencies, magnitudes, bins=fft_BINS):
+    if len(magnitudes) <= bins:
+        return frequencies, magnitudes
+    frequency_bins = np.array_split(frequencies, bins)
+    power_bins = np.array_split(magnitudes, bins)
+    return (
+        np.array([np.mean(bin_values) for bin_values in frequency_bins]),
+        np.array([np.max(bin_values) for bin_values in power_bins]),
+    )
+
 
 def compute_feature_descriptors(data, projected, sample_rate=1.0):
     feature_descriptors = {}
@@ -27,8 +40,10 @@ def compute_feature_descriptors(data, projected, sample_rate=1.0):
     counts, bins = np.histogram(radii, bins=20, range=(0, np.max(radii)), density=True)
     feature_descriptors["tde"] = {"bins": bins.tolist(), "counts": counts.tolist()}
 
-    f, Pxx_spec = signal.welch(data, sample_rate, scaling='spectrum')
-    feature_descriptors["psd"] = {"f": f.tolist(), "Pxx_spec": Pxx_spec.tolist()}
+    fft_frequency_bins = np.fft.rfftfreq(len(data), d=1.0 / sample_rate)
+    fft_magnitudes = np.abs(np.fft.rfft(data))
+    binned_frequency_bins, binned_fft_magnitudes = bin_fft(fft_frequency_bins, fft_magnitudes)
+    feature_descriptors["fft"] = {"f": binned_frequency_bins.tolist(), "magnitudes": binned_fft_magnitudes.tolist()}
 
     return feature_descriptors
 
@@ -95,14 +110,14 @@ class ComputingThread(threading.Thread):
             return self.sample_random()
         gaps = []
         current_label_tde = fingerprints[0]["label"]["tde"]
-        current_label_psd = fingerprints[0]["label"]["psd"]
+        current_label_fft = fingerprints[0]["label"]["fft"]
         for i in range(len(fingerprints) - 1):
             if current_label_tde != fingerprints[i + 1]["label"]["tde"]:
                 gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
                 current_label_tde = fingerprints[i + 1]["label"]["tde"]
-            if current_label_psd != fingerprints[i + 1]["label"]["psd"]:
+            if current_label_fft != fingerprints[i + 1]["label"]["fft"]:
                 gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
-                current_label_psd = fingerprints[i + 1]["label"]["psd"]
+                current_label_fft = fingerprints[i + 1]["label"]["fft"]
         sorted_gaps = sorted(gaps, key=lambda x: abs(x[0] - x[1]), reverse=True)
         if len(sorted_gaps) == 0:
             return self.sample_random()

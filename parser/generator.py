@@ -147,8 +147,8 @@ def save_signal(signal, boundaries):
 
 if __name__ == '__main__':
     signal, boundaries = generate_vibration_signal(
-        total_samples=1_000_000,
+        total_samples=100_000_000,
         min_len=20_000,
-        max_len=100_000,
+        max_len=500_000,
     )
     save_signal(signal, boundaries)

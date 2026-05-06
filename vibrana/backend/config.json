@@ -15,7 +15,7 @@
       "minPoints": 5,
       "sliding_window_size": 1000
     },
-    "psd": {
+    "fft": {
       "eps": 0.5,
       "minPoints": 5
     },

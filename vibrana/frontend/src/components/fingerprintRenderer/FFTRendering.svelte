@@ -41,7 +41,7 @@
     let chart: Chart | null = null;
 
     function getVisibleFrequencies(frequencies: number[]) {
-        return frequencies.slice(0, frequencies.length / 3);
+        return frequencies.slice(0, frequencies.length);
     }
 
     function getDataPoints(power: number[], frequencies: number[]) {
@@ -74,7 +74,7 @@
             data: {
                 datasets: [
                     {
-                        label: "PSD",
+                        label: "Magnitude",
                         data: dataPoints,
                         borderColor: color,
                         backgroundColor: color,
@@ -127,7 +127,7 @@
                         },
                         title: {
                             display: showYAxis,
-                            text: "Power",
+                            text: "Magnitude",
                             padding: {bottom: 0}
                         }
                     }

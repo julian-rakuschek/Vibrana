@@ -16,7 +16,7 @@
         fingerprints?: Fingerprint[];
         index_allocation: number[];
         label_allocation_tde: number[];
-        label_allocation_psd: number[];
+        label_allocation_fft: number[];
         fetchAndDrawAll: () => void;
         addNewItem: (new_fingerprint: Fingerprint, label_delta: ClusterDelta) => void;
     }
@@ -28,7 +28,7 @@
         fingerprints = [],
         index_allocation,
         label_allocation_tde,
-        label_allocation_psd,
+        label_allocation_fft,
         fetchAndDrawAll,
         addNewItem
     }: Props = $props();
@@ -54,7 +54,7 @@
             {#if $fingerprintMode === "tde"}
                 <p>{(new Set(label_allocation_tde)).size - 1}</p>
             {:else}
-                <p>{(new Set(label_allocation_psd)).size - 1}</p>
+                <p>{(new Set(label_allocation_fft)).size - 1}</p>
             {/if}
             <div class="flex flex-row items-center gap-1 col-span-3">
                 <span>Coverage:</span>
@@ -77,12 +77,12 @@
                 <Tooltip color="#303f9f" text="The time series is projected into the 2D plane by taking a sliding window view and subsequently applying PCA on it. Strong frequency components lead to circular arrangements within the point cloud."/>
             </div>
         </div>
-        <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'psd' ? 'border-indigo-800' : 'border-indigo-100'}"
-             onclick={() => fingerprintMode.set("psd")}>
+        <div class="bg-indigo-100 rounded-xl p-2 transition hover:bg-indigo-200 border-4 border-solid {$fingerprintMode === 'fft' ? 'border-indigo-800' : 'border-indigo-100'}"
+             onclick={() => fingerprintMode.set("fft")}>
             <img src="/welch.png"/>
             <div class="flex flex-row items-center justify-center gap-1">
-                <p class="text-center text-indigo-800">PSD</p>
-                <Tooltip color="#303f9f" text="The estimated power spectral density of the signal using Welch's method. The periodogram shows the power distribution across the frequencies."/>
+                <p class="text-center text-indigo-800">FFT</p>
+                <Tooltip color="#303f9f" text="FFT (Fast Fourier Transform) shows which frequencies are present in a signal and how strong they are."/>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@
     </div>
     <div class="bg-indigo-100 rounded-xl p-4 flex flex-col gap-4 text-indigo-800">
         <p class="font-semibold">
-            Clustering Parameters ({$fingerprintMode === "tde" ? "Projection" : "PSD"})
+            Clustering Parameters ({$fingerprintMode === "tde" ? "Projection" : "FFT"})
         </p>
         <ClusteringSettings
                 {dataset} {subset} onRecomputeComplete={fetchAndDrawAll} fingerprintMode={$fingerprintMode}

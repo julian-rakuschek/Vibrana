@@ -4,7 +4,7 @@
     import type {DataProvider} from "@lib/dataProvider/dataProvider";
     import type {Fingerprint} from "@lib/types";
     import {fingerprintMode} from "@lib/stores";
-    import PSDRendering from "@components/fingerprintRenderer/PSDRendering.svelte";
+    import FFTRendering from "@components/fingerprintRenderer/FFTRendering.svelte";
 
     interface Props {
         dataProvider: DataProvider;
@@ -76,10 +76,10 @@
                 {#if $fingerprintMode === "tde"}
                     <FingerprintRendering {dataProvider} cache_projection={false} fingerprint={fingerprints[hovering_fingerprint_index]}/>
                 {:else}
-                    <PSDRendering
+                    <FFTRendering
                             showAxis
-                            frequencies={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.f}
-                            power={fingerprints[hovering_fingerprint_index].feature_descriptors.psd.Pxx_spec}
+                            frequencies={fingerprints[hovering_fingerprint_index].feature_descriptors.fft.f}
+                            power={fingerprints[hovering_fingerprint_index].feature_descriptors.fft.magnitudes}
                     />
                 {/if}
             {/if}
