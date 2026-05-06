@@ -11,7 +11,7 @@ function updateAllocationArray(fp: Fingerprint, zoom_interval: [number, number],
     const start = Math.floor(relative_start * width);
     const end = Math.floor(relative_end * width);
 
-    for (let j = start; j < end; j++) {
+    for (let j = start; j <= end; j++) {
         if (start < 0 || end >= allocation_array.length) continue;
         allocation_array[j] = property_accessor(fp);
     }
