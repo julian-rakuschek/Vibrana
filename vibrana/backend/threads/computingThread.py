@@ -114,11 +114,14 @@ class ComputingThread(threading.Thread):
         intervals = params.get("intervals", [])
         if len(intervals) > 0:
             fingerprints = self.get_fingerprints_in_intervals(intervals, fingerprints)
-        if len(fingerprints) < 2:
-            return self.sample_random()
+        if len(fingerprints) == 0:
+            return self.loader.data_size // 2
+        fingerprints = sorted(fingerprints, key=lambda x: x["start_index"])
         gaps = []
+        gaps.append([0, fingerprints[0]["start_index"]])
         for i in range(len(fingerprints) - 1):
             gaps.append([fingerprints[i]["start_index"], fingerprints[i + 1]["start_index"]])
+        gaps.append([fingerprints[-1]["start_index"], self.loader.data_size])
         sorted_gaps = sorted(gaps, key=lambda x: abs(x[0] - x[1]), reverse=True)
         if len(sorted_gaps) == 0:
             return self.sample_random()
