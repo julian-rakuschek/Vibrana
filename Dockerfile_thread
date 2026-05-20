@@ -15,5 +15,6 @@ COPY ./pyproject.toml ./pyproject.toml
 RUN poetry install --no-root
 
 COPY ./vibrana ./vibrana
+COPY ./parser ./parser
 
 CMD ["poetry", "run", "python3", "/app/vibrana/backend/threads/coordinatorThread.py"]

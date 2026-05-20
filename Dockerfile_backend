@@ -28,11 +28,10 @@ RUN pipx inject poetry poetry-plugin-bundle
 COPY ./poetry.lock ./poetry.lock
 COPY ./pyproject.toml ./pyproject.toml
 RUN poetry install --no-root
-RUN poetry add gunicorn
-RUN poetry add eventlet
 
 COPY ./vibrana/backend ./vibrana/backend
 COPY ./vibrana/algorithms ./vibrana/algorithms
+COPY ./parser ./parser
 COPY --from=build /app ./vibrana/frontend
 
 EXPOSE 5000
