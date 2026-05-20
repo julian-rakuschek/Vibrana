@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {onMount} from "svelte";
+    import {onDestroy, onMount} from "svelte";
     import {
         BarController,
         BarElement,
@@ -162,6 +162,11 @@
         context = canvas.getContext('2d');
         render(power, frequencies, color, showAxis, showYAxis);
     })
+
+    onDestroy(() => {
+        chart?.destroy();
+        chart = null;
+    });
 
     $effect(() => {
         render(power, frequencies, color, showAxis, showYAxis);

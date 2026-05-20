@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {ClusterColorMapping, Fingerprint} from '@lib/types';
-    import {onMount} from 'svelte';
-    import {AVLTree} from "avl";
+    import {onDestroy, onMount} from 'svelte';
+    import {type AVLNode, AVLTree} from "avl";
     import {findNearestFingerprint} from "@lib/helper/util";
     import {fingerprintMode} from "@lib/stores";
     import type IntervalTree from "node-interval-tree";
@@ -100,7 +100,6 @@
         render(visibleIndices, $fingerprintMode);
     });
 
-    fingerprintMode.subscribe(fm => render(visibleIndices, fm));
 
 </script>
 

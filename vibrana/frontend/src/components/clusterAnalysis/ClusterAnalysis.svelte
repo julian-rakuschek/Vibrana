@@ -52,10 +52,8 @@
     let label_allocation_fft: number[] = $state(new Array(width).fill(null));
     let selectedIndices: number[] = $state([]);
 
-    const socket = io('http://localhost:5000');
-    socket.on('connect', () => socket.emit('join', {room: `vibrana:${dataset}:${subset}`}));
-    socket.on('message', data => addNewItem(data['new_fingerprint'], data['labels']));
 
+    let socket;
     const client = useQueryClient()
 
     async function addNewItem(new_fingerprint: Fingerprint, labels: ClusterDelta) {
@@ -118,8 +116,24 @@
 
 
     onMount(async () => {
+        const room = `vibrana:${dataset}:${subset}`;
+        socket = io('http://localhost:5000');
+
+        const onConnect = () => socket.emit('join', {room});
+        const onMessage = data => addNewItem(data.new_fingerprint, data.labels);
+
+        socket.on('connect', onConnect);
+        socket.on('message', onMessage);
+
         await fetchAndDrawAll();
         init_load = false;
+
+        return () => {
+            socket.emit('leave', {room});
+            socket.off('connect', onConnect);
+            socket.off('message', onMessage);
+            socket.disconnect();
+        };
     });
 
     async function updateAllocationArrays(width: number, zoom_interval: [number, number]) {
@@ -153,14 +167,16 @@
             <div class="flex flex-col grow overflow-shown gap-3" bind:clientWidth={width}>
                 <Header {timestamps}/>
                 <div>
-                    <ZoomIndicator {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval {fp_tree} {fp_interval_tree}
-                                   colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft} />
+                    <ZoomIndicator {width} {dataProvider} reset_zoom={() => zoom_interval = [0, 1]} bind:zoom_interval
+                                   {fp_tree} {fp_interval_tree}
+                                   colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft}/>
 
                 </div>
                 <div>
                     <ClusterTimelineWrapper
                             {width} {dataset} {subset} fingerprints={$state.snapshot(fingerprints)}
-                            {dataProvider} {fp_tree} {fp_interval_tree} index_allocation={$state.snapshot(index_allocation)} {timestamps}
+                            {dataProvider} {fp_tree} {fp_interval_tree}
+                            index_allocation={$state.snapshot(index_allocation)} {timestamps}
                             label_allocation={$fingerprintMode === "tde" ? $state.snapshot(label_allocation_tde) : $state.snapshot(label_allocation_fft)}
                             colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft}
                             bind:zoom_interval bind:selectedIndices
@@ -176,7 +192,9 @@
                     {/key}
                 </div>
                 <div>
-                    <DifferenceView {width} {dataProvider} {fp_tree} fingerprints={$state.snapshot(fingerprints)} colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft} {selectedIndices} />
+                    <DifferenceView {width} {dataProvider} {fp_tree} fingerprints={$state.snapshot(fingerprints)}
+                                    colorMapping={$fingerprintMode === "tde" ? color_mapping_tde : color_mapping_fft}
+                                    {selectedIndices}/>
                 </div>
             </div>
         {/if}
