@@ -10,6 +10,7 @@ from bson import json_util
 from pymongo.synchronous.database import Database
 
 from vibrana.algorithms.incdbscan import IncrementalDBSCAN
+from vibrana.backend.data_loaders.dewesoftLoader import DewesoftLoader
 from vibrana.backend.data_loaders.diskLoader import DiskLoader
 from vibrana.backend.data_loaders.redisLoader import RedisLoader
 from vibrana.backend.helper.config import get_config
@@ -42,6 +43,8 @@ def get_loader(loader_type, path, dataset, subset):
         loader.load_numpy_file()
     elif loader_type == "disk":
         loader = DiskLoader(path, dataset, subset)
+    elif loader_type == "dewesoft":
+        loader = DewesoftLoader(dataset, subset)
     else:
         raise Exception("Unknown loader type")
     return loader
