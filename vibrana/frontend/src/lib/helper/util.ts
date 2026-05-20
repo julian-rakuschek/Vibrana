@@ -32,6 +32,21 @@ export function generateTimestamps(
     return Array.from({ length: amount }, (_, index) => visibleStart + step * index);
 }
 
+export function estimateTimestamp(start: string, end: string, index: number, maxIndex: number): number {
+    const startSeconds = new Date(start).getTime() / 1000;
+    const endSeconds = new Date(end).getTime() / 1000;
+
+    if (Number.isNaN(startSeconds) || Number.isNaN(endSeconds)) {
+        throw new Error("Invalid start or end timestamp");
+    }
+    if (index < 0 || index > maxIndex || maxIndex < 0) {
+        throw new Error("Invalid index");
+    }
+    if (maxIndex === 0) return startSeconds;
+
+    return startSeconds + ((endSeconds - startSeconds) * index) / maxIndex;
+}
+
 export function formatUnixTimestamp(timestamp: number): { isoDate: string; time: string;} {
         const date = timestamp < 1e12 ? new Date(timestamp * 1000) : new Date(timestamp);
         const isoDate = date.toISOString();

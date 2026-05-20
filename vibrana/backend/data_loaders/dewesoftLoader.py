@@ -51,6 +51,7 @@ class DewesoftLoader(DataLoaderBase):
                     DWRaiseError("DWDataReader: DWGetMeasurementInfo() failed")
 
                 sample_count = dwparser.get_number_of_samples(reader, channel)
+                print(measurement_info.sample_rate)
                 return {
                     "path": file_path,
                     "sample_count": sample_count,

@@ -11,6 +11,8 @@ from vibrana.backend.helper.config import get_config
 conf = get_config()
 
 def estimate_sampling_frequency(meta: dict) -> float:
+    if "sample_rate" in meta:
+        return meta["sample_rate"]
     start = datetime.datetime.fromisoformat(meta["start_time"])
     end = datetime.datetime.fromisoformat(meta["end_time"])
     total_samples = meta["total_sample_points"]

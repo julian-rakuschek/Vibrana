@@ -1,7 +1,7 @@
 import {ApiRoutes} from "@lib/api/ApiRoutes";
 import type {Fingerprint, TimeInformation} from "@lib/types";
 import {type Writable, writable} from "svelte/store";
-import {generateTimestamps} from "@lib/helper/util";
+import {estimateTimestamp, generateTimestamps} from "@lib/helper/util";
 
 export class DataProvider {
     private readonly dataset: string;
@@ -37,6 +37,13 @@ export class DataProvider {
             this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
         }
         return generateTimestamps(this.time_information?.start_time ?? "1970-01-01T00:00:00", this.time_information?.end_time ?? "1970-01-01T23:59:00", width, zoom_interval);
+    }
+
+    async estimate_timestamp(index: number) {
+        if (!this.time_information) {
+            this.time_information = await ApiRoutes.getTimeInformation.fetch({params: {dataset: this.dataset, subset: this.subset}});
+        }
+        return estimateTimestamp(this.time_information?.start_time ?? "1970-01-01T00:00:00", this.time_information?.end_time ?? "1970-01-01T23:59:00", index, this.time_information.total_sample_points);
     }
 
     isInMemory(): boolean {
