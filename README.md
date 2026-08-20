@@ -8,6 +8,12 @@ Analyzing large vibration signals progressively through visual fingerprints.
 
 </td></tr></table>
 
+## VMV 2026
+
+This project was developed as part of a [VMV 2026](https://www.gcpr-vmv.de/year/2026) submission.
+You can find a snapshot of the prototype including the datasets used in the paper in the releases section of this repository.
+The paper will be linked here soon.
+
 ## Setup
 Vibrana is a web application designed to run locally, 
 ensuring that your data will never be stored in the cloud. 
@@ -15,15 +21,14 @@ Due to its complex architecture, we provide a Docker setup
 that can be run on any common operating system capable of 
 running Docker. Below you will find two ways of setting up Vibrana:
 Either via Docker (easy, but not suitable for development) or manually (hard, but suitable for development).
-In both cases, the data folder must be initiated first.
 
-### Setting up the data folder
+## Datasets
 
 Vibrana does not feature uploading data through the UI, instead data is supplied to the prototype by placing it in a folder "data" within the project root.
 The application will automatically recognize valid files and make them available for exploration. There is no need to register them in any way in a database,
 however, to make this level of flexibility possible, a specific folder structure must be adhered.
 
-[TODO: Precise description of data folder]
+An example dataset can be found in the releases section of this repository.
 
 ### Docker Setup
 
